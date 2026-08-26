@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["bun-types"],
+    "types": ["bun"],
     "resolveJsonModule": true
   }
 }
