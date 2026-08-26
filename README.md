@@ -15,13 +15,15 @@ Spec: [`lenzgraph-spec.md`](./lenzgraph-spec.md).
 ```bash
 bun install
 bun run build:gui                       # → packages/core/static
+(cd packages/core && bun link)          # puts `lenzgraph` on PATH
 
 cd /path/to/your-ts-project
 lenzgraph init                          # writes .lenzgraph/{config.yaml,agents/claude.yaml,nodes/}
 lenzgraph serve                         # daemon + GUI at http://localhost:7331
 ```
 
-`lenzgraph` = `packages/core/bin/lenzgraph` (add it to `PATH`, or run `bun packages/core/src/cli.ts`).
+To get `lenzgraph` on your `PATH`: `cd packages/core && bun link` (symlinks it into `~/.bun/bin`,
+which the bun installer already added to your shell). Alternatively run `bun packages/core/src/cli.ts`.
 
 ### Greenfield
 
