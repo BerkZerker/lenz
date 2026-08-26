@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { NodeCard } from "../components/common";
 import { GraphView } from "./GraphView";
+import { deriveGraph } from "../derive";
 
 export function GraphLens() {
   const { nodes, focus, selected, setSelected, setFocus } = useStore();
@@ -22,7 +23,7 @@ export function GraphLens() {
       <div className="cards">
         {children.map((n) => <NodeCard key={n.id} n={n} selected={n.id === selected} onClick={() => { setSelected(n.id); }} />)}
       </div>
-      {!children.length && <div className="hint">{focus ? "leaf node — see inspector. esc to go up." : "empty graph. press 7 to propose, or run `lenz derive`."}</div>}
+      {!children.length && <div className="hint">{focus ? "leaf node — see inspector. esc to go up." : <>empty graph. press <span className="kbd">7</span> to propose, or <span className="link" onClick={deriveGraph}>generate the graph from code</span> (<span className="kbd">g</span>).</>}</div>}
       <div className="hint">enter drills into an intent · a approve · e edit · d dispatch · n new child · x delete</div>
     </>
   );

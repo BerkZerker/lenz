@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { StatusTag } from "./common";
 import { Summary } from "./Summary";
 import { areaColor } from "../colors";
+import { deriveNode } from "../derive";
 
 export function Inspector() {
   const { selected, focus, nodes, runs } = useStore();
@@ -29,7 +30,7 @@ export function Inspector() {
         {tab === "spec" && <>
           {n.summary && <div className="box" style={{ lineHeight: 1.5 }}><div className="dim" style={{ marginBottom: 4 }}>summary</div><Summary text={n.summary} /></div>}
           <pre>{n.spec || <span className="dim">(no spec — press e to edit)</span>}</pre>
-          <div className="row"><button onClick={() => api(`/nodes/${n.id}/summarize`, {})}>{n.summary ? "re-summarize" : "summarize"}</button></div>
+          <div className="row"><button onClick={() => api(`/nodes/${n.id}/summarize`, {})}>{n.summary ? "re-summarize" : "summarize"}</button>{(n.kind === "intent" ? n.derived : (n.anchors ?? []).length > 0) && <button onClick={() => deriveNode(n)} title={n.kind === "intent" ? "re-derive this folder's subtree from code" : "rewrite spec + examples from the anchored code"}>regenerate</button>}</div>
         </>}
         {tab === "examples" && (n.examples?.length ? n.examples.map((e) => (
           <div className="box" key={e.id}><div><b>{e.name}</b> <span className="dim">{e.id}{e.derived ? " · derived" : ""}</span></div>

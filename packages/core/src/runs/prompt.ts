@@ -91,6 +91,19 @@ export function derivePrompt(folder: string, symbols: { key: string; kind: strin
   return `You are deriving behavior nodes from existing code, bottom-up, one folder at a time. Folder: \`${folder || "."}\`.\n\nGroup this folder's symbols into 1–9 **behavior** nodes: each is a user-observable behavior (title, precise spec of what the code does, 1–3 examples as given/when/then describing observable behavior). Every symbol should be owned by exactly one behavior; a symbol can appear in only one node's anchors. Anchors must be symbol keys copied verbatim from the list. Also write one **intent** node summarizing this folder (title + one-paragraph spec), taking the subfolders' intents into account.\n\n## Symbols in this folder's files\n\n${symbols.map((s) => `- key: \`${s.key}\`\n  ${s.kind} ${s.container ? s.container + "." : ""}${s.name}${s.sig ? ` — ${oneLine(s.sig, 160)}` : ""}${s.doc ? `\n  ${oneLine(s.doc, 200)}` : ""}`).join("\n")}\n\n${subIntents.length ? `## Already-derived subfolder intents\n\n${subIntents.map((s) => `- ${s.title}: ${oneLine(s.spec, 200)}`).join("\n")}\n\n` : ""}Do not use tools. Return JSON matching the schema.`;
 }
 
+export const BEHAVIOR_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string" }, spec: { type: "string" },
+    examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" } }, required: ["name", "given", "when", "then"] } },
+  },
+  required: ["title", "spec", "examples"],
+};
+
+export function behaviorPrompt(n: LenzNode, sources: { key: string; source: string }[], parent: LenzNode | null): string {
+  return `You are rewriting one **behavior** node of a software project graph from its current code. Produce a title, a precise spec of what the code observably does, and 1–3 examples (given/when/then describing observable behavior). Describe the code as it is now, not as it was described before.${parent ? `\n\nParent intent: ${parent.title} — ${oneLine(parent.spec, 300)}` : ""}\n\n## Previous description (may be stale)\n\n${nodeToYamlForPrompt(n)}\n\n## Anchored symbols\n\n${sources.map((s) => `### ${s.key}\n\n\`\`\`\n${s.source.slice(0, 4000)}\n\`\`\``).join("\n\n")}\n\nDo not use tools. Return JSON matching the schema.`;
+}
+
 export function nodeToYamlForPrompt(n: LenzNode) { return YAML.stringify({ title: n.title, spec: n.spec, examples: n.examples }); }
 
 export function summaryPrompt(n: LenzNode, parent: LenzNode | null, children: LenzNode[], out: { id: string; title: string; via: string[] }[], inn: { id: string; title: string; via: string[] }[]): string {

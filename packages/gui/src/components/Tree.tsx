@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { areaColor } from "../colors";
 import type { TreeItem } from "../types";
 import { Dot } from "./common";
+import { deriveGraph } from "../derive";
 
 interface FileSym { key: string; kind: string; name: string; container: string; start_line: number; owner: string | null }
 interface FileEntry { path: string; language: string; symbols: FileSym[] }
@@ -38,7 +39,7 @@ export function Tree() {
         {treeMode === "nodes" ? <>
           <Row depth={0} chevron={null} cls={focus === null ? "focused" : ""} onClick={() => { setFocus(null); setSelected(null); }}><span className="ttl">app</span><span className="ln">{Object.keys(nodes).length}</span></Row>
           {renderNodes(tree, 1)}
-          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. press <span className="kbd">7</span> to propose from a brain-dump, or run <code>lenz derive</code> on existing code.</div>}
+          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. press <span className="kbd">7</span> to propose from a brain-dump, or <span className="link" onClick={deriveGraph}>generate the graph</span> from existing code (<span className="kbd">g</span>).</div>}
         </> : <>
           {root.folders.map((f) => renderFolder(f, 0))}{root.files.map((f) => renderFile(f, 0))}
           {!files.length && <div className="hint" style={{ padding: "0 6px" }}>no indexed files yet.</div>}

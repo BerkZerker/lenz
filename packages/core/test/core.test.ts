@@ -22,6 +22,13 @@ PROMPT=$(cat)
 SETTINGS=""
 while [ $# -gt 0 ]; do case "$1" in --settings) SETTINGS="$2"; shift;; esac; shift; done
 echo '{"type":"system","subtype":"init","session_id":"sess-1","model":"fake"}'
+if echo "$PROMPT" | grep -q "You are deriving behavior nodes"; then
+  FOLDER=$(echo "$PROMPT" | grep -o 'Folder: \`[^\`]*\`' | head -1 | sed 's/Folder: \`//; s/\`$//')
+  KEYS=$(echo "$PROMPT" | grep -o 'key: \`[^\`]*\`' | sed 's/key: \`//; s/\`$//')
+  RES=$(KEYS="$KEYS" FOLDER="$FOLDER" python3 -c "import json,os; ks=[k for k in os.environ['KEYS'].splitlines() if k]; f=os.environ['FOLDER']; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'intent':{'title':'Folder '+f,'spec':'spec of '+f},'behaviors':[{'title':'Behavior '+f,'spec':'does '+f,'anchors':ks,'examples':[{'name':'e','given':'g','when':'w','then':'t'}]}]})}))")
+  echo "$RES"; exit 0
+fi
+if echo "$PROMPT" | grep -q "You are rewriting one"; then python3 -c "import json; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'title':'Regenerated','spec':'fresh spec','examples':[{'name':'x','given':'a','when':'b','then':'c'}]})}))"; exit 0; fi
 if ! echo "$PROMPT" | grep -q "Output contract"; then echo '{"type":"result","subtype":"success","result":"This code hashes passwords.","session_id":"sess-1"}'; exit 0; fi
 HOOK=$(python3 -c "import json,sys; print(json.load(open('$SETTINGS'))['hooks']['PreToolUse'][0]['hooks'][0]['command'])")
 NODE=$(echo "$PROMPT" | grep -o 'node set n_[a-z0-9]*' | head -1 | awk '{print $3}')
@@ -171,5 +178,62 @@ describe("dispatch → build → verify (fake agent)", () => {
     expect(f.entries.length).toBe(1); expect(f.tree.children.length).toBeGreaterThan(0);
     const st = await (await fetch(`http://127.0.0.1:${PORT}/api/status`)).json();
     expect(st.nodes).toBeGreaterThan(0);
+  });
+});
+
+describe("brownfield: derive / regenerate (fake agent)", () => {
+  const derivedIntents = () => core.store.all().filter((n) => n.kind === "intent" && n.derived);
+  test("generate graph: one intent per folder (bottom-up, reparented), behaviors anchored to orphans, progress events", async () => {
+    core.cfg.llm = { provider: "claude", model: "" };
+    const progress: any[] = []; core.bus.on("derive.progress", (e) => progress.push(e.data));
+    const before = core.orphans().orphan_count; expect(before).toBeGreaterThan(0);
+    const r = core.deriveAll("none"); expect(r.started).toBe(true);
+    expect(() => core.deriveAll("none")).toThrow(/already deriving/);
+    expect(core.status().deriving?.scope).toBe("graph");
+    const { created } = await r.done;
+    expect(created.length).toBeGreaterThan(0);
+    expect(core.status().deriving).toBeNull();
+    expect(progress.at(-1)).toBeNull(); expect(progress.some((p) => p && p.total > 0 && p.current)).toBe(true);
+    const auth = derivedIntents().find((n) => n.folder === "src/auth")!; expect(auth).toBeDefined();
+    const src = derivedIntents().find((n) => n.folder === "src")!; expect(src).toBeDefined();
+    expect(auth.parent).toBe(src.id);
+    const beh = core.store.children(auth.id).find((n) => n.kind === "behavior")!;
+    expect(beh.derived).toBe(true); expect(beh.status).toBe("proposed"); expect((beh.anchors ?? []).length).toBeGreaterThan(0); expect(beh.examples?.[0]?.derived).toBe(true);
+    expect(core.orphans().orphan_count).toBeLessThan(before);
+  });
+  test("regenerate (proposed): approved derived nodes survive and their intent is reused; regenerate (all) wipes them", async () => {
+    const auth = derivedIntents().find((n) => n.folder === "src/auth")!;
+    const beh = core.store.children(auth.id).find((n) => n.kind === "behavior")!;
+    core.approve(auth.id); // → specified, recursively
+    expect(core.store.get(beh.id)!.status).toBe("specified");
+    const others = derivedIntents().filter((n) => n.status === "proposed").map((n) => n.id);
+    await core.deriveAll("proposed").done;
+    expect(core.store.get(auth.id)).not.toBeNull(); expect(core.store.get(beh.id)).not.toBeNull();
+    for (const id of others) expect(core.store.get(id)).toBeNull();
+    expect(derivedIntents().filter((n) => n.folder === "src/auth").length).toBe(1); // reused, not duplicated
+    expect(derivedIntents().find((n) => n.folder === "src")).toBeDefined(); // re-derived
+    await core.deriveAll("all").done;
+    expect(core.store.get(auth.id)).toBeNull(); expect(core.store.get(beh.id)).toBeNull();
+    expect(derivedIntents().find((n) => n.folder === "src/auth")).toBeDefined();
+  });
+  test("per-node: intent re-derives its folder subtree; behavior rewrites title/spec/examples keeping anchors", async () => {
+    const auth = derivedIntents().find((n) => n.folder === "src/auth")!;
+    const src = derivedIntents().find((n) => n.folder === "src")!;
+    const oldBeh = core.store.children(auth.id).find((n) => n.kind === "behavior")!;
+    const r = core.deriveNode(auth.id, "proposed"); expect("started" in r && r.started).toBe(true);
+    await (r as any).done;
+    expect(core.store.get(auth.id)).not.toBeNull(); expect(core.store.get(auth.id)!.parent).toBe(src.id);
+    expect(core.store.get(oldBeh.id)).toBeNull();
+    const newBeh = core.store.children(auth.id).find((n) => n.kind === "behavior")!; expect(newBeh).toBeDefined();
+    expect(core.store.get(src.id)).not.toBeNull(); // outside the subtree: untouched
+    const anchors = newBeh.anchors;
+    const out = await core.deriveNode(newBeh.id) as any;
+    expect(out.title).toBe("Regenerated"); expect(out.spec).toBe("fresh spec"); expect(out.examples[0].then).toBe("c"); expect(out.anchors).toEqual(anchors);
+    expect(() => core.deriveNode("n_nope")).toThrow();
+    const res = await fetch(`http://127.0.0.1:${PORT}/api/derive`, { method: "POST", body: JSON.stringify({ reset: "none" }), headers: { "content-type": "application/json" } });
+    expect((await res.json()).started).toBe(true);
+    const busy = await fetch(`http://127.0.0.1:${PORT}/api/derive`, { method: "POST", body: "{}" });
+    expect(busy.status).toBe(409);
+    while (core.status().deriving) await Bun.sleep(50);
   });
 });

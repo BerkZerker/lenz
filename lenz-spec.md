@@ -197,12 +197,13 @@ are single joins.
 
 ## `packages/core`
 
-Headless daemon (`lenz serve`, Bun) owning all state and orchestration.
+Headless daemon (`lenz start`, Bun) owning all state and orchestration.
 Serves the GUI and exposes:
 
 - `GET/PUT /nodes`, `/nodes/:id`, `/tree`, `/orphans`, `/flow?from=`,
   `/runs`, `/locks`, `/staging`
-- `POST /propose` (greenfield), `/derive` (brownfield), `/staging/confirm`,
+- `POST /propose` (greenfield), `/derive` + `/nodes/:id/derive` (brownfield, background;
+  `derive.progress` events), `/staging/confirm`,
   `/runs/:id/approve|reject`, `/nodes/:id/verify` (execute examples),
   `/nodes/:id/reconstruct`, `/locks/acquire|release`
 - `WS /events`: `node.updated`, `run.event`, `lock.changed`, `drift.detected`,
@@ -294,7 +295,7 @@ channel.
 
 ### Brownfield
 
-1. `lenz derive` walks the containment tree **bottom-up**: one LLM call
+1. **Generate graph** (GUI, `g`; `POST /derive`) walks the containment tree **bottom-up**: one LLM call
    per folder, given its files' symbols (names, signatures, docstrings, first
    lines) and its subfolders' already-derived intent titles. Output: proposed
    behavior nodes over this folder's symbols (with anchor keys — core validates
@@ -302,6 +303,11 @@ channel.
 2. Everything lands `proposed`, examples marked `derived: true` (weaker
    evidence — they came from code, not intent). Human ratifies in the same
    approval UI. Orphans lens shows burn-down.
+3. Regeneration: `POST /derive {reset: proposed|all}` drops derived nodes (only
+   the still-`proposed` ones, or every derived node) and re-derives; approved
+   intents for a folder are reused. `POST /nodes/:id/derive` does the same for
+   one intent's folder subtree, or rewrites a behavior's spec/examples from its
+   anchors (anchors kept; spec change stages the node).
 
 ### Build → Verify
 
@@ -411,7 +417,7 @@ lenz/
     structure.db          gitignored
 ```
 
-CLI: `lenz init | serve | index [--scip] | derive | propose <file> |
+CLI: `lenz init | start | index [--scip] | propose <file> |
 dispatch <node> | verify <node> | lock acquire|release | node set <id> <path>
 <value>`.
 

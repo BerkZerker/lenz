@@ -24,7 +24,7 @@ bun run build:gui                       # → packages/core/static
 
 cd /path/to/your-ts-project
 lenz init                          # writes .lenz/{config.yaml,agents/claude.yaml,nodes/}
-lenz serve                         # daemon + GUI at http://localhost:7331
+lenz start                         # daemon + GUI at http://localhost:7331
 ```
 
 To get `lenz` on your `PATH`: `cd packages/core && bun link` (symlinks it into `~/.bun/bin`,
@@ -43,10 +43,12 @@ which the bun installer already added to your shell). Alternatively run `bun pac
 
 ### Brownfield
 
-```bash
-lenz serve &
-lenz derive        # one LLM call per folder, bottom-up; everything lands `proposed`
-```
+Press `g` (or the **generate graph** button in the graph view). One LLM call per folder,
+bottom-up; everything lands `proposed` and appears in the tree as it is derived (progress in the
+status bar). Once a graph exists the button becomes **regenerate graph** and asks whether to
+replace only unreviewed (`proposed`) derived nodes or all of them. Any node's inspector has a
+**regenerate** button: an intent re-derives its folder subtree, a behavior rewrites its
+spec + examples from its anchored code.
 
 `4` (Orphans) is the burn-down: symbols with no owning behavior node.
 
@@ -89,7 +91,7 @@ runs, flow) · `7/8` propose/stage · `a` approve · `r` reject · `e` edit · `
 ## CLI
 
 ```
-lenz init | serve [--port N] | index [--scip] | derive | propose <file> [--parent id]
+lenz init | start [--port N] | index [--scip] | propose <file> [--parent id]
           | dispatch <node> | verify <node> | lock acquire|release <file> --run <id>
           | node set <id> <path> <value> | status
 ```

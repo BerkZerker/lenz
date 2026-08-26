@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-export type EventName = "node.updated" | "node.deleted" | "run.event" | "run.updated" | "lock.changed" | "drift.detected" | "structure.synced" | "staging.changed" | "log";
+export type EventName = "node.updated" | "node.deleted" | "run.event" | "run.updated" | "lock.changed" | "drift.detected" | "structure.synced" | "staging.changed" | "derive.progress" | "log";
 export interface LenzEvent { type: EventName; at: string; data: any }
 
 export class EventBus extends EventEmitter {

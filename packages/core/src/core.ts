@@ -7,13 +7,15 @@ import { EventBus } from "./events.ts";
 import { LockBroker } from "./locks.ts";
 import { FanOutError, NodeStore, newId, FAN_OUT_CAP } from "./nodes.ts";
 import { RunManager } from "./runs/manager.ts";
-import { DERIVE_SCHEMA, PROPOSAL_SCHEMA, buildPrompt, comparePrompt, derivePrompt, oneLine, proposePrompt, reconstructPrompt, summaryPrompt } from "./runs/prompt.ts";
+import { BEHAVIOR_SCHEMA, DERIVE_SCHEMA, PROPOSAL_SCHEMA, behaviorPrompt, buildPrompt, comparePrompt, derivePrompt, oneLine, proposePrompt, reconstructPrompt, summaryPrompt } from "./runs/prompt.ts";
 import { computeRelations, type NodeRelations } from "./relations.ts";
 import { runCommand, runExamples } from "./verify/examples.ts";
 import { loadEnvFiles } from "./llm/gemini.ts";
 import { EDITABLE_FIELDS, type Example, type LenzNode, type NodeStatus, type ProposedAnchor } from "./types.ts";
 
 export interface CoreOpts { root: string; port?: number; cli?: string[] }
+export type DeriveReset = "none" | "proposed" | "all";
+export interface DeriveProgress { scope: string; total: number; done: number; current: string; started_at: string }
 
 export class Core {
   root: string; dir: string; cfg: LenzConfig; bus = new EventBus();
@@ -22,6 +24,7 @@ export class Core {
   port: number;
   private relCache: { at: number; data: Record<string, NodeRelations> } | null = null;
   private summarizing = new Set<string>();
+  deriving: DeriveProgress | null = null;
   cli: string[];
 
   constructor(opts: CoreOpts) {
@@ -334,42 +337,124 @@ export class Core {
   }
 
   // ---------- brownfield: derive ----------
-  async derive(onProgress?: (msg: string) => void) {
+  /** Folder a derived intent stands for: recorded at derive time, else the common directory of its descendants' anchors. */
+  folderOf(n: LenzNode): string | null {
+    if (n.folder !== undefined) return n.folder;
+    const dirs = this.store.anchorsOf(n.id).map((a) => (dirname(a.file) === "." ? "" : dirname(a.file)));
+    if (!dirs.length) return null;
+    let common = dirs[0].split("/");
+    for (const d of dirs.slice(1)) { const parts = d.split("/"); let i = 0; while (i < common.length && common[i] === parts[i]) i++; common = common.slice(0, i); }
+    return common.join("/");
+  }
+  private derivedIn(subtreeRoot: string | null, scope: DeriveReset) {
+    const pool = subtreeRoot ? this.store.descendants(subtreeRoot) : this.store.all();
+    return pool.filter((n) => n.derived && (scope === "all" || n.status === "proposed"));
+  }
+  /** Drop derived nodes (non-recursively: hand-authored / kept children float up to the nearest surviving ancestor). */
+  private resetDerived(subtreeRoot: string | null, scope: DeriveReset) {
+    const victims = this.derivedIn(subtreeRoot, scope);
+    for (const v of victims) if (this.store.get(v.id)) this.store.delete(v.id, false);
+    return victims.length;
+  }
+  /** Regenerate the whole graph from code. `reset` decides which existing derived nodes are thrown away first. */
+  deriveAll(reset: DeriveReset = "none") {
+    return this.runDerive("graph", () => { this.resetDerived(null, reset); return { dirs: this.allDirs(), parent: null, parentDir: null }; });
+  }
+  /** Regenerate one node: an intent re-derives its folder subtree, a behavior rewrites its title/spec/examples from its anchors. */
+  deriveNode(id: string, reset: DeriveReset = "none") {
+    const n = this.store.get(id); if (!n) throw new Error(`unknown node ${id}`);
+    if (n.kind === "behavior") return this.regenerateBehavior(id);
+    const folder = this.folderOf(n); if (folder === null) throw new Error(`${n.title} has no folder to derive from (no derived symbols underneath it)`);
+    return this.runDerive(n.title, () => {
+      this.resetDerived(id, reset);
+      const dirs = this.allDirs().filter((d) => d === folder || (folder === "" ? true : d.startsWith(folder + "/")));
+      return { dirs, parent: n.parent, parentDir: folder };
+    });
+  }
+  private allDirs(): string[] {
+    const files = this.idx.db.allFiles().map((f) => f.path).filter((f) => !this.idx.isOrphanExcluded(f));
+    const all = new Set<string>();
+    for (const f of files) { let d = dirname(f) === "." ? "" : dirname(f); all.add(d); while (d) { d = dirname(d) === "." ? "" : dirname(d); all.add(d); } }
+    return [...all];
+  }
+  private runDerive(scope: string, plan: () => { dirs: string[]; parent: string | null; parentDir: string | null }) {
+    if (this.deriving) throw new Error(`already deriving (${this.deriving.scope})`);
+    this.deriving = { scope, total: 0, done: 0, current: "", started_at: new Date().toISOString() };
+    const progress = () => this.bus.publish("derive.progress", this.deriving);
+    progress();
+    const done = (async () => {
+      try {
+        const { dirs, parent, parentDir } = plan();
+        const r = await this.derive(dirs, parent, parentDir, (d, i, total) => { this.deriving = { ...this.deriving!, current: d === null ? "" : d || ".", done: i, total }; progress(); });
+        this.deriving = { ...this.deriving!, done: this.deriving!.total, current: "" };
+        this.log(`derived ${r.created.length} proposed nodes (${scope})`);
+        return r;
+      } catch (e) { this.log(`derive failed: ${e}`, "error"); throw e; }
+      finally { this.deriving = null; this.bus.publish("derive.progress", null); }
+    })();
+    done.catch(() => {});
+    return { started: true, scope, done };
+  }
+  /**
+   * Bottom-up: one LLM call per folder over its still-orphan symbols, plus one intent per folder. Existing derived intents
+   * for a folder are reused (title/spec refreshed only while still `proposed`) so approved work survives a re-run.
+   */
+  async derive(dirs: string[], parent: string | null = null, rootDir: string | null = null, onProgress?: (dir: string | null, i: number, total: number) => void) {
     const files = this.idx.db.allFiles().map((f) => f.path).filter((f) => !this.idx.isOrphanExcluded(f));
     const folders = new Map<string, string[]>();
     for (const f of files) { const d = dirname(f) === "." ? "" : dirname(f); const a = folders.get(d) ?? []; a.push(f); folders.set(d, a); }
-    const allDirs = new Set<string>(folders.keys());
-    for (const d of [...allDirs]) { let p = d; while (p && p !== ".") { p = dirname(p) === "." ? "" : dirname(p); allDirs.add(p); } }
-    const dirs = [...allDirs].sort((a, b) => b.split("/").length - a.split("/").length || a.localeCompare(b)); // deepest first
+    const order = [...new Set(dirs)].sort((a, b) => b.split("/").length - a.split("/").length || a.localeCompare(b)); // deepest first
     const intentByDir = new Map<string, LenzNode>();
+    for (const n of this.store.all()) if (n.kind === "intent" && n.derived) { const d = this.folderOf(n); if (d !== null && !intentByDir.has(d)) intentByDir.set(d, n); }
     const created: string[] = [];
     const orphanKeys = new Set(this.idx.db.orphans().map((s) => s.key));
-    for (const dir of dirs) {
+    const subsOf = (dir: string) => [...intentByDir].filter(([d]) => d !== dir && (dir === "" ? !d.includes("/") : d.startsWith(dir + "/") && !d.slice(dir.length + 1).includes("/"))).map(([, n]) => n);
+    const work = order.filter((dir) => (folders.get(dir) ?? []).some((f) => this.idx.db.symbolsInFile(f).some((s) => orphanKeys.has(s.key))) || subsOf(dir).length);
+    let i = 0;
+    for (const dir of work) {
       const syms = (folders.get(dir) ?? []).flatMap((f) => this.idx.db.symbolsInFile(f)).filter((s) => orphanKeys.has(s.key));
-      const subs = [...intentByDir].filter(([d]) => d !== dir && (dir === "" ? !d.includes("/") : d.startsWith(dir + "/") && !d.slice(dir.length + 1).includes("/"))).map(([, n]) => n);
-      if (!syms.length && !subs.length) continue;
-      onProgress?.(`deriving ${dir || "."} (${syms.length} symbols, ${subs.length} subfolders)`);
-      const parentDir = dir === "" ? null : dirname(dir) === "." ? "" : dirname(dir);
+      const subs = subsOf(dir);
+      onProgress?.(dir, i++, work.length);
+      this.log(`deriving ${dir || "."} (${syms.length} symbols, ${subs.length} subfolders)`);
+      const existing = intentByDir.get(dir);
+      const intentParent = dir === rootDir || dir === "" ? parent : null; // deeper intents are reparented by their folder's intent below
       let intent: LenzNode;
       if (!syms.length) {
-        intent = this.store.create({ kind: "intent", title: dir.split("/").pop() || "project", spec: `Folder ${dir || "."}: ${subs.map((s) => s.title).join(", ")}`, status: "proposed", derived: true });
+        intent = existing ?? this.store.create({ kind: "intent", title: dir.split("/").pop() || "project", spec: `Folder ${dir || "."}: ${subs.map((s) => s.title).join(", ")}`, status: "proposed", derived: true, folder: dir, parent: intentParent });
       } else {
         const symInfo = syms.map((s) => ({ key: s.key, kind: s.kind, name: s.name, container: s.container, file: s.file, sig: (this.idx.symbolSource(s.key) ?? "").split("\n")[0].slice(0, 160), doc: docOf(this.idx, s) }));
         const out = await this.runs.submit({ kind: "derive", node: null, prompt: derivePrompt(dir, symInfo, subs.map((s) => ({ title: s.title, spec: s.spec }))), extra: ["--tools", ""], schema: DERIVE_SCHEMA, light: true }).done;
         const parsed = out.structured ?? extractJson(out.text);
         if (!parsed?.intent) { this.log(`derive ${dir}: no output (${out.run.error ?? "empty"})`, "warn"); continue; }
-        intent = this.store.create({ kind: "intent", title: String(parsed.intent.title ?? dir).slice(0, 120), spec: String(parsed.intent.spec ?? ""), status: "proposed", derived: true });
+        const title = String(parsed.intent.title ?? dir).slice(0, 120), spec = String(parsed.intent.spec ?? "");
+        if (existing) intent = existing.status === "proposed" ? this.store.update(existing.id, { title, spec, folder: dir }) : existing;
+        else intent = this.store.create({ kind: "intent", title, spec, status: "proposed", derived: true, folder: dir, parent: intentParent });
         const valid = new Set(syms.map((s) => s.key)); const used = new Set<string>();
-        const behaviors: any[] = (parsed.behaviors ?? []).slice(0, FAN_OUT_CAP).map((b: any) => ({ ...b, kind: "behavior", anchors: (b.anchors ?? []).filter((k: string) => valid.has(k) && !used.has(k) && (used.add(k), true)).map((k: string) => toAnchor(this.idx.db.symbol(k)!)) }));
+        const room = Math.max(0, FAN_OUT_CAP - this.store.children(intent.id).length);
+        const behaviors: any[] = (parsed.behaviors ?? []).slice(0, room).map((b: any) => ({ ...b, kind: "behavior", anchors: (b.anchors ?? []).filter((k: string) => valid.has(k) && !used.has(k) && (used.add(k), true)).map((k: string) => toAnchor(this.idx.db.symbol(k)!)) }));
+        if ((parsed.behaviors ?? []).length > room) this.log(`derive ${dir}: dropped ${(parsed.behaviors ?? []).length - room} behaviors (fan-out cap)`, "warn");
         created.push(...this.materialize(behaviors, intent.id, true));
       }
-      created.push(intent.id);
+      if (!existing) created.push(intent.id);
       intentByDir.set(dir, intent);
-      for (const s of subs) if (s.parent !== intent.id) { try { this.store.update(s.id, { parent: intent.id }); } catch (e) { this.log(String(e), "warn"); } }
-      void parentDir;
+      for (const s of subs) if (s.parent !== intent.id && s.id !== intent.id) { try { this.store.update(s.id, { parent: intent.id }); } catch (e) { this.log(String(e), "warn"); } }
     }
+    onProgress?.(null, work.length, work.length);
     void this.summarizeAll(false, (m) => this.log(m)).catch((e) => this.log(String(e), "warn"));
     return { created };
+  }
+  /** Re-ask the LLM for a behavior's title/spec/examples from its current anchors (anchors kept). Goes through putNode so spec changes stage the node. */
+  async regenerateBehavior(id: string) {
+    const n = this.store.get(id); if (!n || n.kind !== "behavior") throw new Error(`unknown behavior ${id}`);
+    const anchors = n.anchors ?? []; if (!anchors.length) throw new Error(`${n.title} has no anchored symbols to regenerate from`);
+    const sources = anchors.map((a) => ({ key: anchorKey(a), source: this.idx.symbolSource(anchorKey(a)) ?? "(symbol not found on disk)" }));
+    const out = await this.runs.submit({ kind: "derive", node: id, prompt: behaviorPrompt(n, sources, n.parent ? this.store.get(n.parent) : null), extra: ["--tools", ""], schema: BEHAVIOR_SCHEMA, light: true }).done;
+    const parsed = out.structured ?? extractJson(out.text);
+    if (!parsed?.title) throw new Error(`regenerate ${id}: no output (${out.run.error ?? "empty"})`);
+    const examples: Example[] = (parsed.examples ?? []).map((e: any, i: number) => ({ id: `ex_${newId("").slice(1)}`, name: e.name ?? `example ${i + 1}`, given: e.given, when: e.when, then: e.then, expect: { mode: "exit0" }, derived: true }));
+    const updated = this.putNode(id, { title: String(parsed.title).slice(0, 120), spec: String(parsed.spec ?? ""), examples });
+    void this.summarize(id).catch((e) => this.log(String(e), "warn"));
+    return updated;
   }
 
   /** Compact repo overview for providers that cannot read the tree themselves. */
@@ -424,6 +509,7 @@ export class Core {
       staged: this.staging(),
       orphans: this.orphans().orphan_count,
       nodes: nodes.length,
+      deriving: this.deriving,
     };
   }
 }

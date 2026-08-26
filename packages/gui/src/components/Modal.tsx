@@ -5,7 +5,7 @@ const HELP: [string, string][] = [
   ["j / k", "move selection"], ["enter", "drill in / open"], ["esc / h", "up / close"], ["/", "search tree"],
   ["1–6", "lens: graph · queue · verify · orphans · runs · flow"], ["7 / 8", "propose · stage"],
   ["a", "approve (proposed → specified, built → verified)"], ["r", "reject with note (re-dispatch)"], ["e", "edit node (yaml)"], ["d", "dispatch build"],
-  ["n", "new node under focus"], ["x", "delete node"], ["c", "confirm staged set"], ["i", "toggle immediate mode"], ["?", "this help"],
+  ["n", "new node under focus"], ["x", "delete node"], ["g", "generate / regenerate graph from code"], ["c", "confirm staged set"], ["i", "toggle immediate mode"], ["?", "this help"],
 ];
 
 export function Modal() {
@@ -21,6 +21,12 @@ export function Modal() {
         <h3>{modal.title}</h3>
         {modal.kind === "help" && <table><tbody>{HELP.map(([k, d]) => <tr key={k}><td><span className="kbd">{k}</span></td><td>{d}</td></tr>)}</tbody></table>}
         {modal.kind === "confirm" && <div className="row"><button className="primary" autoFocus onClick={submit}>confirm</button><button onClick={close}>cancel</button></div>}
+        {modal.kind === "choice" && (
+          <>
+            {(modal.options ?? []).map((o) => <label key={o.value} className="row" style={{ cursor: "pointer", marginBottom: 6 }}><input type="radio" name="choice" checked={v === o.value} onChange={() => setV(o.value)} />{o.label}{o.hint && <span className="dim">— {o.hint}</span>}</label>)}
+            <div className="row"><button className="primary" autoFocus onClick={submit}>confirm</button><button onClick={close}>cancel</button></div>
+          </>
+        )}
         {(modal.kind === "text" || modal.kind === "yaml") && (
           <>
             <textarea ref={ref} value={v} onChange={(e) => setV(e.target.value)} placeholder={modal.placeholder} style={{ minHeight: modal.kind === "yaml" ? 360 : 140 }} spellCheck={false} />

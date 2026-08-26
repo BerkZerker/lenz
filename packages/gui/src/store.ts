@@ -3,7 +3,7 @@ import { api } from "./api";
 import type { Lens, LenzNode, Lock, LockEvent, RunRecord, Status, TreeItem } from "./types";
 
 export interface RunEvent { run: string; node: string | null; kind: string; event: any; at: string }
-export interface Modal { kind: "text" | "yaml" | "help" | "confirm"; title: string; initial?: string; placeholder?: string; onSubmit?: (v: string) => void }
+export interface Modal { kind: "text" | "yaml" | "help" | "confirm" | "choice"; title: string; initial?: string; placeholder?: string; options?: { value: string; label: string; hint?: string }[]; onSubmit?: (v: string) => void }
 
 interface State {
   nodes: Record<string, LenzNode>; tree: TreeItem[]; status: Status | null; runs: RunRecord[]; locks: Lock[]; lockLog: LockEvent[];
@@ -57,6 +57,7 @@ export const useStore = create<State>((set, get) => ({
         case "lock.changed": { set({ locks: ev.data.locks, lockLog: [...s.lockLog.slice(-300), ev.data.event] }); void api<Status>("/status").then((status) => set({ status })); break; }
         case "drift.detected": { s.notify(`drift: ${ev.data.id} — ${ev.data.reasons.join("; ")}`); break; }
         case "structure.synced": { void api<Status>("/status").then((status) => set({ status })); void api("/relations").then((relations) => set({ relations })).catch(() => {}); break; }
+        case "derive.progress": { if (s.status) set({ status: { ...s.status, deriving: ev.data } }); if (ev.data === null) void get().refresh(); break; }
         case "staging.changed": { void api<Status>("/status").then((status) => set({ status })); break; }
         case "log": { set({ logs: [...s.logs.slice(-300), { at: ev.at, ...ev.data }] }); break; }
       }

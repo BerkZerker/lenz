@@ -14,6 +14,7 @@ export function StatusBar() {
       <span className={`link ${lens === "stage" ? "active" : ""}`} onClick={() => setLens("stage")}>staged: <b>{staged}</b> (blast {blast})</span>
       <span className={`link ${lens === "propose" ? "active" : ""}`} onClick={() => setLens("propose")}>[propose]</span>
       <span className="link" onClick={() => api("/staging/immediate", { on: !s?.staged.immediate })}>[immediate: {s?.staged.immediate ? "on" : "off"}]</span>
+      {s?.deriving && <span className="derive-progress" title={`deriving ${s.deriving.scope}`}><span className="accent">deriving</span> {s.deriving.done}/{s.deriving.total || "?"} <span className="dim">{s.deriving.current}</span><span className="bar"><span style={{ width: `${s.deriving.total ? Math.round((100 * s.deriving.done) / s.deriving.total) : 0}%` }} /></span></span>}
       <span style={{ marginLeft: "auto" }} className={connected ? "dim" : "bad"}>{connected ? "● live" : "○ disconnected"}</span>
       {toast && <span className="accent">{toast}</span>}
       <span className="dim">? help</span>

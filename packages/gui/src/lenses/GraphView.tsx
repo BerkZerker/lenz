@@ -5,6 +5,7 @@ import { areaColor, STATUS_RING, withAlpha } from "../colors";
 import { Summary } from "../components/Summary";
 import { StatusTag } from "../components/common";
 import type { LenzNode } from "../types";
+import { deriveGraph, deriveNode } from "../derive";
 
 interface P { id: string; x: number; y: number; tx: number; ty: number; vx: number; vy: number; pinned?: boolean }
 type Layout = "force" | "tree";
@@ -20,7 +21,9 @@ const unschedule = (id: number) => { if (id & 0x40000000) clearTimeout(id & ~0x4
  * changed by a click — only pans, smoothly. Node color = area (top-level subtree); ring = status.
  */
 export function GraphView() {
-  const { nodes, focus, selected, setSelected, setFocus, relations } = useStore();
+  const { nodes, focus, selected, setSelected, setFocus, relations, status } = useStore();
+  const deriving = status?.deriving ?? null;
+  const generated = useMemo(() => Object.values(nodes).some((n) => n.derived), [nodes]);
   const [layout, setLayout] = useState<Layout>(() => { try { return (localStorage.getItem("lg.graphLayout") as Layout) || "tree"; } catch { return "tree"; } });
   const [seed, setSeed] = useState(0);
   // flow mode: relation edges become directed, animated call arrows; the selected/hovered node's downstream chain is traced
@@ -203,6 +206,8 @@ export function GraphView() {
         <button className={flowMode ? "primary" : ""} onClick={toggleFlow} title="flow mode: show call direction between the loaded nodes and trace downstream (orange) / upstream (blue) from the selected or hovered node">flow</button>
         <button onClick={() => { pos.current.clear(); setSeed((s) => s + 1); }}>re-sort</button>
         <button onClick={fitAll}>fit</button>
+        <span style={{ width: 8 }} />
+        <button className={generated ? "" : "primary"} disabled={!!deriving} onClick={deriveGraph} title={generated ? "re-derive the graph from code (choose what to replace)" : "derive intent/behavior nodes from the code, one LLM call per folder"}>{deriving ? `generating ${deriving.done}/${deriving.total || "?"}…` : generated ? "regenerate graph" : "generate graph"}</button>
       </div>
       <div className="graph-hint">{flowMode ? "flow: arrows = calls · hover/select a node to trace · +n downstream (orange) · −n upstream (blue) · labels = via symbol" : "click intent: go there · click behavior: details · ▲ up · drag: pan · wheel: zoom"}</div>
 
@@ -272,6 +277,7 @@ function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; o
         {(n.status === "built" || n.status === "drifted") && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
         {firstAnchor && <button onClick={() => { api<{ key: string | null }>(`/nodes/${n.id}/flow-entry`).then((r) => { setFlowFrom(r.key ?? `${firstAnchor.file}#${firstAnchor.container}#${firstAnchor.kind}#${firstAnchor.name}`); setLens("flow"); }).catch((e) => notify(e.message)); }} title="open the logical execution flow from this node's code">flow →</button>}
         <button onClick={() => act(`/nodes/${n.id}/summarize`)} title="rewrite the summary with Gemini">{n.summary ? "re-summarize" : "summarize"}</button>
+        {(n.kind === "intent" ? n.derived : (n.anchors ?? []).length > 0) && <button onClick={() => deriveNode(n)} title={n.kind === "intent" ? "re-derive this folder's subtree from code" : "rewrite spec + examples from the anchored code"}>regenerate</button>}
       </div>
     </div>
   );

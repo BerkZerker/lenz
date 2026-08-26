@@ -49,7 +49,8 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/staging/confirm", async () => json(await core.confirmStaging()));
   on("POST", "/api/staging/immediate", async (req) => { const b = await body(req); core.setImmediate(!!b.on); return json(core.staging()); });
   on("POST", "/api/propose", async (req) => { const b = await body(req); try { return json(await core.propose(b.text ?? "", b.parent ?? null)); } catch (e) { return err(e); } });
-  on("POST", "/api/derive", async () => { try { return json(await core.derive((m) => core.log(m))); } catch (e) { return err(e); } });
+  on("POST", "/api/derive", async (req) => { const b = await body(req); try { const { started, scope } = core.deriveAll(b.reset ?? "none"); return json({ started, scope }); } catch (e) { return err(e, 409); } });
+  on("POST", "/api/nodes/:id/derive", async (req, p) => { const b = await body(req); try { const r = await core.deriveNode(p.id, b.reset ?? "none"); return json("started" in r ? { started: r.started, scope: r.scope } : r); } catch (e) { return err(e); } });
   on("POST", "/api/index", async () => { const ev = await core.idx.indexAll(); core.idx.applyScip(); return json(ev); });
   on("GET", "/api/events/history", () => json(core.bus.history.slice(-300)));
 

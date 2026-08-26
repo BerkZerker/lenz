@@ -37,10 +37,10 @@ const daemonUp = async () => { try { await api("/status"); return true; } catch 
 const usage = `lenz — agent dev kit
 
   lenz init                         create .lenz/ in the current project
-  lenz serve [--port N] [--no-watch] start the daemon + GUI (http://localhost:${port})
+  lenz start [--port N] [--no-watch] start the daemon + GUI (http://localhost:${port})
   lenz index [--scip]               (re)build structure.db; --scip runs scip-typescript if installed
-  lenz derive                       brownfield: derive proposed nodes bottom-up (needs daemon)
   lenz propose <file> [--parent id] greenfield: turn a brain-dump file into proposed nodes (needs daemon)
+                                    (brownfield: generate the graph from the GUI's graph view)
   lenz dispatch <node>              build a node with an agent (needs daemon)
   lenz verify <node>                execute a node's examples + machine check (needs daemon)
   lenz lock acquire|release <file> --run <id>
@@ -52,7 +52,7 @@ const usage = `lenz — agent dev kit
 async function main() {
   switch (cmd) {
     case "init": { const d = initProject(root); console.log(`initialized ${relative(process.cwd(), d) || "."}`); return; }
-    case "serve": {
+    case "start": {
       const core = new Core({ root, port, cli: [process.execPath, resolve(import.meta.path)] });
       core.bus.on("log", (e) => console.log(`[${e.data.level}] ${e.data.msg}`));
       core.bus.on("run.updated", (e) => console.log(`[run] ${e.data.run.id} ${e.data.run.kind} ${e.data.run.node ?? ""} → ${e.data.run.status}`));
@@ -61,7 +61,7 @@ async function main() {
       await core.start({ watch: !has("--no-watch") });
       const staticDir = resolve(import.meta.dir, "../static");
       startServer(core, staticDir);
-      console.log(`lenz serving ${root} at http://localhost:${port}`);
+      console.log(`lenz started on ${root} at http://localhost:${port}`);
       return;
     }
     case "index": {
@@ -78,7 +78,6 @@ async function main() {
     }
     case "summarize": { await api("/summarize", { force: has("--force") }); console.log("summarizing in the background; watch the daemon log"); return; }
     case "status": { console.log(JSON.stringify(await api("/status"), null, 2)); return; }
-    case "derive": { const r = await api("/derive", {}); console.log(`derived ${r.created.length} proposed nodes`); return; }
     case "propose": { const f = positional[0]; if (!f) throw new Error("propose <file>"); const r = await api("/propose", { text: readFileSync(f, "utf8"), parent: flag("--parent") ?? null }); console.log(`proposed ${r.created.length} nodes`); return; }
     case "dispatch": { const n = await api(`/nodes/${positional[0]}/dispatch`, { note: flag("--note") }); console.log(`${n.id} → ${n.status} (run ${n.last_run})`); return; }
     case "verify": { const n = await api(`/nodes/${positional[0]}/verify`, {}); console.log(JSON.stringify(n.verification, null, 2)); return; }

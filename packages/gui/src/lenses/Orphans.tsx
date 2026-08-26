@@ -16,7 +16,7 @@ export function OrphansLens() {
   return (
     <>
       <div className="section"><div className="section-h">orphans — {data.orphan_count} of {data.total_symbols} symbols have no owner ({pct}% owned)</div>
-        <div className="dim">greenfield: an orphan is something nobody asked for · brownfield: burn this down with derive + assignment</div></div>
+        <div className="dim">greenfield: an orphan is something nobody asked for · brownfield: burn this down with generate graph (g) + assignment</div></div>
       {data.files.map((f) => (
         <div className="orphan-file" key={f.file}><div className="fname">{f.file}</div>
           {f.symbols.map((s) => (

@@ -51,6 +51,8 @@ export interface LenzNode {
   proposed_anchors?: ProposedAnchor[];
   last_run?: string;
   derived?: boolean;
+  /** derived intents: the source folder they stand for ("" = repo root) */
+  folder?: string;
   pinned_entry?: string[];
 }
 

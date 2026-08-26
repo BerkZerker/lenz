@@ -15,6 +15,7 @@ import { FlowLens } from "./lenses/Flow";
 import { ProposeLens } from "./lenses/Propose";
 import { StageLens } from "./lenses/Stage";
 import type { Lens } from "./types";
+import { deriveGraph } from "./derive";
 
 const LENSES: { id: Lens; key: string; title: string; q: string }[] = [
   { id: "graph", key: "1", title: "graph", q: "what is this?" }, { id: "queue", key: "2", title: "queue", q: "what's next?" }, { id: "verify", key: "3", title: "verify", q: "what needs my judgment?" },
@@ -66,6 +67,7 @@ export function App() {
         case "x": if (sel) return s.openModal({ kind: "confirm", title: `delete ${sel.title} and its children?`, onSubmit: () => act(`/nodes/${sel.id}`, undefined, "DELETE") }); return;
         case "c": return act("/staging/confirm", {});
         case "i": return act("/staging/immediate", { on: !s.status?.staged.immediate });
+        case "g": return deriveGraph();
       }
     };
     window.addEventListener("keydown", onKey);

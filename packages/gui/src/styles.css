@@ -22,6 +22,9 @@ a { color: var(--accent); }
 .statusbar b { color: var(--text); font-weight: normal; }
 .statusbar .link { cursor: pointer; } .statusbar .link:hover { color: var(--accent); }
 .statusbar .active { color: var(--accent); }
+.derive-progress { display: inline-flex; align-items: center; gap: 6px; }
+.derive-progress .bar { display: inline-block; width: 120px; height: 6px; border: 1px solid var(--border); background: transparent; }
+.derive-progress .bar > span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
 .tree-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; padding: 0 4px; }
 .tree-item.dimmed { opacity: .4; }
 .tree-item.focused { background: #171717; }
