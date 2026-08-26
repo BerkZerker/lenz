@@ -207,7 +207,8 @@ export class StructureIndex extends EventEmitter {
       ignored: (p: string, stats?: any) => {
         const rel = this.rel(p);
         if (!rel || rel === ".") return false;
-        if (this.isIgnored(rel) || rel.startsWith(".git")) return true;
+        if (this.isIgnored(rel) || rel.startsWith(".git") || rel === ".codegraph" || rel.startsWith(".codegraph/")) return true;
+        if (stats && !stats.isDirectory?.() && !stats.isFile?.()) return true; // sockets, fifos: fs.watch refuses them (EOPNOTSUPP)
         if (stats?.isFile?.() && !this.accepts(rel)) return true;
         return false;
       },
