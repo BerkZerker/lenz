@@ -1,0 +1,13 @@
+{
+  "name": "@lenzgraph/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": { "lenzgraph": "bin/lenzgraph" },
+  "dependencies": {
+    "@lenzgraph/structure": "workspace:*",
+    "yaml": "^2.6.0",
+    "picomatch": "^4.0.2"
+  },
+  "devDependencies": { "@types/picomatch": "^3.0.1" }
+}

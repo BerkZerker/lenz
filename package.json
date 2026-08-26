@@ -1,0 +1,16 @@
+{
+  "name": "lenzgraph",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build:gui": "cd packages/gui && bun run build",
+    "test": "bun test packages/structure packages/core",
+    "typecheck": "bunx tsc -p packages/structure --noEmit && bunx tsc -p packages/core --noEmit",
+    "lenzgraph": "bun packages/core/src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.6.0"
+  }
+}
