@@ -281,6 +281,13 @@ export class Core {
     const owner = new Map<string, string>(); for (const o of this.idx.db.ownedSymbols()) owner.set(o.key, o.node_id);
     return this.idx.db.allFiles().map((f) => ({ path: f.path, language: f.language, symbols: this.idx.db.symbolsInFile(f.path).map((s) => ({ key: s.key, kind: s.kind, name: s.name, container: s.container, start_line: s.start_line, owner: owner.get(s.key) ?? null })) }));
   }
+  /** the anchor of a node that fans out the most — the natural place to start reading its execution flow */
+  flowEntryFor(id: string): string | null {
+    const n = this.store.get(id); if (!n) return null;
+    let best: string | null = null, bestN = -1;
+    for (const a of n.anchors ?? []) { const k = `${a.file}#${a.container}#${a.kind}#${a.name}`; const c = this.idx.db.refsFrom(k).length; if (c > bestN) { best = k; bestN = c; } }
+    return best;
+  }
   flow(from?: string) {
     const entries = this.idx.db.entryPoints().map((e) => ({ ...e, symbol: this.idx.db.symbol(e.key)! }));
     return { entries, tree: from ? flowFrom(this.idx.db, from) : null };

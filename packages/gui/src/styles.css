@@ -68,7 +68,8 @@ table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid var
 .kbd { border: 1px solid var(--border); padding: 0 4px; color: var(--text); }
 .flow-node { padding-left: 16px; border-left: 1px solid var(--border); }
 .flow-node.syntactic > .flow-label { color: var(--dim); font-style: italic; }
-.flow-label { cursor: pointer; } .flow-label:hover { color: var(--accent); }
+.flow-label { cursor: pointer; white-space: nowrap; } .flow-label:hover { color: var(--accent); }
+.flow-label .chev { display: inline-block; width: 14px; color: var(--dim); text-align: center; } .flow-label .chev.leaf { visibility: hidden; }
 .search { width: 100%; margin-bottom: 6px; }
 .orphan-file { margin-bottom: 8px; } .orphan-file .fname { color: var(--dim); }
 .orphan-sym { padding-left: 12px; display: flex; gap: 8px; align-items: center; }
@@ -131,3 +132,11 @@ select:hover, input:hover, textarea:hover { border-color: #525252; }
 .tree-item.sym .ttl { color: var(--dim); }
 .tree-item.sym.owned .ttl { color: var(--text); }
 .tree-item .ln { color: #525252; margin-left: 6px; font-size: 11px; }
+
+/* ---- flow mode ---- */
+.g-flow { stroke-dasharray: 6 5; animation: march 1.1s linear infinite; }
+.g-flow.lit { animation-duration: .5s; }
+@keyframes march { to { stroke-dashoffset: -11; } }
+.flow-links { font-size: 12px; }
+.flow-link { padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flow-link a { cursor: pointer; }

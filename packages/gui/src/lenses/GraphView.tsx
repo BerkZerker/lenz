@@ -23,6 +23,9 @@ export function GraphView() {
   const { nodes, focus, selected, setSelected, setFocus, relations } = useStore();
   const [layout, setLayout] = useState<Layout>(() => { try { return (localStorage.getItem("lg.graphLayout") as Layout) || "tree"; } catch { return "tree"; } });
   const [seed, setSeed] = useState(0);
+  // flow mode: relation edges become directed, animated call arrows; the selected/hovered node's downstream chain is traced
+  const [flowMode, setFlowMode] = useState<boolean>(() => { try { return localStorage.getItem("lg.graphFlow") === "1"; } catch { return false; } });
+  const toggleFlow = () => setFlowMode((f) => { try { localStorage.setItem("lg.graphFlow", f ? "0" : "1"); } catch {} return !f; });
   const [hover, setHover] = useState<string | null>(null);
   const [view, setViewRaw] = useState({ x: 0, y: 0, k: 1.3 });
   const viewRef = useRef(view); viewRef.current = view;
@@ -39,11 +42,11 @@ export function GraphView() {
   const children = useMemo(() => Object.values(nodes).filter((n) => n.parent === focus).sort((a, b) => a.title.localeCompare(b.title)), [nodes, focus]);
   const loaded = useMemo(() => { const s = new Map<string, LenzNode | null>(); if (parentId) s.set(parentId, parentId === ROOT ? null : nodes[parentId]); s.set(cursor, focus ? nodes[focus] : null); for (const c of children) s.set(c.id, c); return s; }, [nodes, focus, children, cursor, parentId]);
   const relEdges = useMemo(() => {
-    const out: { a: string; b: string; kind: "dep" | "calls" }[] = [];
+    const out: { a: string; b: string; kind: "dep" | "calls"; via: string[] }[] = [];
     const ids = new Set(children.map((c) => c.id));
     for (const c of children) {
-      for (const d of c.deps) if (ids.has(d)) out.push({ a: d, b: c.id, kind: "dep" });
-      for (const r of relations[c.id]?.out ?? []) if (ids.has(r.id) && !c.deps.includes(r.id)) out.push({ a: c.id, b: r.id, kind: "calls" });
+      for (const d of c.deps) if (ids.has(d)) out.push({ a: d, b: c.id, kind: "dep", via: [] });
+      for (const r of relations[c.id]?.out ?? []) if (ids.has(r.id) && !c.deps.includes(r.id)) out.push({ a: c.id, b: r.id, kind: "calls", via: r.via });
     }
     return out;
   }, [children, relations]);
@@ -135,17 +138,36 @@ export function GraphView() {
   crumbs.push(...chain);
   const colorOf = (id: string) => (id === ROOT ? "#d4d4d4" : areaColor(nodes, id));
   const connected = (id: string) => new Set(relEdges.filter((e) => e.a === id || e.b === id).flatMap((e) => [e.a, e.b]));
-  const hi = hover ? connected(hover) : null;
+  // flow trace: hops downstream (calls) and upstream (called by) from the traced node, within the loaded level
+  const traced = flowMode ? (hover ?? selected) : null;
+  const trace = useMemo(() => {
+    const down = new Map<string, number>(), up = new Map<string, number>();
+    if (!traced) return { down, up };
+    const walk = (m: Map<string, number>, dir: "a" | "b") => { m.set(traced, 0); const q = [traced]; while (q.length) { const x = q.shift()!; const h = m.get(x)!; for (const e of relEdges) { const from = dir === "a" ? e.a : e.b, to = dir === "a" ? e.b : e.a; if (from === x && !m.has(to)) { m.set(to, h + 1); q.push(to); } } } };
+    walk(down, "a"); walk(up, "b");
+    return { down, up };
+  }, [traced, relEdges]);
+  const hi = flowMode ? (traced ? new Set([...trace.down.keys(), ...trace.up.keys()]) : null) : hover ? connected(hover) : null;
+  const flowEdgeState = (e: { a: string; b: string }) => { if (!traced) return "idle"; const dA = trace.down.get(e.a), dB = trace.down.get(e.b); if (dA !== undefined && dB === dA + 1) return "down"; const uA = trace.up.get(e.a), uB = trace.up.get(e.b); if (uB !== undefined && uA === uB + 1) return "up"; return "off"; };
 
   return (
     <div className="graph-wrap">
       <svg ref={svgRef} onMouseDown={(e) => onDown(e, null)} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp} onWheel={onWheel} style={{ cursor: drag.current && !drag.current.id ? "grabbing" : "default" }}>
-        <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#666" /></marker></defs>
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#666" /></marker>
+          <marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d97757" /></marker>
+          <marker id="arrow-cold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa" /></marker></defs>
         <g transform={`translate(${(svgRef.current?.clientWidth ?? 800) / 2 + view.x}, ${(svgRef.current?.clientHeight ?? 500) / 2 + view.y}) scale(${view.k})`}>
           {/* containment edges */}
-          {[...loaded.keys()].filter((id) => id !== cursor).map((id) => { const A = pos.current.get(id), C = pos.current.get(cursor); if (!A || !C) return null; const dim = hi && !hi.has(id) && hover !== id; return <line key={"c" + id} className="g-link" x1={C.x} y1={C.y} x2={A.x} y2={A.y} stroke={id === parentId ? "#555" : withAlpha(colorOf(id), 0.45)} strokeWidth={1.2} opacity={dim ? 0.25 : 1} />; })}
+          {[...loaded.keys()].filter((id) => id !== cursor).map((id) => { const A = pos.current.get(id), C = pos.current.get(cursor); if (!A || !C) return null; const dim = hi && !hi.has(id) && hover !== id; return <line key={"c" + id} className="g-link" x1={C.x} y1={C.y} x2={A.x} y2={A.y} stroke={id === parentId ? "#555" : withAlpha(colorOf(id), 0.45)} strokeWidth={1.2} opacity={flowMode ? 0.12 : dim ? 0.25 : 1} />; })}
           {/* relation edges between siblings */}
-          {relEdges.map((e, i) => { const A = pos.current.get(e.a), B = pos.current.get(e.b); if (!A || !B) return null; const on = hover === e.a || hover === e.b; const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const x2 = B.x - (dx / d) * 12, y2 = B.y - (dy / d) * 12; const bend = 28 * (i % 2 ? 1 : -1); return <path key={"r" + i} className="g-link" d={`M ${A.x} ${A.y} Q ${(A.x + B.x) / 2 - (dy / d) * bend} ${(A.y + B.y) / 2 + (dx / d) * bend} ${x2} ${y2}`} fill="none" stroke={e.kind === "dep" ? "#d97757" : colorOf(e.a)} strokeDasharray={e.kind === "dep" ? "5 3" : "2 3"} strokeWidth={on ? 1.8 : 1} opacity={hover ? (on ? 0.95 : 0.08) : 0.32} markerEnd="url(#arrow)" />; })}
+          {relEdges.map((e, i) => { const A = pos.current.get(e.a), B = pos.current.get(e.b); if (!A || !B) return null; const on = hover === e.a || hover === e.b; const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const x2 = B.x - (dx / d) * 12, y2 = B.y - (dy / d) * 12; const bend = 28 * (i % 2 ? 1 : -1); const cx = (A.x + B.x) / 2 - (dy / d) * bend, cy = (A.y + B.y) / 2 + (dx / d) * bend; const dpath = `M ${A.x} ${A.y} Q ${cx} ${cy} ${x2} ${y2}`;
+            if (!flowMode) return <path key={"r" + i} className="g-link" d={dpath} fill="none" stroke={e.kind === "dep" ? "#d97757" : colorOf(e.a)} strokeDasharray={e.kind === "dep" ? "5 3" : "2 3"} strokeWidth={on ? 1.8 : 1} opacity={hover ? (on ? 0.95 : 0.08) : 0.32} markerEnd="url(#arrow)" />;
+            const st = flowEdgeState(e); const col = st === "down" ? "#d97757" : st === "up" ? "#60a5fa" : colorOf(e.a); const lit = st === "down" || st === "up"; const showLbl = lit || (!traced && relEdges.length <= 12);
+            const mx = (A.x + 2 * cx + B.x) / 4, my = (A.y + 2 * cy + B.y) / 4; // point on the quadratic at t=.5
+            return <g key={"r" + i}>
+              <path className={`g-link g-flow ${lit ? "lit" : ""}`} d={dpath} fill="none" stroke={col} strokeWidth={lit ? 2.2 : 1.2} opacity={st === "off" ? 0.06 : lit ? 1 : 0.5} markerEnd={lit ? (st === "down" ? "url(#arrow-hot)" : "url(#arrow-cold)") : "url(#arrow)"} />
+              {showLbl && e.via.length > 0 && <text x={mx} y={my - 4} textAnchor="middle" fontSize={9} fill={lit ? col : "#8a8a8a"} opacity={st === "off" ? 0.1 : 1} style={{ pointerEvents: "none", userSelect: "none" }}>{trunc(e.via[0].split(" → ").pop() ?? e.via[0], 26)}{e.via.length > 1 ? ` +${e.via.length - 1}` : ""}</text>}
+            </g>; })}
           {[...loaded].map(([id, n]) => {
             const P = pos.current.get(id); if (!P) return null;
             const isCursor = id === cursor, isParent = id === parentId, isSel = id === selected, isIntent = !n || n.kind === "intent";
@@ -154,13 +176,15 @@ export function GraphView() {
             const col = colorOf(id); const ring = n ? STATUS_RING[n.status] : undefined;
             const title = id === ROOT ? "app" : n!.title;
             const dim = hi && !hi.has(id) && hover !== id && !isCursor && !isParent;
+            const flowDim = flowMode && !traced && !isCursor && !isParent && !relEdges.some((e) => e.a === id || e.b === id);
             return (
-              <g key={id} className="g-node" transform={`translate(${P.x},${P.y})`} opacity={dim ? 0.35 : isParent ? 0.75 : 1} onMouseDown={(e) => onDown(e, id)} onClick={() => click(id)} onMouseEnter={() => setHover(id)} onMouseLeave={() => setHover(null)}>
+              <g key={id} className="g-node" transform={`translate(${P.x},${P.y})`} opacity={dim ? 0.35 : flowDim ? 0.45 : isParent ? 0.75 : 1} onMouseDown={(e) => onDown(e, id)} onClick={() => click(id)} onMouseEnter={() => setHover(id)} onMouseLeave={() => setHover(null)}>
                 <circle className="halo" r={r + 10} fill={col} />
                 <circle r={r} fill={isIntent ? "#0a0a0a" : col} stroke={isSel ? "#fff" : col} strokeWidth={isSel ? 2.5 : isIntent ? 1.8 : 1.2} strokeDasharray={n?.status === "proposed" ? "3 2" : undefined} />
                 {ring && <circle r={r + 4} fill="none" stroke={ring} strokeWidth={1.5} opacity={0.9} />}
                 {isIntent && kids > 0 && <text textAnchor="middle" dy="3.5" fontSize={9} fill={col} style={{ pointerEvents: "none" }}>{kids}</text>}
                 {isParent && <text textAnchor="middle" y={-r - 6} fontSize={9} fill="#737373" style={{ pointerEvents: "none" }}>▲ up</text>}
+                {flowMode && traced && id !== cursor && id !== parentId && (() => { const dn = trace.down.get(id), upn = trace.up.get(id); if (dn === undefined && upn === undefined) return null; const lbl = id === traced ? "●" : dn !== undefined ? `+${dn}` : `−${upn}`; const c = id === traced ? "#fff" : dn !== undefined ? "#d97757" : "#60a5fa"; return <g transform={`translate(${r + 2},${-r - 2})`} style={{ pointerEvents: "none" }}><circle r={7} fill="#0a0a0a" stroke={c} strokeWidth={1} /><text textAnchor="middle" dy="3" fontSize={8} fill={c}>{lbl}</text></g>; })()}
                 {(() => { const lp = labelPos(P, r, isCursor || isParent); return <>
                   <text className="lbl" textAnchor={lp.anchor} x={lp.x} y={lp.y} fontSize={isCursor ? 13 : 12} fontWeight={isCursor ? 700 : 400} fill={isSel ? "#fff" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, 30)}</text>
                   {n?.staged && <text textAnchor={lp.anchor} x={lp.x} y={lp.y + 12} fontSize={10} fill="#d97757">staged</text>}
@@ -176,13 +200,28 @@ export function GraphView() {
         <span style={{ width: 8 }} />
         <button className={layout === "force" ? "primary" : ""} onClick={() => { setLayout("force"); try { localStorage.setItem("lg.graphLayout", "force"); } catch {} }}>force</button>
         <button className={layout === "tree" ? "primary" : ""} onClick={() => { setLayout("tree"); try { localStorage.setItem("lg.graphLayout", "tree"); } catch {} }}>tree</button>
+        <button className={flowMode ? "primary" : ""} onClick={toggleFlow} title="flow mode: show call direction between the loaded nodes and trace downstream (orange) / upstream (blue) from the selected or hovered node">flow</button>
         <button onClick={() => { pos.current.clear(); setSeed((s) => s + 1); }}>re-sort</button>
         <button onClick={fitAll}>fit</button>
       </div>
-      <div className="graph-hint">click intent: go there · click behavior: details · ▲ up · drag: pan · wheel: zoom</div>
+      <div className="graph-hint">{flowMode ? "flow: arrows = calls · hover/select a node to trace · +n downstream (orange) · −n upstream (blue) · labels = via symbol" : "click intent: go there · click behavior: details · ▲ up · drag: pan · wheel: zoom"}</div>
 
       <Minimap nodes={nodes} focus={focus} onGo={navigate} />
       {sel && <NodePanel n={sel} onClose={() => setSelected(null)} onOpen={() => navigate(sel.id)} />}
+    </div>
+  );
+}
+
+/** peer-level call relations of a node, as colored links with the symbol pair that connects them */
+function FlowLinks({ id }: { id: string }) {
+  const nodes = useStore((s) => s.nodes); const rel = useStore((s) => s.relations[id]); const setFocus = useStore((s) => s.setFocus); const setSelected = useStore((s) => s.setSelected);
+  if (!rel || (!rel.out.length && !rel.in.length)) return null;
+  const go = (t: string) => { const x = nodes[t]; if (!x) return; setFocus(x.kind === "intent" ? x.id : x.parent); setSelected(x.id); };
+  const list = (rs: { id: string; via: string[] }[]) => rs.filter((r) => nodes[r.id]).map((r) => <div key={r.id} className="flow-link"><a className="nodelink" style={{ color: areaColor(nodes, r.id), borderColor: areaColor(nodes, r.id) }} onClick={() => go(r.id)}>{nodes[r.id].title}</a>{r.via.length > 0 && <span className="dim" title={r.via.join("\n")}> via {trunc(r.via[0], 40)}{r.via.length > 1 ? ` +${r.via.length - 1}` : ""}</span>}</div>);
+  return (
+    <div className="flow-links">
+      {rel.out.length > 0 && <div><div className="dim" style={{ marginTop: 6 }}>calls →</div>{list(rel.out)}</div>}
+      {rel.in.length > 0 && <div><div className="dim" style={{ marginTop: 6 }}>← called by</div>{list(rel.in)}</div>}
     </div>
   );
 }
@@ -225,12 +264,13 @@ function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; o
       {n.summary && n.spec && <details><summary className="dim" style={{ cursor: "pointer" }}>spec</summary><pre className="dim" style={{ fontSize: 12, marginTop: 4 }}>{n.spec}</pre></details>}
       {n.kind === "behavior" && <div className="dim" style={{ marginTop: 6 }}>{(n.examples ?? []).length} examples · {(n.anchors ?? []).length} symbols{v?.examples ? ` · ex ${v.examples.pass}/${v.examples.pass + v.examples.fail + v.examples.pending}` : ""}{v?.reconstruction ? ` · recon ${v.reconstruction.verdict}` : ""}</div>}
       {n.status === "drifted" && <div className="bad" style={{ marginTop: 6 }}>drift: {n.drift?.reasons.join("; ")}</div>}
+      <FlowLinks id={n.id} />
       <div className="actions">
         {n.kind === "intent" && <button className="primary" onClick={onOpen}>open →</button>}
         {n.status === "proposed" && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
         {(n.status === "specified" || n.status === "rejected") && n.kind === "behavior" && <button className="primary" onClick={() => act(`/nodes/${n.id}/dispatch`)}>dispatch</button>}
         {(n.status === "built" || n.status === "drifted") && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
-        {firstAnchor && <button onClick={() => { setFlowFrom(`${firstAnchor.file}#${firstAnchor.container}#${firstAnchor.kind}#${firstAnchor.name}`); setLens("flow"); }} title="open the logical execution flow from this node's code">flow →</button>}
+        {firstAnchor && <button onClick={() => { api<{ key: string | null }>(`/nodes/${n.id}/flow-entry`).then((r) => { setFlowFrom(r.key ?? `${firstAnchor.file}#${firstAnchor.container}#${firstAnchor.kind}#${firstAnchor.name}`); setLens("flow"); }).catch((e) => notify(e.message)); }} title="open the logical execution flow from this node's code">flow →</button>}
         <button onClick={() => act(`/nodes/${n.id}/summarize`)} title="rewrite the summary with Gemini">{n.summary ? "re-summarize" : "summarize"}</button>
       </div>
     </div>

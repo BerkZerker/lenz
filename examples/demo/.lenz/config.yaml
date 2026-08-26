@@ -13,14 +13,15 @@ ignore_globs:
   - "**/dist/**"
   - "**/build/**"
   - "**/.git/**"
-  - "**/.lenzgraph/**"
+  - "**/.lenz/**"
   - "**/*.d.ts"
 entry_globs:
-  - src/index.ts
-  - src/main.ts
-  - src/server.ts
-  - src/cli.ts
-  - src/app.ts
+  - "**/src/{index,main,server,cli,app}.{ts,tsx,js}"
+  - "{index,main,server,cli,app}.{ts,tsx,js}"
+  - "**/main.py"
+  - "**/__main__.py"
+  - "**/main.go"
+  - "**/cmd/*/main.go"
 orphan_exclude:
   - "**/*.test.*"
   - "**/*.spec.*"

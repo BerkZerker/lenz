@@ -31,6 +31,7 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/summarize", async (req) => { const b = await body(req); void core.summarizeAll(!!b.force, (m) => core.log(m)).catch((e) => core.log(String(e), "warn")); return json({ started: true }); });
   on("GET", "/api/files", () => json(core.files()));
   on("GET", "/api/orphans", () => json(core.orphans()));
+  on("GET", "/api/nodes/:id/flow-entry", (_r, p) => json({ key: core.flowEntryFor(p.id) }));
   on("GET", "/api/flow", (_r, _p, url) => json(core.flow(url.searchParams.get("from") ?? undefined)));
   on("POST", "/api/flow/pin", async (req) => { const b = await body(req); core.idx.db.pinEntryPoint(b.key, b.pinned !== false); return json(core.flow()); });
   on("GET", "/api/symbols/:key/source", (_r, p) => json({ key: p.key, source: core.idx.symbolSource(decodeURIComponent(p.key)) }));

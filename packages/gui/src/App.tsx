@@ -28,14 +28,14 @@ export function App() {
   useEffect(() => {
     connect();
     // #<lens>[/<node id>] — the node id sets the graph cursor (deep link to a location)
-    const fromHash = () => { const [h, id] = location.hash.replace("#", "").split("/") as [Lens, string?]; if (LENSES.some((l) => l.id === h)) setLens(h); if (id && id.startsWith("n_")) pendingFocus.current = id; applyPending(); };
+    const fromHash = () => { const [h, id] = location.hash.replace("#", "").split("?")[0].split("/") as [Lens, string?]; const fm = /[?&]from=([^&]+)/.exec(location.hash); if (fm) useStore.getState().setFlowFrom(decodeURIComponent(fm[1])); if (LENSES.some((l) => l.id === h)) setLens(h); if (id && id.startsWith("n_")) pendingFocus.current = id; applyPending(); };
     const applyPending = () => { const id = pendingFocus.current; if (!id) return; const s = useStore.getState(); const n = s.nodes[id]; if (!n) return; pendingFocus.current = null; if (n.kind === "intent") { s.setFocus(id); s.setSelected(id); } else { s.setFocus(n.parent); s.setSelected(id); } };
     fromHash(); window.addEventListener("hashchange", fromHash);
     const unsub = useStore.subscribe((s, prev) => { if (s.nodes !== prev.nodes) applyPending(); });
     return () => { window.removeEventListener("hashchange", fromHash); unsub(); };
   }, []);
   const focus = useStore((s) => s.focus);
-  useEffect(() => { const want = "#" + lens + (lens === "graph" && focus ? "/" + focus : ""); if (location.hash !== want) history.replaceState(null, "", want); }, [lens, focus]);
+  useEffect(() => { const want = "#" + lens + (lens === "graph" && focus ? "/" + focus : ""); if (location.hash.split("?")[0] !== want) history.replaceState(null, "", want); }, [lens, focus]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;

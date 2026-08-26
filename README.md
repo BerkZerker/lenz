@@ -1,33 +1,33 @@
-# lenzgraph
+# lenz
 
 An agent dev kit for closing the human↔agent feedback loop. One multi-resolution graph of the
 project (L0 intent · L1 behavior · L2 structure · L3 code); the GUI is a set of zoom lenses over it.
-Spec: [`lenzgraph-spec.md`](./lenzgraph-spec.md).
+Spec: [`lenz-spec.md`](./lenz-spec.md).
 
 ## Requirements
 
 - [bun](https://bun.sh) ≥ 1.2
 - [Claude Code](https://claude.com/claude-code) CLI on `PATH` (`claude`) — the only agent adapter in V1
 - a Gemini API key for the non-agentic calls (propose, derive, reconstruction, spec comparison).
-  Put `GEMINI_API_KEY=...` in `~/.config/lenzgraph/env` (all projects) or `.lenzgraph/.env` (one
+  Put `GEMINI_API_KEY=...` in `~/.config/lenz/env` (all projects) or `.lenz/.env` (one
   project; gitignored). Model defaults to `gemini-3.7-flash`; override via `llm:` in `config.yaml`
   (`llm: { provider: claude }` routes those calls through Claude Code instead). Builds always run
   on Claude Code.
-- optional: `@sourcegraph/scip-typescript` for precise references (`lenzgraph index --scip`)
+- optional: `@sourcegraph/scip-typescript` for precise references (`lenz index --scip`)
 
 ## Quick start
 
 ```bash
 bun install
 bun run build:gui                       # → packages/core/static
-(cd packages/core && bun link)          # puts `lenzgraph` on PATH
+(cd packages/core && bun link)          # puts `lenz` on PATH
 
 cd /path/to/your-ts-project
-lenzgraph init                          # writes .lenzgraph/{config.yaml,agents/claude.yaml,nodes/}
-lenzgraph serve                         # daemon + GUI at http://localhost:7331
+lenz init                          # writes .lenz/{config.yaml,agents/claude.yaml,nodes/}
+lenz serve                         # daemon + GUI at http://localhost:7331
 ```
 
-To get `lenzgraph` on your `PATH`: `cd packages/core && bun link` (symlinks it into `~/.bun/bin`,
+To get `lenz` on your `PATH`: `cd packages/core && bun link` (symlinks it into `~/.bun/bin`,
 which the bun installer already added to your shell). Alternatively run `bun packages/core/src/cli.ts`.
 
 ### Greenfield
@@ -44,8 +44,8 @@ which the bun installer already added to your shell). Alternatively run `bun pac
 ### Brownfield
 
 ```bash
-lenzgraph serve &
-lenzgraph derive        # one LLM call per folder, bottom-up; everything lands `proposed`
+lenz serve &
+lenz derive        # one LLM call per folder, bottom-up; everything lands `proposed`
 ```
 
 `4` (Orphans) is the burn-down: symbols with no owning behavior node.
@@ -68,7 +68,17 @@ root → cursor with the siblings at each level. URLs deep-link: `#graph/<node i
 
 Each node carries a Gemini-written **summary** ("does X, hands off to [[A]], relies on [[B]]") derived
 from the symbol graph; `[[links]]` render color-coded and navigate. Summaries are written after
-derive/propose/build, or on demand (`summarize` button, `lenzgraph summarize [--force]`).
+derive/propose/build, or on demand (`summarize` button, `lenz summarize [--force]`).
+
+### Flow mode and the flow lens
+
+- **`flow`** toggle in the graph toolbar: relation edges become directed, animated call arrows between the loaded nodes, labeled with the symbol pair that connects them. Hover or select a node to trace: downstream hops are orange (`+1`, `+2`…), upstream callers blue (`−n`); everything else fades. The trace follows you as you move levels, since relations are lifted to whatever level is loaded.
+- The node panel lists **calls →** / **← called by** with `via` symbols; **`flow →`** opens the **6 flow** lens at the node's most-connected symbol.
+- **6 flow** lens: entry points (exported symbols and top-level functions in files matching `entry_globs`, plus pinned keys) and a collapsible static call tree (⊞/⊟; auto-open to depth 2), each symbol tagged with its owning node (click the tag to jump to it in the graph). Deep link: `#flow?from=<file#container#kind#name>`.
+
+### Explorer (left pane)
+
+VS Code style: chevrons collapse/expand, ⊞/⊟ expand/collapse all, `nodes` | `files` toggle. The files view shows folders → files → symbols with owner colors (dashed = orphan); clicking an owned symbol jumps to its node.
 
 ## Keys
 
@@ -79,13 +89,13 @@ runs, flow) · `7/8` propose/stage · `a` approve · `r` reject · `e` edit · `
 ## CLI
 
 ```
-lenzgraph init | serve [--port N] | index [--scip] | derive | propose <file> [--parent id]
+lenz init | serve [--port N] | index [--scip] | derive | propose <file> [--parent id]
           | dispatch <node> | verify <node> | lock acquire|release <file> --run <id>
           | node set <id> <path> <value> | status
 ```
 
 `node set` is what build agents use to write example `run` commands back
-(`lenzgraph node set n_x examples.ex_1.run "bun test tests/x.test.ts -t ex_1"`).
+(`lenz node set n_x examples.ex_1.run "bun test tests/x.test.ts -t ex_1"`).
 
 ## Layout
 
@@ -98,14 +108,14 @@ packages/gui         React + Vite + zustand, built into packages/core/static
 examples/demo        greenfield demo (todo store)      examples/brownfield   derive demo
 ```
 
-Per-project state lives in `.lenzgraph/`: `config.yaml`, `CONVENTIONS.md` (prepended to every
+Per-project state lives in `.lenz/`: `config.yaml`, `CONVENTIONS.md` (prepended to every
 prompt), `agents/claude.yaml` (adapter), `nodes/**/*.yaml` (committed), `runs/` and
 `structure.db` (gitignored).
 
 ## How locks work
 
 Every agent run gets a generated Claude Code settings file whose `PreToolUse` hooks call
-`lenzgraph hook pre` for `Write|Edit|MultiEdit|NotebookEdit|Bash`. The hook asks the daemon for the
+`lenz hook pre` for `Write|Edit|MultiEdit|NotebookEdit|Bash`. The hook asks the daemon for the
 file lock; if another run holds it and wrote within `lock_cooldown` (45s) the tool call is denied
 with a reason the agent can act on. Otherwise the lock transfers and the previous holder is told on
 its next tool call. Bash commands are scanned for write targets (redirections, `sed -i`, `tee`,

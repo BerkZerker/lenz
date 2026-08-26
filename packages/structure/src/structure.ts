@@ -22,7 +22,7 @@ export interface StructureConfig {
 export const DEFAULT_STRUCTURE_CONFIG: Omit<StructureConfig, "root" | "dbPath"> = {
   source_globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py", "**/*.go"],
   ignore_globs: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.git/**", "**/.lenz/**", "**/*.d.ts"],
-  entry_globs: ["src/index.ts", "src/main.ts", "src/server.ts", "src/cli.ts", "src/app.ts"],
+  entry_globs: ["**/src/{index,main,server,cli,app}.{ts,tsx,js}", "{index,main,server,cli,app}.{ts,tsx,js}", "**/main.py", "**/__main__.py", "**/main.go", "**/cmd/*/main.go"],
   orphan_exclude: ["**/*.test.*", "**/*.spec.*", "**/tests/**", "**/test/**", "**/__tests__/**", "**/*.config.*", "**/*.generated.*"],
 };
 
@@ -150,7 +150,8 @@ export class StructureIndex extends EventEmitter {
 
   refreshEntryPoints() {
     const keys: string[] = [];
-    for (const f of this.db.allFiles()) if (this.isEntry(f.path)) for (const s of this.db.symbolsInFile(f.path)) if (s.exported) keys.push(s.key);
+    // exported symbols, plus top-level functions/classes (scripts like cli.ts rarely export their main)
+    for (const f of this.db.allFiles()) if (this.isEntry(f.path)) for (const s of this.db.symbolsInFile(f.path)) if (s.exported || (s.container === "" && (s.kind === "function" || s.kind === "class"))) keys.push(s.key);
     this.db.setAutoEntryPoints(keys);
   }
 
