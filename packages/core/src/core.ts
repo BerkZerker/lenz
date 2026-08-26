@@ -11,7 +11,6 @@ import { DERIVE_SCHEMA, PROPOSAL_SCHEMA, buildPrompt, comparePrompt, derivePromp
 import { computeRelations, type NodeRelations } from "./relations.ts";
 import { runCommand, runExamples } from "./verify/examples.ts";
 import { loadEnvFiles } from "./llm/gemini.ts";
-import { homedir } from "node:os";
 import { EDITABLE_FIELDS, type Example, type LenzNode, type NodeStatus, type ProposedAnchor } from "./types.ts";
 
 export interface CoreOpts { root: string; port?: number; cli?: string[] }
@@ -27,7 +26,7 @@ export class Core {
 
   constructor(opts: CoreOpts) {
     this.root = opts.root; this.dir = initProject(opts.root); this.cfg = loadConfig(opts.root);
-    loadEnvFiles([join(homedir(), ".config/lenz/env"), join(this.dir, ".env")]);
+    loadEnvFiles([join(this.root, ".env"), join(this.dir, ".env")]); // <project>/.env (standard) or .lenz/.env
     if (this.cfg.llm.provider === "gemini" && !process.env.GEMINI_API_KEY) { this.cfg.llm = { provider: "claude", model: "" }; }
     this.port = opts.port ?? this.cfg.port;
     this.cli = opts.cli ?? ["bun", join(import.meta.dir, "cli.ts")];

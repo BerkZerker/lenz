@@ -7,3 +7,6 @@ examples/*/.lenz/runs/
 examples/*/.lenz/structure.db*
 examples/*/node_modules/
 *.log
+.env
+.env.*
+!.env.example
