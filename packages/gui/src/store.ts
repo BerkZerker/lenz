@@ -10,6 +10,8 @@ interface State {
   runEvents: RunEvent[]; logs: { at: string; level: string; msg: string }[]; connected: boolean;
   relations: Record<string, { out: { id: string; via: string[] }[]; in: { id: string; via: string[] }[] }>;
   lens: Lens; focus: string | null; selected: string | null; search: string; modal: Modal | null; toast: string | null;
+  treeMode: "nodes" | "files"; expanded: Set<string>; flowFrom: string | null;
+  setTreeMode: (m: "nodes" | "files") => void; toggleExpanded: (id: string) => void; setExpanded: (ids: Iterable<string>) => void; setFlowFrom: (k: string | null) => void;
   setLens: (l: Lens) => void; setFocus: (id: string | null) => void; setSelected: (id: string | null) => void; setSearch: (s: string) => void;
   openModal: (m: Modal | null) => void; notify: (s: string) => void;
   refresh: () => Promise<void>; refreshRuns: () => Promise<void>;
@@ -19,7 +21,16 @@ interface State {
 export const useStore = create<State>((set, get) => ({
   nodes: {}, tree: [], status: null, runs: [], locks: [], lockLog: [], runEvents: [], logs: [], connected: false, relations: {},
   lens: "graph", focus: null, selected: null, search: "", modal: null, toast: null,
-  setLens: (lens) => set({ lens }), setFocus: (focus) => set({ focus }), setSelected: (selected) => set({ selected }), setSearch: (search) => set({ search }),
+  treeMode: (() => { try { return localStorage.getItem("lg.treeMode") === "files" ? "files" : "nodes"; } catch { return "nodes"; } })(), expanded: new Set<string>(), flowFrom: null,
+  setTreeMode: (treeMode) => { try { localStorage.setItem("lg.treeMode", treeMode); } catch {} set({ treeMode }); },
+  toggleExpanded: (id) => set((s) => { const expanded = new Set(s.expanded); expanded.has(id) ? expanded.delete(id) : expanded.add(id); return { expanded }; }),
+  setExpanded: (ids) => set({ expanded: new Set(ids) }),
+  setFlowFrom: (flowFrom) => set({ flowFrom }),
+  setLens: (lens) => set({ lens }),
+  // focusing/selecting reveals the node in the tree (expands its ancestors), like VS Code's reveal-in-explorer
+  setFocus: (focus) => set((s) => ({ focus, expanded: reveal(s, focus, true) })),
+  setSelected: (selected) => set((s) => ({ selected, expanded: reveal(s, selected, false) })),
+  setSearch: (search) => set({ search }),
   openModal: (modal) => set({ modal }),
   notify: (toast) => { set({ toast }); setTimeout(() => set((s) => (s.toast === toast ? { toast: null } : {})), 3000); },
   refresh: async () => {
@@ -52,3 +63,11 @@ export const useStore = create<State>((set, get) => ({
     };
   },
 }));
+
+function reveal(s: State, id: string | null, self: boolean): Set<string> {
+  if (!id) return s.expanded;
+  const ex = new Set(s.expanded);
+  let n = self ? s.nodes[id] : (s.nodes[id]?.parent ? s.nodes[s.nodes[id].parent!] : null);
+  while (n) { ex.add(n.id); n = n.parent ? s.nodes[n.parent] : null; }
+  return ex;
+}

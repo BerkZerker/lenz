@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import YAML from "yaml";
-import { StructureIndex, anchorKey, flowFrom, resolveAnchor, toAnchor, type Anchor, type SymbolRow, type SymbolsChanged } from "@lenzgraph/structure";
+import { StructureIndex, anchorKey, flowFrom, resolveAnchor, toAnchor, type Anchor, type SymbolRow, type SymbolsChanged } from "@lenz/structure";
 import { initProject, lenzDir, loadConfig, type LenzConfig } from "./config.ts";
 import { EventBus } from "./events.ts";
 import { LockBroker } from "./locks.ts";
@@ -27,7 +27,7 @@ export class Core {
 
   constructor(opts: CoreOpts) {
     this.root = opts.root; this.dir = initProject(opts.root); this.cfg = loadConfig(opts.root);
-    loadEnvFiles([join(homedir(), ".config/lenzgraph/env"), join(this.dir, ".env")]);
+    loadEnvFiles([join(homedir(), ".config/lenz/env"), join(this.dir, ".env")]);
     if (this.cfg.llm.provider === "gemini" && !process.env.GEMINI_API_KEY) { this.cfg.llm = { provider: "claude", model: "" }; }
     this.port = opts.port ?? this.cfg.port;
     this.cli = opts.cli ?? ["bun", join(import.meta.dir, "cli.ts")];
@@ -70,7 +70,7 @@ export class Core {
   createNode(partial: Partial<LenzNode> & { title: string; kind: LenzNode["kind"] }) { return this.store.create({ ...partial, status: partial.status ?? "specified" }); }
   deleteNode(id: string) { this.store.delete(id); }
 
-  /** `lenzgraph node set <id> <path> <value>` — path segments may address array items by id. */
+  /** `lenz node set <id> <path> <value>` — path segments may address array items by id. */
   nodeSet(id: string, path: string, rawValue: string) {
     const n = this.store.get(id); if (!n) throw new Error(`unknown node ${id}`);
     let value: any; try { value = YAML.parse(rawValue); } catch { value = rawValue; }
@@ -275,6 +275,11 @@ export class Core {
     for (const s of all) { const a = byFile.get(s.file) ?? []; a.push(s); byFile.set(s.file, a); }
     const total = this.idx.db.allSymbols().filter((s) => !this.idx.isOrphanExcluded(s.file)).length;
     return { total_symbols: total, orphan_count: all.length, files: [...byFile].map(([file, symbols]) => ({ file, symbols })) };
+  }
+  /** every indexed file with its symbols and owning node (for the GUI file tree) */
+  files() {
+    const owner = new Map<string, string>(); for (const o of this.idx.db.ownedSymbols()) owner.set(o.key, o.node_id);
+    return this.idx.db.allFiles().map((f) => ({ path: f.path, language: f.language, symbols: this.idx.db.symbolsInFile(f.path).map((s) => ({ key: s.key, kind: s.kind, name: s.name, container: s.container, start_line: s.start_line, owner: owner.get(s.key) ?? null })) }));
   }
   flow(from?: string) {
     const entries = this.idx.db.entryPoints().map((e) => ({ ...e, symbol: this.idx.db.symbol(e.key)! }));

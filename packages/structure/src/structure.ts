@@ -21,7 +21,7 @@ export interface StructureConfig {
 
 export const DEFAULT_STRUCTURE_CONFIG: Omit<StructureConfig, "root" | "dbPath"> = {
   source_globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py", "**/*.go"],
-  ignore_globs: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.git/**", "**/.lenzgraph/**", "**/*.d.ts"],
+  ignore_globs: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.git/**", "**/.lenz/**", "**/*.d.ts"],
   entry_globs: ["src/index.ts", "src/main.ts", "src/server.ts", "src/cli.ts", "src/app.ts"],
   orphan_exclude: ["**/*.test.*", "**/*.spec.*", "**/tests/**", "**/test/**", "**/__tests__/**", "**/*.config.*", "**/*.generated.*"],
 };

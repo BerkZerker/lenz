@@ -29,6 +29,7 @@ export function startServer(core: Core, staticDir: string) {
   on("GET", "/api/relations", () => json(core.relations()));
   on("POST", "/api/nodes/:id/summarize", async (_r, p) => { try { return json(await core.summarize(p.id)); } catch (e) { return err(e); } });
   on("POST", "/api/summarize", async (req) => { const b = await body(req); void core.summarizeAll(!!b.force, (m) => core.log(m)).catch((e) => core.log(String(e), "warn")); return json({ started: true }); });
+  on("GET", "/api/files", () => json(core.files()));
   on("GET", "/api/orphans", () => json(core.orphans()));
   on("GET", "/api/flow", (_r, _p, url) => json(core.flow(url.searchParams.get("from") ?? undefined)));
   on("POST", "/api/flow/pin", async (req) => { const b = await body(req); core.idx.db.pinEntryPoint(b.key, b.pinned !== false); return json(core.flow()); });
@@ -70,7 +71,7 @@ export function startServer(core: Core, staticDir: string) {
       // static GUI
       let p = join(staticDir, url.pathname === "/" ? "index.html" : url.pathname);
       if (!existsSync(p)) p = join(staticDir, "index.html");
-      if (!existsSync(p)) return new Response("GUI not built. Run `bun run build:gui` in the lenzgraph repo.", { status: 503 });
+      if (!existsSync(p)) return new Response("GUI not built. Run `bun run build:gui` in the lenz repo.", { status: 503 });
       return new Response(Bun.file(p));
     },
     websocket: {

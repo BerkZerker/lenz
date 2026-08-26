@@ -1,4 +1,4 @@
-import type { Anchor } from "@lenzgraph/structure";
+import type { Anchor } from "@lenz/structure";
 
 export type NodeKind = "intent" | "behavior";
 export type NodeStatus = "proposed" | "specified" | "building" | "built" | "verified" | "rejected" | "drifted";

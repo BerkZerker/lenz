@@ -21,12 +21,12 @@ const has = (name: string) => bools.has(name);
 const positional = words.slice(1);
 
 function findRoot(): string {
-  let d = resolve(flag("--root", process.env.LENZGRAPH_ROOT ?? process.cwd())!);
+  let d = resolve(flag("--root", process.env.LENZ_ROOT ?? process.cwd())!);
   const start = d;
-  while (true) { if (existsSync(join(d, ".lenzgraph"))) return d; const p = resolve(d, ".."); if (p === d) return start; d = p; }
+  while (true) { if (existsSync(join(d, ".lenz"))) return d; const p = resolve(d, ".."); if (p === d) return start; d = p; }
 }
 const root = findRoot();
-const port = Number(flag("--port", process.env.LENZGRAPH_PORT ?? String(loadConfig(root).port)));
+const port = Number(flag("--port", process.env.LENZ_PORT ?? String(loadConfig(root).port)));
 const api = async (path: string, body?: any, method = body ? "POST" : "GET") => {
   const r = await fetch(`http://127.0.0.1:${port}/api${path}`, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
@@ -34,19 +34,19 @@ const api = async (path: string, body?: any, method = body ? "POST" : "GET") => 
   return j;
 };
 const daemonUp = async () => { try { await api("/status"); return true; } catch { return false; } };
-const usage = `lenzgraph — agent dev kit
+const usage = `lenz — agent dev kit
 
-  lenzgraph init                         create .lenzgraph/ in the current project
-  lenzgraph serve [--port N] [--no-watch] start the daemon + GUI (http://localhost:${port})
-  lenzgraph index [--scip]               (re)build structure.db; --scip runs scip-typescript if installed
-  lenzgraph derive                       brownfield: derive proposed nodes bottom-up (needs daemon)
-  lenzgraph propose <file> [--parent id] greenfield: turn a brain-dump file into proposed nodes (needs daemon)
-  lenzgraph dispatch <node>              build a node with an agent (needs daemon)
-  lenzgraph verify <node>                execute a node's examples + machine check (needs daemon)
-  lenzgraph lock acquire|release <file> --run <id>
-  lenzgraph node set <id> <path> <value> set a field in a node (path may address examples by id)
-  lenzgraph summarize [--force]          write relational summaries for nodes (needs daemon)
-  lenzgraph status
+  lenz init                         create .lenz/ in the current project
+  lenz serve [--port N] [--no-watch] start the daemon + GUI (http://localhost:${port})
+  lenz index [--scip]               (re)build structure.db; --scip runs scip-typescript if installed
+  lenz derive                       brownfield: derive proposed nodes bottom-up (needs daemon)
+  lenz propose <file> [--parent id] greenfield: turn a brain-dump file into proposed nodes (needs daemon)
+  lenz dispatch <node>              build a node with an agent (needs daemon)
+  lenz verify <node>                execute a node's examples + machine check (needs daemon)
+  lenz lock acquire|release <file> --run <id>
+  lenz node set <id> <path> <value> set a field in a node (path may address examples by id)
+  lenz summarize [--force]          write relational summaries for nodes (needs daemon)
+  lenz status
 `;
 
 async function main() {
@@ -61,7 +61,7 @@ async function main() {
       await core.start({ watch: !has("--no-watch") });
       const staticDir = resolve(import.meta.dir, "../static");
       startServer(core, staticDir);
-      console.log(`lenzgraph serving ${root} at http://localhost:${port}`);
+      console.log(`lenz serving ${root} at http://localhost:${port}`);
       return;
     }
     case "index": {
@@ -83,7 +83,7 @@ async function main() {
     case "dispatch": { const n = await api(`/nodes/${positional[0]}/dispatch`, { note: flag("--note") }); console.log(`${n.id} → ${n.status} (run ${n.last_run})`); return; }
     case "verify": { const n = await api(`/nodes/${positional[0]}/verify`, {}); console.log(JSON.stringify(n.verification, null, 2)); return; }
     case "lock": {
-      const sub = positional[0]; const file = positional[1]; const run = flag("--run", process.env.LENZGRAPH_RUN);
+      const sub = positional[0]; const file = positional[1]; const run = flag("--run", process.env.LENZ_RUN);
       if (!file || !run) throw new Error("lock acquire|release <file> --run <id>");
       const rel = relative(root, resolve(file)).split("\\").join("/");
       const r = await api(`/locks/${sub === "release" ? "release" : "acquire"}`, { file: rel, run });
@@ -102,12 +102,12 @@ async function main() {
 
 /** Claude Code hook entry points (stdin = hook JSON). */
 async function hook(sub: string) {
-  const run = flag("--run", process.env.LENZGRAPH_RUN)!;
+  const run = flag("--run", process.env.LENZ_RUN)!;
   const input = JSON.parse(await Bun.stdin.text().catch(() => "{}") || "{}");
   const toRel = (fp: string) => relative(root, resolve(input.cwd ?? root, fp)).split("\\").join("/");
   const fp: string | undefined = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
   const files: string[] = fp ? [toRel(fp)] : input.tool_name === "Bash" ? bashWriteTargets(String(input.tool_input?.command ?? ""), input.cwd ?? root).map(toRel) : [];
-  const inRepo = files.filter((f) => f && !f.startsWith("..") && !f.startsWith(".lenzgraph/"));
+  const inRepo = files.filter((f) => f && !f.startsWith("..") && !f.startsWith(".lenz/"));
   const emit = (o: any) => { process.stdout.write(JSON.stringify(o)); };
   try {
     if (sub === "pre") {
@@ -116,7 +116,7 @@ async function hook(sub: string) {
       for (const f of inRepo) {
         const r = await api("/locks/acquire", { file: f, run });
         notices.push(...(r.notices ?? []));
-        if (!r.granted) { emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: `lenzgraph lock denied: ${r.reason}` } }); return; }
+        if (!r.granted) { emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: `lenz lock denied: ${r.reason}` } }); return; }
       }
       if (notices.length) { const ctx = notices.join("\n"); emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", additionalContext: ctx }, additionalContext: ctx }); }
     } else if (sub === "post") {
@@ -127,7 +127,7 @@ async function hook(sub: string) {
     }
   } catch (e) {
     // broker unreachable → fail open (never wedge the agent), but say so
-    process.stderr.write(`lenzgraph hook: ${e}\n`);
+    process.stderr.write(`lenz hook: ${e}\n`);
   }
 }
 

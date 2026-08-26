@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import YAML from "yaml";
-import { DEFAULT_STRUCTURE_CONFIG } from "@lenzgraph/structure";
+import { DEFAULT_STRUCTURE_CONFIG } from "@lenz/structure";
 
 export interface LenzConfig {
   languages: string[];
@@ -39,7 +39,7 @@ events: claude-stream-json
 hooks: claude-settings
 `;
 
-export function lenzDir(root: string) { return join(root, ".lenzgraph"); }
+export function lenzDir(root: string) { return join(root, ".lenz"); }
 
 export function loadConfig(root: string): LenzConfig {
   const p = join(lenzDir(root), "config.yaml");

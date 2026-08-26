@@ -13,7 +13,7 @@ const PORT = 7399;
 beforeAll(async () => {
   root = mkdtempSync(join(tmpdir(), "lgc-"));
   cpSync(fixture, root, { recursive: true });
-  mkdirSync(join(root, ".lenzgraph/agents"), { recursive: true });
+  mkdirSync(join(root, ".lenz/agents"), { recursive: true });
   // fake agent: emits stream-json, acquires a lock via the hook protocol, edits a file, registers an example run
   const fake = join(root, "fake-claude.sh");
   writeFileSync(fake, `#!/usr/bin/env bash
@@ -36,8 +36,8 @@ echo '{"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}
 echo '{"type":"result","subtype":"success","result":"implemented verifyPassword","total_cost_usd":0.01,"session_id":"sess-1"}'
 `);
   chmodSync(fake, 0o755);
-  writeFileSync(join(root, ".lenzgraph/agents/claude.yaml"), `command: ${fake} --settings {settings_file}\nevents: claude-stream-json\nhooks: claude-settings\n`);
-  writeFileSync(join(root, ".lenzgraph/config.yaml"), "max_concurrent_runs: 2\nlock_cooldown: 2\nrun_timeout: 60\nexample_timeout: 10\n");
+  writeFileSync(join(root, ".lenz/agents/claude.yaml"), `command: ${fake} --settings {settings_file}\nevents: claude-stream-json\nhooks: claude-settings\n`);
+  writeFileSync(join(root, ".lenz/config.yaml"), "max_concurrent_runs: 2\nlock_cooldown: 2\nrun_timeout: 60\nexample_timeout: 10\n");
   core = new Core({ root, port: PORT, cli: [process.execPath, join(import.meta.dir, "../src/cli.ts")] });
   process.env.LENZ_CLI = `${process.execPath} ${join(import.meta.dir, "../src/cli.ts")} --root ${root} --port ${PORT}`;
   await core.start({ watch: true });
@@ -50,7 +50,7 @@ describe("nodes", () => {
     const auth = core.createNode({ kind: "intent", title: "Auth" });
     const login = core.createNode({ kind: "behavior", title: "Login", parent: auth.id, spec: "users log in" });
     const reset = core.createNode({ kind: "behavior", title: "Reset password", parent: auth.id, spec: "reset", deps: [login.id] });
-    expect(existsSync(join(root, ".lenzgraph/nodes/auth/reset-password.yaml"))).toBe(true);
+    expect(existsSync(join(root, ".lenz/nodes/auth/reset-password.yaml"))).toBe(true);
     expect(core.store.topo([reset.id, login.id]).map((n) => n.id)).toEqual([login.id, reset.id]);
     for (let i = 0; i < 7; i++) core.createNode({ kind: "behavior", title: `b${i}`, parent: auth.id });
     expect(() => core.createNode({ kind: "behavior", title: "tenth", parent: auth.id })).toThrow(FanOutError);
@@ -61,8 +61,8 @@ describe("nodes", () => {
   test("rename moves the yaml file (git rename), id stable", () => {
     const auth = core.store.all().find((n) => n.title === "Auth")!;
     core.putNode(auth.id, { title: "Authentication" });
-    expect(existsSync(join(root, ".lenzgraph/nodes/authentication.yaml"))).toBe(true);
-    expect(existsSync(join(root, ".lenzgraph/nodes/authentication/reset-password.yaml"))).toBe(true);
+    expect(existsSync(join(root, ".lenz/nodes/authentication.yaml"))).toBe(true);
+    expect(existsSync(join(root, ".lenz/nodes/authentication/reset-password.yaml"))).toBe(true);
     expect(core.store.get(auth.id)?.title).toBe("Authentication");
   });
   test("node set addresses examples by id and parses values", () => {
@@ -73,7 +73,7 @@ describe("nodes", () => {
     const n = core.store.get(login.id)!;
     expect(n.examples![0].run).toBe("bun test -t ex_1");
     expect(n.machine?.run).toBe("bun test tests/");
-    expect(readFileSync(join(root, ".lenzgraph/nodes/authentication/login.yaml"), "utf8")).toContain("run: bun test -t ex_1");
+    expect(readFileSync(join(root, ".lenz/nodes/authentication/login.yaml"), "utf8")).toContain("run: bun test -t ex_1");
   });
   test("spec edit stages the node; blast radius follows deps and refs", () => {
     const login = core.store.all().find((n) => n.title === "Login")!;
@@ -130,14 +130,14 @@ describe("dispatch → build → verify (fake agent)", () => {
     for (let i = 0; i < 100 && core.store.get(hashNode.id)!.status !== "built"; i++) await Bun.sleep(100);
     for (let i = 0; i < 50 && !core.store.get(hashNode.id)!.verification?.machine; i++) await Bun.sleep(100);
     const run = core.runs.get(runId)!;
-    if (run.status !== "done") console.log("RUN ERROR:", run.error, readFileSync(join(root, ".lenzgraph/runs", runId, "events.jsonl"), "utf8").slice(0, 500));
+    if (run.status !== "done") console.log("RUN ERROR:", run.error, readFileSync(join(root, ".lenz/runs", runId, "events.jsonl"), "utf8").slice(0, 500));
     expect(run.status).toBe("done");
     expect(run.session_id).toBe("sess-1");
     expect(core.locks.log.some((e) => e.kind === "grant" && e.file === "src/auth/hash.ts" && e.run === runId)).toBe(true);
     expect(run.changed_symbols).toContain("src/auth/hash.ts##function#verifyPassword");
-    expect(existsSync(join(root, ".lenzgraph/runs", runId, "prompt.md"))).toBe(true);
-    expect(existsSync(join(root, ".lenzgraph/runs", runId, "events.jsonl"))).toBe(true);
-    const result = JSON.parse(readFileSync(join(root, ".lenzgraph/runs", runId, "result.json"), "utf8"));
+    expect(existsSync(join(root, ".lenz/runs", runId, "prompt.md"))).toBe(true);
+    expect(existsSync(join(root, ".lenz/runs", runId, "events.jsonl"))).toBe(true);
+    const result = JSON.parse(readFileSync(join(root, ".lenz/runs", runId, "result.json"), "utf8"));
     expect(result.exit).toBe(0);
     const n = core.store.get(hashNode.id)!;
     expect(n.status).toBe("built");

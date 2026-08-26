@@ -1,6 +1,6 @@
-import { anchorKey } from "@lenzgraph/structure";
+import { anchorKey } from "@lenz/structure";
 import type { NodeStore } from "./nodes.ts";
-import type { StructureDb } from "@lenzgraph/structure";
+import type { StructureDb } from "@lenz/structure";
 
 export interface Relation { id: string; via: string[] } // peer node id + up to a few "symbol → symbol" examples
 export interface NodeRelations { out: Relation[]; in: Relation[] }

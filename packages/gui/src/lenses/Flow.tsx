@@ -7,7 +7,8 @@ interface FlowNode { key: string; symbol: { name: string; kind: string; file: st
 export function FlowLens() {
   const status = useStore((s) => s.status);
   const [entries, setEntries] = useState<{ key: string; source: string; symbol: any }[]>([]);
-  const [from, setFrom] = useState<string | null>(null);
+  const flowFrom = useStore((s) => s.flowFrom); const setFlowFrom = useStore((s) => s.setFlowFrom);
+  const from = flowFrom; const setFrom = setFlowFrom;
   const [tree, setTree] = useState<FlowNode | null>(null);
   const [pin, setPin] = useState("");
   useEffect(() => { api("/flow").then((r) => setEntries(r.entries)); }, [status?.nodes]);
@@ -26,7 +27,8 @@ export function FlowLens() {
   );
   return (
     <>
-      <div className="section"><div className="section-h">entry points ({entries.length})</div>
+      <div className="section"><div className="section-h">logical execution flow — entry points ({entries.length})</div>
+        <div className="dim" style={{ marginBottom: 4 }}>pick an entry point (or "flow →" on a node in the graph) to walk the call tree from there; each symbol shows the node that owns it.</div>
         <div className="row">{entries.map((e) => <button key={e.key} className={from === e.key ? "primary" : ""} onClick={() => setFrom(e.key)}>{e.symbol?.name}<span className="dim"> {e.symbol?.file}{e.source === "pinned" ? " ·pin" : ""}</span></button>)}</div>
         <div className="row"><input placeholder="pin a symbol key: file#container#kind#name" value={pin} onChange={(e) => setPin(e.target.value)} style={{ width: 420 }} /><button onClick={() => api("/flow/pin", { key: pin, pinned: true }).then((r) => { setEntries(r.entries); setPin(""); })}>pin</button></div>
       </div>

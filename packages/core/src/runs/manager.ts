@@ -1,6 +1,6 @@
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { StructureIndex, SymbolsChanged } from "@lenzgraph/structure";
+import type { StructureIndex, SymbolsChanged } from "@lenz/structure";
 import type { EventBus } from "../events.ts";
 import type { LockBroker } from "../locks.ts";
 import type { RunKind, RunRecord } from "../types.ts";
@@ -26,7 +26,7 @@ interface Active { rec: RunRecord; proc: ReturnType<typeof Bun.spawn>; timer: Re
 
 export interface RunManagerOpts {
   root: string; lenzDir: string; runsDir: string; port: number;
-  cli: string[]; // argv prefix to invoke the lenzgraph CLI
+  cli: string[]; // argv prefix to invoke the lenz CLI
   maxConcurrent: () => number; timeoutSec: () => number; model?: () => string | undefined;
   llm: () => { provider: "gemini" | "claude"; model: string };
 }
@@ -86,7 +86,7 @@ export class RunManager {
       cwd: this.opts.root,
       stdin: Bun.file(promptFile),
       stdout: "pipe", stderr: "pipe",
-      env: { ...process.env, LENZGRAPH_RUN: rec.id, LENZGRAPH_PORT: String(this.opts.port), LENZGRAPH_ROOT: this.opts.root, CLAUDECODE: undefined as any },
+      env: { ...process.env, LENZ_RUN: rec.id, LENZ_PORT: String(this.opts.port), LENZ_ROOT: this.opts.root, CLAUDECODE: undefined as any },
     });
     const timer = setTimeout(() => this.kill(rec.id, "timeout"), this.opts.timeoutSec() * 1000);
     const act: Active = { rec, proc, timer, changed: new Map(), resolve, text: "" };
@@ -149,7 +149,7 @@ export class RunManager {
     this.active.set(rec.id, { rec, light: true } as any);
     this.bus.publish("run.updated", { run: rec });
     const apiKey = process.env.GEMINI_API_KEY ?? "";
-    const r = apiKey ? await geminiGenerate({ apiKey, model, prompt: spec.prompt, schema: spec.schema, timeoutMs: this.opts.timeoutSec() * 1000 }) : { text: "", error: "GEMINI_API_KEY not set (put it in ~/.config/lenzgraph/env or .lenzgraph/.env)" };
+    const r = apiKey ? await geminiGenerate({ apiKey, model, prompt: spec.prompt, schema: spec.schema, timeoutMs: this.opts.timeoutSec() * 1000 }) : { text: "", error: "GEMINI_API_KEY not set (put it in ~/.config/lenz/env or .lenz/.env)" };
     rec.ended_at = new Date().toISOString(); rec.duration = (Date.parse(rec.ended_at) - Date.parse(rec.started_at)) / 1000;
     rec.exit = r.error ? 1 : 0; rec.error = r.error; rec.result_text = r.text; rec.status = r.error ? "failed" : "done"; rec.tokens = r.usage;
     appendFileSync(join(dir, "events.jsonl"), JSON.stringify({ type: "result", provider: rec.provider, text: r.text, structured: r.structured, usage: r.usage, error: r.error }) + "\n");

@@ -210,8 +210,9 @@ function Minimap({ nodes, focus, onGo }: { nodes: Record<string, LenzNode>; focu
 }
 
 function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; onOpen: () => void }) {
-  const nodes = useStore((s) => s.nodes); const notify = useStore((s) => s.notify);
+  const nodes = useStore((s) => s.nodes); const notify = useStore((s) => s.notify); const setLens = useStore((s) => s.setLens); const setFlowFrom = useStore((s) => s.setFlowFrom);
   const col = areaColor(nodes, n.id);
+  const firstAnchor = (n.anchors ?? [])[0];
   const v = n.verification;
   const act = (path: string, body?: any) => api(path, body ?? {}).catch((e) => notify(e.message));
   return (
@@ -229,6 +230,7 @@ function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; o
         {n.status === "proposed" && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
         {(n.status === "specified" || n.status === "rejected") && n.kind === "behavior" && <button className="primary" onClick={() => act(`/nodes/${n.id}/dispatch`)}>dispatch</button>}
         {(n.status === "built" || n.status === "drifted") && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
+        {firstAnchor && <button onClick={() => { setFlowFrom(`${firstAnchor.file}#${firstAnchor.container}#${firstAnchor.kind}#${firstAnchor.name}`); setLens("flow"); }} title="open the logical execution flow from this node's code">flow →</button>}
         <button onClick={() => act(`/nodes/${n.id}/summarize`)} title="rewrite the summary with Gemini">{n.summary ? "re-summarize" : "summarize"}</button>
       </div>
     </div>

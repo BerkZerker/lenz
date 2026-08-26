@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import YAML from "yaml";
-import { anchorKey, type StructureDb } from "@lenzgraph/structure";
+import { anchorKey, type StructureDb } from "@lenz/structure";
 import type { LenzNode, NodeStatus } from "./types.ts";
 import type { EventBus } from "./events.ts";
 
