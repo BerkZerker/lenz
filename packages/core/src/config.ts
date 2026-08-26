@@ -15,7 +15,9 @@ export interface LenzConfig {
   run_timeout: number; // seconds
   example_timeout: number; // seconds
   port: number;
-  model?: string; // optional model override for all agent runs
+  model?: string; // optional model override for Claude Code build runs
+  /** provider for the non-agentic calls (propose, derive, reconstruction, compare). Builds always use the Claude Code adapter. */
+  llm: { provider: "gemini" | "claude"; model: string };
 }
 
 export const DEFAULT_CONFIG: LenzConfig = {
@@ -27,6 +29,7 @@ export const DEFAULT_CONFIG: LenzConfig = {
   run_timeout: 20 * 60,
   example_timeout: 60,
   port: 7331,
+  llm: { provider: "gemini", model: "gemini-3.7-flash" },
 };
 
 export const DEFAULT_AGENT_YAML = `# Claude Code adapter. {prompt_file} is fed on stdin; {settings_file} carries the lock hooks.
@@ -42,7 +45,7 @@ export function loadConfig(root: string): LenzConfig {
   const p = join(lenzDir(root), "config.yaml");
   if (!existsSync(p)) return { ...DEFAULT_CONFIG };
   const raw = YAML.parse(readFileSync(p, "utf8")) ?? {};
-  return { ...DEFAULT_CONFIG, ...raw };
+  return { ...DEFAULT_CONFIG, ...raw, llm: { ...DEFAULT_CONFIG.llm, ...(raw.llm ?? {}) } };
 }
 
 export function initProject(root: string) {
@@ -55,6 +58,6 @@ export function initProject(root: string) {
   const agentPath = join(dir, "agents", "claude.yaml");
   if (!existsSync(agentPath)) writeFileSync(agentPath, DEFAULT_AGENT_YAML);
   const gi = join(dir, ".gitignore");
-  if (!existsSync(gi)) writeFileSync(gi, "runs/\nstructure.db*\n");
+  if (!existsSync(gi)) writeFileSync(gi, "runs/\nstructure.db*\n.env\n");
   return dir;
 }

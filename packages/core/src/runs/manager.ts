@@ -5,14 +5,17 @@ import type { EventBus } from "../events.ts";
 import type { LockBroker } from "../locks.ts";
 import type { RunKind, RunRecord } from "../types.ts";
 import { buildCommand, loadAdapter, parseStreamJsonLine, writeClaudeSettings, type AgentAdapter } from "./adapter.ts";
+import { geminiGenerate } from "../llm/gemini.ts";
 
 export interface RunSpec {
   kind: RunKind;
   node: string | null;
   prompt: string;
   note?: string;
-  /** extra CLI args (e.g. --json-schema, --tools) */
+  /** extra CLI args (e.g. --json-schema, --tools) — Claude adapter only */
   extra?: string[];
+  /** JSON schema for structured output (both providers) */
+  schema?: any;
   /** don't count against max_concurrent_runs (short LLM calls) */
   light?: boolean;
   session_id?: string;
@@ -25,6 +28,7 @@ export interface RunManagerOpts {
   root: string; lenzDir: string; runsDir: string; port: number;
   cli: string[]; // argv prefix to invoke the lenzgraph CLI
   maxConcurrent: () => number; timeoutSec: () => number; model?: () => string | undefined;
+  llm: () => { provider: "gemini" | "claude"; model: string };
 }
 
 /** Owns agent processes: queueing, concurrency, timeouts, run records, changed-symbol capture. */
@@ -71,6 +75,9 @@ export class RunManager {
     const promptFile = join(dir, "prompt.md");
     const settingsFile = join(dir, "settings.json");
     writeFileSync(promptFile, spec.prompt);
+    const llm = this.opts.llm();
+    if (spec.light && llm.provider === "gemini") { void this.startGemini(spec, rec, resolve, dir, llm.model); return; }
+    if (spec.schema) spec.extra = [...(spec.extra ?? []), "--json-schema", JSON.stringify(spec.schema)];
     writeClaudeSettings(settingsFile, { cli: this.opts.cli, runId: rec.id, port: this.opts.port, model: this.opts.model?.() });
     const argv = buildCommand(this.adapter, { prompt_file: promptFile, settings_file: settingsFile, session_id: spec.session_id }, spec.extra ?? []);
     rec.status = "running"; rec.started_at = new Date().toISOString();
@@ -132,6 +139,25 @@ export class RunManager {
     this.bus.publish("run.updated", { run: rec });
     act.resolve({ run: rec, text: act.text, structured: act.structured });
     (rec as any).changes = [...act.changed].map(([key, change]) => ({ key, change }));
+    this.pump();
+  }
+
+  /** In-process Gemini call for light runs; keeps the same run record / run dir contract. */
+  private async startGemini(spec: RunSpec, rec: RunRecord, resolve: (o: RunOutcome) => void, dir: string, model: string) {
+    rec.status = "running"; rec.started_at = new Date().toISOString(); rec.provider = `gemini:${model}`;
+    writeFileSync(join(dir, "meta.json"), JSON.stringify({ ...rec, provider: rec.provider }, null, 2));
+    this.active.set(rec.id, { rec, light: true } as any);
+    this.bus.publish("run.updated", { run: rec });
+    const apiKey = process.env.GEMINI_API_KEY ?? "";
+    const r = apiKey ? await geminiGenerate({ apiKey, model, prompt: spec.prompt, schema: spec.schema, timeoutMs: this.opts.timeoutSec() * 1000 }) : { text: "", error: "GEMINI_API_KEY not set (put it in ~/.config/lenzgraph/env or .lenzgraph/.env)" };
+    rec.ended_at = new Date().toISOString(); rec.duration = (Date.parse(rec.ended_at) - Date.parse(rec.started_at)) / 1000;
+    rec.exit = r.error ? 1 : 0; rec.error = r.error; rec.result_text = r.text; rec.status = r.error ? "failed" : "done"; rec.tokens = r.usage;
+    appendFileSync(join(dir, "events.jsonl"), JSON.stringify({ type: "result", provider: rec.provider, text: r.text, structured: r.structured, usage: r.usage, error: r.error }) + "\n");
+    writeFileSync(join(dir, "result.json"), JSON.stringify({ changed_symbols: [], locks_held: [], exit: rec.exit, duration: rec.duration, status: rec.status, provider: rec.provider, usage: r.usage, error: r.error }, null, 2));
+    this.bus.publish("run.event", { run: rec.id, node: rec.node, kind: rec.kind, event: { type: "result", subtype: rec.status, text: (r.text ?? "").slice(0, 2000), tokens: r.usage } });
+    this.active.delete(rec.id);
+    this.bus.publish("run.updated", { run: rec });
+    resolve({ run: rec, text: r.text, structured: r.structured });
     this.pump();
   }
 

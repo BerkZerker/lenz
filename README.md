@@ -8,6 +8,11 @@ Spec: [`lenzgraph-spec.md`](./lenzgraph-spec.md).
 
 - [bun](https://bun.sh) ≥ 1.2
 - [Claude Code](https://claude.com/claude-code) CLI on `PATH` (`claude`) — the only agent adapter in V1
+- a Gemini API key for the non-agentic calls (propose, derive, reconstruction, spec comparison).
+  Put `GEMINI_API_KEY=...` in `~/.config/lenzgraph/env` (all projects) or `.lenzgraph/.env` (one
+  project; gitignored). Model defaults to `gemini-3.7-flash`; override via `llm:` in `config.yaml`
+  (`llm: { provider: claude }` routes those calls through Claude Code instead). Builds always run
+  on Claude Code.
 - optional: `@sourcegraph/scip-typescript` for precise references (`lenzgraph index --scip`)
 
 ## Quick start

@@ -1,0 +1,24 @@
+kind: behavior
+title: Clear completed todos
+spec: "Add `clear(): void` to the store. Removes all todos currently marked as done from the store.
+  Any open todos remain unaffected. If no todos are marked as done, the store state remains
+  unchanged."
+parent: n_8b0e65
+status: proposed
+examples:
+  - id: ex_0a77ed
+    name: Remove all completed todos
+    given: A store with one open todo and two done todos
+    when: clear() is called
+    then: The two done todos are removed and only the open todo remains
+    expect:
+      mode: exit0
+  - id: ex_407599
+    name: Clear when no todos are completed
+    given: A store containing only open todos
+    when: clear() is called
+    then: All todos remain in the store unchanged
+    expect:
+      mode: exit0
+id: n_ac12e5
+deps: []

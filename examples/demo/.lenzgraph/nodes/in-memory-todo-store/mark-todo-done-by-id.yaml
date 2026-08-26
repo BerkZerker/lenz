@@ -126,39 +126,61 @@ verification:
   reconstruction:
     verdict: match
     reasons: []
-    at: 2026-08-26T02:16:12.715Z
+    at: 2026-08-26T03:21:11.389Z
 reconstruction: >-
-  **`done(id)` — mark a todo as completed**
+  ### Method Behavior: `createStore.done`
 
 
-  Behavior:
+  **Overview**
 
-  - Looks up the first todo in the store's in-memory `todos` array whose `id` strictly equals
-  (`===`) the given `id`.
-
-  - If no matching todo exists, throws an `Error` with the message `todo not found: <id>`. Nothing
-  is modified in that case.
-
-  - If found, sets that todo's `done` property to `true` — mutating the object in place inside the
-  array — and returns that same object (not a copy).
+  The `done` method marks a single to-do item within the store's `todos` collection as completed by
+  its unique identifier.
 
 
-  Edge cases and invariants:
+  ---
 
-  - Idempotent: calling `done` on a todo that is already done leaves it `done: true` and returns it
-  without error.
 
-  - Only the first match is affected; if duplicate IDs existed in the array, only the first would be
-  marked. (Whether duplicates can exist is not determined by this code.)
+  ### Inputs and Outputs
 
-  - No validation of `id` beyond the equality check: a non-integer, negative, `NaN`, or otherwise
-  unmatched value results in the "not found" error. `NaN` never matches since `NaN === NaN` is
-  false.
+  * **Input:** `id` (number) — The identifier of the to-do item to mark as done.
 
-  - The returned object is a live reference: callers who modify it will modify the store's state.
+  * **Output:** `Todo` — The updated to-do item object.
 
-  - No other fields of the todo are touched; no timestamps or side effects beyond the `done` flag
-  are recorded.
 
-  - The method is synchronous and returns a `Todo`; it never returns `undefined` — failure is
-  signaled only by the thrown error.
+  ---
+
+
+  ### Execution Flow
+
+  1. **Search:** Scans the `todos` collection sequentially for the first item whose `id` strictly
+  equals the provided `id`.
+
+  2. **Validation:** Checks if a matching item was located.
+     * If found: Updates the item's `done` property directly to `true` and returns the mutated item.
+     * If not found: Halts execution immediately by throwing an error.
+
+  ---
+
+
+  ### Error Handling
+
+  * **Item Not Found:** Throws a standard JavaScript `Error` with the message `todo not found: <id>`
+  if no item in `todos` matches the supplied `id`.
+
+
+  ---
+
+
+  ### Edge Cases and Invariants
+
+  * **In-Place Mutation:** Directly modifies the existing object reference inside the `todos` list
+  rather than creating an immutable copy.
+
+  * **Idempotency (Already Done):** If the matching item is already marked `done: true`, the method
+  reassigns `done = true` without error and returns the item unchanged.
+
+  * **Duplicate Identifiers:** If multiple items in `todos` share the same `id`, only the **first**
+  matching item in array order is updated and returned; subsequent duplicates remain unmodified.
+
+  * **Post-condition Invariant:** On successful execution, the returned `Todo` object is guaranteed
+  to have `done === true`.

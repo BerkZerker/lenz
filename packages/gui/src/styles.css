@@ -55,7 +55,7 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
 .box { border: 1px solid var(--border); padding: 6px 8px; margin: 6px 0; background: var(--panel); }
 .box.selected { border-color: var(--accent); }
-.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .tabs div { padding: 2px 10px; cursor: pointer; color: var(--dim); border-right: 1px solid var(--border); }
 .tabs div.active { color: var(--accent); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -74,3 +74,4 @@ table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid var
 .orphan-sym { padding-left: 12px; display: flex; gap: 8px; align-items: center; }
 .orphan-sym.selected { outline: 1px solid var(--accent); outline-offset: -1px; }
 .hint { color: var(--dim); margin-top: 12px; }
+svg *:focus, svg:focus { outline: none !important; }

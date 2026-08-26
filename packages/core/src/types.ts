@@ -73,6 +73,8 @@ export interface RunRecord {
   error?: string;
   result_text?: string;
   cost_usd?: number;
+  provider?: string;
+  tokens?: { prompt: number; output: number; thoughts?: number };
 }
 
 export interface Lock { file: string; run: string; acquired_at: number; last_write_at: number }

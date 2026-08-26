@@ -15,6 +15,17 @@ export function GraphView() {
   const pos = useRef(new Map<string, P>());
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string | null; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
+  const userView = useRef(false); // set once the user pans/zooms; disables auto-fit
+  const fit = () => {
+    if (userView.current || !svgRef.current) return;
+    const ps = [...pos.current.values()]; if (!ps.length) return;
+    const xs = ps.map((p) => p.x), ys = ps.map((p) => p.y);
+    const w = Math.max(...xs) - Math.min(...xs) + 320, h = Math.max(...ys) - Math.min(...ys) + 100;
+    const W = svgRef.current.clientWidth, H = svgRef.current.clientHeight;
+    const k = Math.min(2.4, Math.max(0.5, Math.min(W / w, H / h)));
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2 + 60, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    setView({ k, x: -cx * k, y: -cy * k });
+  };
   const centerId = focus ?? ROOT;
   // default: intent children of the center are expanded one level so a folder shows its behaviors immediately
   useEffect(() => { setExpanded(new Set(Object.values(nodes).filter((n) => n.parent === focus && n.kind === "intent").map((n) => n.id))); }, [focus, Object.keys(nodes).length]);
@@ -59,12 +70,12 @@ export function GraphView() {
       const ps = [...m.values()];
       for (let a = 0; a < ps.length; a++) for (let b = a + 1; b < ps.length; b++) {
         const A = ps[a], B = ps[b]; let dx = B.x - A.x, dy = B.y - A.y; let d2 = dx * dx + dy * dy || 1; const d = Math.sqrt(d2);
-        const f = Math.min(80, 40000 / d2); dx /= d; dy /= d;
+        const f = Math.min(120, 90000 / d2); dx /= d; dy /= d;
         A.vx -= dx * f; A.vy -= dy * f; B.vx += dx * f; B.vy += dy * f;
       }
       for (const l of links) {
         const A = m.get(l.a), B = m.get(l.b); if (!A || !B) continue;
-        const rest = l.kind === "dep" ? 260 : 190 + Math.min(4, (visible.get(l.b) ? childCount(nodes, l.b) : 0)) * 15;
+        const rest = l.kind === "dep" ? 300 : 230 + Math.min(4, (visible.get(l.b) ? childCount(nodes, l.b) : 0)) * 15;
         const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const f = (d - rest) * (l.kind === "dep" ? 0.01 : 0.04);
         A.vx += (dx / d) * f; A.vy += (dy / d) * f; B.vx -= (dx / d) * f; B.vy -= (dy / d) * f;
       }
@@ -75,7 +86,7 @@ export function GraphView() {
       }
       alpha = Math.max(0.05, alpha * 0.985);
       tick((t) => t + 1);
-      if (alpha > 0.06) raf = requestAnimationFrame(step);
+      if (alpha > 0.06) raf = requestAnimationFrame(step); else fit();
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
@@ -85,12 +96,12 @@ export function GraphView() {
   const onDown = (e: React.MouseEvent, id: string | null) => { e.stopPropagation(); const p = id ? pos.current.get(id) : null; drag.current = { id, sx: e.clientX, sy: e.clientY, ox: p ? p.x : view.x, oy: p ? p.y : view.y, moved: false }; if (p) p.pinned = true; };
   const onMove = (e: React.MouseEvent) => {
     const d = drag.current; if (!d) return; const dx = e.clientX - d.sx, dy = e.clientY - d.sy; if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
-    if (d.id) { const p = pos.current.get(d.id); if (p) { p.x = d.ox + dx / view.k; p.y = d.oy + dy / view.k; tick((t) => t + 1); } } else setView((v) => ({ ...v, x: d.ox + dx, y: d.oy + dy }));
+    if (d.id) { const p = pos.current.get(d.id); if (p) { p.x = d.ox + dx / view.k; p.y = d.oy + dy / view.k; tick((t) => t + 1); } } else { userView.current = true; setView((v) => ({ ...v, x: d.ox + dx, y: d.oy + dy })); }
   };
   const onUp = () => { const d = drag.current; if (d?.id && d.id !== centerId) { const p = pos.current.get(d.id); if (p) p.pinned = false; } drag.current = null; };
-  const onWheel = (e: React.WheelEvent) => { const k = Math.min(3, Math.max(0.3, view.k * (e.deltaY < 0 ? 1.1 : 0.9))); setView((v) => ({ ...v, k })); };
-  const click = (id: string) => { if (drag.current?.moved) return; if (id === ROOT) { setSelected(null); return; } setSelected(id); setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); };
-  const dbl = (id: string) => { const n = nodes[id]; if (id === ROOT) { setFocus(null); return; } if (n?.kind === "intent") { setFocus(id); setSelected(null); setExpanded(new Set()); } };
+  const onWheel = (e: React.WheelEvent) => { userView.current = true; const k = Math.min(3, Math.max(0.3, view.k * (e.deltaY < 0 ? 1.1 : 0.9))); setView((v) => ({ ...v, k })); };
+  const click = (id: string) => { if (drag.current?.moved) return; if (id === ROOT) { setSelected(null); return; } const already = useStore.getState().selected === id; setSelected(id); setExpanded((s) => { const n = new Set(s); if (already && n.has(id)) n.delete(id); else n.add(id); return n; }); };
+  const dbl = (id: string) => { const n = nodes[id]; userView.current = false; if (id === ROOT) { setFocus(null); return; } if (n?.kind === "intent") { setFocus(id); setSelected(null); setExpanded(new Set()); } };
 
   const crumbs: { id: string | null; title: string }[] = [{ id: null, title: "app" }];
   let p = focus ? nodes[focus] : null; const chain: typeof crumbs = [];

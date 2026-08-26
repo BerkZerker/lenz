@@ -1,0 +1,39 @@
+kind: behavior
+title: Undo last mutation
+spec: "Add `undo(): void` to the store. Reverts the most recent state-changing mutation (`add`,
+  `remove`, or `done`). Undoing an `add` deletes the created todo; undoing a `remove` restores the
+  removed todo with its previous state and id; undoing a `done` sets the todo status back to open.
+  If there is no previous mutation in history, calling `undo()` is a no-op and does not throw."
+parent: n_8b0e65
+status: proposed
+examples:
+  - id: ex_c33f77
+    name: Revert added todo
+    given: A store where a todo titled 'Buy milk' was just added
+    when: undo() is called
+    then: The todo 'Buy milk' is removed from the store
+    expect:
+      mode: exit0
+  - id: ex_f118b7
+    name: Revert completed todo
+    given: A store where an open todo with id 1 was marked done
+    when: undo() is called
+    then: Todo with id 1 reverts back to open status
+    expect:
+      mode: exit0
+  - id: ex_b36604
+    name: Revert removed todo
+    given: A store where todo with id 1 was deleted
+    when: undo() is called
+    then: Todo with id 1 is restored to the store with its original status
+    expect:
+      mode: exit0
+  - id: ex_eca4a3
+    name: Undo with empty history
+    given: A fresh store with no recorded mutation history
+    when: undo() is called
+    then: No error is thrown and the store remains unchanged
+    expect:
+      mode: exit0
+id: n_a9ca44
+deps: []

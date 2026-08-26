@@ -9,6 +9,8 @@ import { FanOutError, NodeStore, newId, FAN_OUT_CAP } from "./nodes.ts";
 import { RunManager } from "./runs/manager.ts";
 import { DERIVE_SCHEMA, PROPOSAL_SCHEMA, buildPrompt, comparePrompt, derivePrompt, oneLine, proposePrompt, reconstructPrompt } from "./runs/prompt.ts";
 import { runCommand, runExamples } from "./verify/examples.ts";
+import { loadEnvFiles } from "./llm/gemini.ts";
+import { homedir } from "node:os";
 import { EDITABLE_FIELDS, type Example, type LenzNode, type NodeStatus, type ProposedAnchor } from "./types.ts";
 
 export interface CoreOpts { root: string; port?: number; cli?: string[] }
@@ -22,12 +24,14 @@ export class Core {
 
   constructor(opts: CoreOpts) {
     this.root = opts.root; this.dir = initProject(opts.root); this.cfg = loadConfig(opts.root);
+    loadEnvFiles([join(homedir(), ".config/lenzgraph/env"), join(this.dir, ".env")]);
+    if (this.cfg.llm.provider === "gemini" && !process.env.GEMINI_API_KEY) { this.cfg.llm = { provider: "claude", model: "" }; }
     this.port = opts.port ?? this.cfg.port;
     this.cli = opts.cli ?? ["bun", join(import.meta.dir, "cli.ts")];
     this.idx = new StructureIndex({ root: this.root, dbPath: join(this.dir, "structure.db"), source_globs: this.cfg.source_globs, ignore_globs: this.cfg.ignore_globs, entry_globs: this.cfg.entry_globs, orphan_exclude: this.cfg.orphan_exclude });
     this.store = new NodeStore(join(this.dir, "nodes"), this.idx.db, this.bus);
     this.locks = new LockBroker(this.bus, () => this.cfg.lock_cooldown);
-    this.runs = new RunManager({ root: this.root, lenzDir: this.dir, runsDir: join(this.dir, "runs"), port: this.port, cli: this.cli, maxConcurrent: () => this.cfg.max_concurrent_runs, timeoutSec: () => this.cfg.run_timeout, model: () => this.cfg.model }, this.bus, this.locks, this.idx);
+    this.runs = new RunManager({ root: this.root, lenzDir: this.dir, runsDir: join(this.dir, "runs"), port: this.port, cli: this.cli, maxConcurrent: () => this.cfg.max_concurrent_runs, timeoutSec: () => this.cfg.run_timeout, model: () => this.cfg.model, llm: () => this.cfg.llm }, this.bus, this.locks, this.idx);
     this.idx.on("symbols_changed", (ev: SymbolsChanged) => { this.bus.publish("structure.synced", ev); this.detectDrift(ev); });
     this.idx.on("error", (e: any) => this.bus.publish("log", { level: "error", msg: String(e) }));
   }
@@ -39,7 +43,7 @@ export class Core {
     this.store.load();
     this.refreshAllAnchors();
     if (opts.watch) this.idx.watch();
-    this.log(`indexed ${this.idx.db.allFiles().length} files, ${this.idx.db.allSymbols().length} symbols; ${this.store.all().length} nodes`);
+    this.log(`indexed ${this.idx.db.allFiles().length} files, ${this.idx.db.allSymbols().length} symbols; ${this.store.all().length} nodes; llm: ${this.cfg.llm.provider === "gemini" ? this.cfg.llm.model : "claude code"} (builds: claude code)`);
   }
   async close() { await this.idx.close(); }
   log(msg: string, level = "info") { this.bus.publish("log", { level, msg }); }
@@ -237,7 +241,7 @@ export class Core {
     if (!text) { this.store.update(nodeId, { verification: { ...(this.store.get(nodeId)!.verification ?? {}), reconstruction: { verdict: "error", reasons: [r1.run.error ?? "empty reconstruction"], at: new Date().toISOString() } } }); return; }
     this.store.update(nodeId, { reconstruction: text });
     const schema = { type: "object", properties: { verdict: { type: "string", enum: ["match", "mismatch"] }, reasons: { type: "array", items: { type: "string" } } }, required: ["verdict", "reasons"] };
-    const r2 = await this.runs.submit({ kind: "compare", node: nodeId, prompt: comparePrompt(n.spec, n.examples, text), extra: ["--tools", "", "--json-schema", JSON.stringify(schema)], light: true }).done;
+    const r2 = await this.runs.submit({ kind: "compare", node: nodeId, prompt: comparePrompt(n.spec, n.examples, text), extra: ["--tools", ""], schema, light: true }).done;
     const parsed = r2.structured ?? extractJson(r2.text);
     const verdict = parsed?.verdict === "match" || parsed?.verdict === "mismatch" ? parsed.verdict : "error";
     this.store.update(nodeId, { verification: { ...(this.store.get(nodeId)!.verification ?? {}), reconstruction: { verdict, reasons: Array.isArray(parsed?.reasons) ? parsed.reasons : [r2.run.error ?? "no verdict"], at: new Date().toISOString() } } });
@@ -276,10 +280,10 @@ export class Core {
     const existing = this.store.tree();
     const treeText = renderTree(existing, this.store);
     const parentNode = parent ? this.store.get(parent) : null;
-    let prompt = proposePrompt(text, treeText, parentNode?.title ?? null);
+    let prompt = proposePrompt(text, treeText, parentNode?.title ?? null, this.cfg.llm.provider === "gemini" ? this.repoSummary() : null);
     let lastErr = "";
     for (let attempt = 0; attempt < 2; attempt++) {
-      const out = await this.runs.submit({ kind: "propose", node: parent, prompt: attempt ? prompt + `\n\nYour previous proposal was rejected: ${lastErr}. Fix it.` : prompt, extra: ["--tools", "Read,Glob,Grep", "--json-schema", JSON.stringify(PROPOSAL_SCHEMA)], light: true }).done;
+      const out = await this.runs.submit({ kind: "propose", node: parent, prompt: attempt ? prompt + `\n\nYour previous proposal was rejected: ${lastErr}. Fix it.` : prompt, extra: ["--tools", "Read,Glob,Grep"], schema: PROPOSAL_SCHEMA, light: true }).done;
       const parsed = out.structured ?? extractJson(out.text);
       if (!parsed?.nodes) { lastErr = out.run.error ?? "no JSON tree in output"; continue; }
       const viol = fanOutViolation(parsed.nodes, this.store.children(parent).length);
@@ -332,7 +336,7 @@ export class Core {
         intent = this.store.create({ kind: "intent", title: dir.split("/").pop() || "project", spec: `Folder ${dir || "."}: ${subs.map((s) => s.title).join(", ")}`, status: "proposed", derived: true });
       } else {
         const symInfo = syms.map((s) => ({ key: s.key, kind: s.kind, name: s.name, container: s.container, file: s.file, sig: (this.idx.symbolSource(s.key) ?? "").split("\n")[0].slice(0, 160), doc: docOf(this.idx, s) }));
-        const out = await this.runs.submit({ kind: "derive", node: null, prompt: derivePrompt(dir, symInfo, subs.map((s) => ({ title: s.title, spec: s.spec }))), extra: ["--tools", "", "--json-schema", JSON.stringify(DERIVE_SCHEMA)], light: true }).done;
+        const out = await this.runs.submit({ kind: "derive", node: null, prompt: derivePrompt(dir, symInfo, subs.map((s) => ({ title: s.title, spec: s.spec }))), extra: ["--tools", ""], schema: DERIVE_SCHEMA, light: true }).done;
         const parsed = out.structured ?? extractJson(out.text);
         if (!parsed?.intent) { this.log(`derive ${dir}: no output (${out.run.error ?? "empty"})`, "warn"); continue; }
         intent = this.store.create({ kind: "intent", title: String(parsed.intent.title ?? dir).slice(0, 120), spec: String(parsed.intent.spec ?? ""), status: "proposed", derived: true });
@@ -346,6 +350,17 @@ export class Core {
       void parentDir;
     }
     return { created };
+  }
+
+  /** Compact repo overview for providers that cannot read the tree themselves. */
+  repoSummary(maxLines = 300): string {
+    const lines: string[] = [];
+    for (const f of this.idx.db.allFiles()) {
+      const syms = this.idx.db.symbolsInFile(f.path).filter((s) => s.exported || s.container === "").map((s) => `${s.container ? s.container + "." : ""}${s.name}`);
+      lines.push(`${f.path}: ${syms.slice(0, 12).join(", ")}${syms.length > 12 ? ", …" : ""}`);
+      if (lines.length >= maxLines) { lines.push("…"); break; }
+    }
+    return lines.join("\n");
   }
 
   status() {
