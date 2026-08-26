@@ -1,0 +1,25 @@
+kind: behavior
+title: Status bar metrics and system state display
+spec: Renders the footer StatusBar component displaying aggregated state statistics, node counts,
+  sync/coverage status, and system metrics.
+parent: n_9fe373
+status: proposed
+examples:
+  - id: ex_7ba809
+    name: Display active metrics
+    given: A project with loaded nodes and current validation status
+    when: StatusBar renders at the bottom of the viewport
+    then: Renders counts of total nodes, current filter state, and status indicators
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: StatusBar
+    container: ""
+    file: packages/gui/src/components/StatusBar.tsx
+    sig: a9d0d8e95e12
+    body: be9d6d755de7
+id: n_2a6526
+deps: []

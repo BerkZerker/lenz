@@ -1,0 +1,57 @@
+kind: behavior
+title: Project Configuration and Initialization
+spec: Loads configuration files from `.lenzgraph/config.json`, provides default settings and agent
+  YAML templates, resolves the `.lenzgraph` directory path, and initializes project directories and
+  scaffold files.
+parent: n_87c287
+status: proposed
+examples:
+  - id: ex_525e07
+    name: Initialize new lenzgraph project
+    given: A project root directory without `.lenzgraph` folder
+    when: initProject(root) is executed
+    then: Creates `.lenzgraph/nodes`, `.lenzgraph/runs`, writes default `config.json` and default
+      `agent.yaml` files, and returns the project directory path.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: LenzConfig
+    container: ""
+    file: packages/core/src/config.ts
+    sig: ab7a9da81398
+    body: eb7806d1a017
+  - kind: const
+    name: DEFAULT_CONFIG
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 19f504461277
+    body: 87bfa224197f
+  - kind: const
+    name: DEFAULT_AGENT_YAML
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 53a0acfad593
+    body: 2048821b035c
+  - kind: function
+    name: lenzDir
+    container: ""
+    file: packages/core/src/config.ts
+    sig: cd06a1e9d7eb
+    body: 6af7747c1789
+  - kind: function
+    name: loadConfig
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 412ed57e1c97
+    body: 8da019c35751
+  - kind: function
+    name: initProject
+    container: ""
+    file: packages/core/src/config.ts
+    sig: cd06a1e9d7eb
+    body: c8a84dc71637
+id: n_d5ecfb
+deps: []

@@ -1,0 +1,32 @@
+kind: behavior
+title: Hierarchical node navigation tree with search filtering
+spec: Renders a nested expandable tree view of specs and behavior nodes, supporting recursive search
+  queries via hasMatch to expand and highlight matching tree items and their ancestors.
+parent: n_9fe373
+status: proposed
+examples:
+  - id: ex_14d8b1
+    name: Filter tree nodes by search term
+    given: A tree structure containing child nodes with varying titles and a query string
+    when: hasMatch is evaluated on a parent node against the query string
+    then: Returns true if any child title or deep descendant contains the query string
+      (case-insensitively)
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: Tree
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: a9d0d8e95e12
+    body: 4ef057f5e637
+  - kind: function
+    name: hasMatch
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: f26d879d8e8c
+    body: a8c384867788
+id: n_a8a9bd
+deps: []

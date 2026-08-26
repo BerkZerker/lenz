@@ -1,0 +1,179 @@
+kind: behavior
+title: YAML Node Storage and Hierarchy Management
+spec: Persists and loads intent and behavior nodes as YAML files structured by hierarchy paths,
+  enforces a fan-out cap per parent node (max 9 children), mirrors node anchors into structure
+  index, generates topological orderings, and produces tree views.
+parent: n_87c287
+status: proposed
+examples:
+  - id: ex_fd1273
+    name: Create node and enforce fan-out limit
+    given: A parent node that already has 9 child nodes
+    when: Attempting to create a 10th child node under that parent
+    then: A FanOutError is thrown.
+    expect:
+      mode: exit0
+    derived: true
+  - id: ex_167bfe
+    name: Update node status and sync anchors
+    given: An existing behavior node in NodeStore
+    when: "update(id, { title: 'New Title' }) is called"
+    then: The node YAML file is updated on disk, anchors are mirrored to structure DB, and
+      'node.updated' is published.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: FAN_OUT_CAP
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: 53a0acfad593
+    body: 06bca58f73d8
+  - kind: function
+    name: slugify
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: c3487862de8e
+    body: 0c8bbe182e61
+  - kind: function
+    name: newId
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: 5838afafbcf4
+    body: 0845d5c4b4d2
+  - kind: class
+    name: FanOutError
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: e171bea1d487
+    body: 0bff6e65aeb8
+  - kind: method
+    name: constructor
+    container: FanOutError
+    file: packages/core/src/nodes.ts
+    sig: 8e13e7e74b79
+    body: 6ebf911bbc7f
+  - kind: class
+    name: NodeStore
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: 53f82707abe6
+    body: ec407a62e84b
+  - kind: method
+    name: constructor
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 127a0cba813c
+    body: 196661c171cd
+  - kind: method
+    name: load
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: d7b0a4d6f984
+    body: 37775b7eece8
+  - kind: method
+    name: get
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: b9efcf67d26e
+    body: 186c11abdec0
+  - kind: method
+    name: all
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: d7b0a4d6f984
+    body: 2d0d4b0c2749
+  - kind: method
+    name: children
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: bd10fc389865
+    body: f35b701ca5cd
+  - kind: method
+    name: descendants
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 3340ebe95a82
+    body: 2c5b1d322b90
+  - kind: method
+    name: ancestors
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 3340ebe95a82
+    body: aabc838875eb
+  - kind: method
+    name: anchorsOf
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: b9efcf67d26e
+    body: 7486683c6596
+  - kind: method
+    name: pathFor
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 96021aae2c9c
+    body: bfb5befa0790
+  - kind: method
+    name: assertFanOut
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: a0cff9bbe7a4
+    body: 664de757468e
+  - kind: method
+    name: create
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 757e0ea25a3a
+    body: 352ae272e965
+  - kind: method
+    name: save
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9255f042ff38
+    body: ae28fd7d0d9f
+  - kind: method
+    name: mirror
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9b08fc93a690
+    body: 9d89b9bc864c
+  - kind: method
+    name: update
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 64a17980d2dd
+    body: 3ca2c988dc86
+  - kind: method
+    name: setStatus
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9eac97a4350e
+    body: 94e6147bb99c
+  - kind: method
+    name: delete
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 546be732ed2f
+    body: e14cd59e0322
+  - kind: method
+    name: topo
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 631cadd99e7e
+    body: b1182437764d
+  - kind: method
+    name: tree
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 62f569d02428
+    body: 91157d5ebd03
+  - kind: interface
+    name: TreeItem
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: ab7a9da81398
+    body: 6c8e19df3976
+id: n_5b9044
+deps: []

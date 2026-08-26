@@ -1,0 +1,27 @@
+kind: behavior
+title: Node detail inspection panel
+spec: Renders the Inspector panel displaying the currently selected node's details, including title,
+  status, full specification text, associated source code anchors, and given/when/then example
+  scenarios.
+parent: n_9fe373
+status: proposed
+examples:
+  - id: ex_5e05bb
+    name: Inspect selected behavior node
+    given: A behavior node is selected in application state
+    when: The Inspector component renders
+    then: Displays the node's title, status tag, full spec markdown, anchor list, and interactive
+      examples
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: Inspector
+    container: ""
+    file: packages/gui/src/components/Inspector.tsx
+    sig: a9d0d8e95e12
+    body: bf72cca6501f
+id: n_7f8ddf
+deps: []

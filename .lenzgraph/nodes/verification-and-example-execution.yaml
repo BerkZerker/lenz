@@ -1,0 +1,10 @@
+kind: intent
+title: Verification and Example Execution
+spec: Provides execution and assertion capabilities to verify behaviors and examples by running
+  shell commands within specified working directories, evaluating their outputs against expected
+  assertions, matching structured JSON subsets, and reporting batch results with timeout safety.
+status: proposed
+derived: true
+id: n_0cc4df
+parent: null
+deps: []

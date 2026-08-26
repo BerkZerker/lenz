@@ -1,0 +1,128 @@
+kind: behavior
+title: Incremental Index Coordination and Watching
+spec: Orchestrates project-wide extraction, incremental synchronization on file modifications,
+  debounced filesystem watching, SCIP reference overlays, entry point auto-discovery, and symbol
+  source retrieval.
+parent: n_424a45
+status: proposed
+examples:
+  - id: ex_5e524b
+    name: Sync modified files incrementally
+    given: A StructureIndex instance watching source directories
+    when: sync(['src/handler.ts'], []) is triggered after edits
+    then: Re-extracts the modified file, updates database symbols and refs, and emits 'symbols_changed'.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: StructureConfig
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: ab7a9da81398
+    body: 83284b01435b
+  - kind: const
+    name: DEFAULT_STRUCTURE_CONFIG
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: c051e29bbc81
+    body: 32d0cf60082f
+  - kind: class
+    name: StructureIndex
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: 3e72e0311fa1
+    body: 78ce6f69aa51
+  - kind: method
+    name: constructor
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 077b327f59ef
+    body: 121d2f0e910b
+  - kind: method
+    name: rel
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 0258408d32d2
+    body: 78756e7477d1
+  - kind: method
+    name: abs
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 73c225fc899d
+    body: 0fc315123900
+  - kind: method
+    name: accepts
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 73c225fc899d
+    body: f06f89f55261
+  - kind: method
+    name: listSourceFiles
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 69efba224114
+    body: 0145020e18a3
+  - kind: method
+    name: indexAll
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: f7b1d5fa30b1
+    body: 6b001f2f9bf5
+  - kind: method
+    name: sync
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 89f507d539bd
+    body: 965e5d6da688
+  - kind: method
+    name: doSync
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 2b824c63e4a4
+    body: 55d64afa6402
+  - kind: method
+    name: refreshEntryPoints
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: d7b0a4d6f984
+    body: ab823a239eec
+  - kind: method
+    name: applyScip
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: df0345ebb4a7
+    body: 2541373d9f2f
+  - kind: method
+    name: watch
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: d7b0a4d6f984
+    body: 1b3d20f50206
+  - kind: method
+    name: flush
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 1464fbdaa860
+    body: 3e278e753967
+  - kind: method
+    name: close
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 2b99dbd07328
+    body: 04d64dd006ef
+  - kind: method
+    name: symbolSource
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 87318759f4e6
+    body: 30ce03fcaf32
+  - kind: method
+    name: fileMtime
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: b79355986553
+    body: 086b9c4319a9
+id: n_848ccb
+deps: []

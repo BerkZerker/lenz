@@ -1,0 +1,8 @@
+kind: intent
+title: packages
+spec: "Folder packages: core, gui, structure"
+status: proposed
+derived: true
+id: n_3bbc53
+parent: null
+deps: []

@@ -1,0 +1,86 @@
+kind: behavior
+title: Domain Data Types and Schema Definitions
+spec: Defines core TypeScript structures and interfaces representing nodes, code anchors,
+  verification examples and results, symbols, lock statuses, run execution records, and navigation
+  lenses.
+parent: n_fc5e23
+status: proposed
+examples:
+  - id: ex_6c33e2
+    name: represent node model
+    given: a behavior or intent node in the system
+    when: deserialized into a LenzNode structure
+    then: provides typed access to id, kind, title, spec, anchors, examples, and relations
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: Anchor
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 70a09107be1d
+  - kind: interface
+    name: Example
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 24b6ca0dbb1c
+  - kind: interface
+    name: ExampleResult
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 0e4f11dbbf33
+  - kind: interface
+    name: LenzNode
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 99579008e11e
+  - kind: interface
+    name: TreeItem
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: d3c8c643b314
+  - kind: interface
+    name: RunRecord
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: bb4886532718
+  - kind: interface
+    name: Lock
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 373bcd076eca
+  - kind: interface
+    name: LockEvent
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 91064816bb46
+  - kind: interface
+    name: SymbolRow
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 23cda9f996ca
+  - kind: interface
+    name: Status
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: fc1ac1bfa91a
+  - kind: type
+    name: Lens
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: e9c2c6793a61
+    body: 612b2899385d
+id: n_833082
+deps: []

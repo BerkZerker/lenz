@@ -1,0 +1,12 @@
+kind: intent
+title: Static Web Application Assets and Bundled Runtimes
+spec: The `packages/core/static/assets` folder contains bundled, minified client-side JavaScript
+  assets used to power the core static web interface and documentation. It encapsulates the React UI
+  runtime and DOM renderer for component rendering and state updates, alongside a comprehensive YAML
+  parsing, AST representation, and serialization engine for handling configuration and specification
+  documents in the browser.
+status: proposed
+derived: true
+id: n_b7bebc
+parent: n_8acf92
+deps: []

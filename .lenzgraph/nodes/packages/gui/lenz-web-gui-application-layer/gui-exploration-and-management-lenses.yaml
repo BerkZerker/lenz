@@ -1,0 +1,11 @@
+kind: intent
+title: GUI Exploration and Management Lenses
+spec: Provides specialized lens views for the GUI, enabling users to interactively inspect node
+  hierarchies, explore force-directed dependency graphs, manage staging and change proposals, track
+  execution queues, audit test runs and events, review verification details, and manage orphan
+  symbols.
+status: proposed
+derived: true
+id: n_742e8a
+parent: n_fc5e23
+deps: []

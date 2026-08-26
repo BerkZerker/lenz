@@ -1,0 +1,37 @@
+kind: behavior
+title: Node Verification and Summary Details
+spec: Renders high-level verification summaries and detailed test/check execution results for
+  selected nodes and associated runs.
+parent: n_742e8a
+status: proposed
+examples:
+  - id: ex_a62fc5
+    name: view node verification detail
+    given: A node with passed and failed verification checks
+    when: The user inspects the node in the Verify lens
+    then: Displays overall summary status and itemized run failure or pass details.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: VerifyLens
+    container: ""
+    file: packages/gui/src/lenses/Verify.tsx
+    sig: a9d0d8e95e12
+    body: 936337722f77
+  - kind: function
+    name: Summary
+    container: ""
+    file: packages/gui/src/lenses/Verify.tsx
+    sig: 64dc05cad910
+    body: 6b8748adfc4c
+  - kind: function
+    name: Detail
+    container: ""
+    file: packages/gui/src/lenses/Verify.tsx
+    sig: 9b6ba46ed1b7
+    body: 19c3bd0b406c
+id: n_522746
+deps: []

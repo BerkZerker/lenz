@@ -1,0 +1,8 @@
+kind: intent
+title: examples
+spec: "Folder examples: brownfield, demo"
+status: proposed
+derived: true
+id: n_6461e1
+parent: null
+deps: []

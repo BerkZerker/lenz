@@ -1,0 +1,9 @@
+kind: intent
+title: Todo Store
+spec: Provides an in-memory storage and state management interface for Todo items, supporting
+  creation, status updates, deletion, and filtered retrieval.
+status: proposed
+derived: true
+id: n_b7cf79
+parent: n_82bce8
+deps: []

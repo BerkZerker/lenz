@@ -1,0 +1,111 @@
+kind: behavior
+title: Tree-Sitter AST Symbol and Reference Extraction
+spec: Parses source code files with Tree-sitter WASM modules and language queries to extract
+  top-level and container-scoped symbols, signatures, hashes, imports, and raw reference
+  identifiers.
+parent: n_424a45
+status: proposed
+examples:
+  - id: ex_1e84e9
+    name: Extract symbols and raw refs from TypeScript file
+    given: A TypeScript file containing a class and an exported function
+    when: extractFile is executed on the file path
+    then: Returns an Extraction object containing SymbolRows, ImportRows, and RawRefs with normalized
+      hashes.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: RawRef
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: ab7a9da81398
+    body: 814e1b82ed01
+  - kind: interface
+    name: Extraction
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: ab7a9da81398
+    body: c5a455d3cb4f
+  - kind: const
+    name: initPromise
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 2b30882c3a3e
+    body: 493e277433c3
+  - kind: const
+    name: langCache
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 53a0acfad593
+    body: "896e63365260"
+  - kind: function
+    name: ensureInit
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 207bfd2fb49a
+    body: 2ad000455a09
+  - kind: function
+    name: loadLanguage
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 712f69fe8a91
+    body: 9f52ff3b9930
+  - kind: function
+    name: hashText
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: e188321efa0f
+    body: c482bc12645b
+  - kind: function
+    name: contentHash
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: e188321efa0f
+    body: 9027e6240a0f
+  - kind: function
+    name: normalize
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 40d0c770c43d
+    body: ac6d98c71fbc
+  - kind: const
+    name: FN_TYPES
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 53a0acfad593
+    body: 18502df4d0c5
+  - kind: function
+    name: isFunctionLocal
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 0c269cf63017
+    body: a255cd876610
+  - kind: function
+    name: containerOf
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 3c8ed2be4db9
+    body: 8797d843c284
+  - kind: function
+    name: signatureOf
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 11548d5cd91f
+    body: 7637ff261ffc
+  - kind: function
+    name: extractFile
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: fa027ca82cf7
+    body: a71e6e6c546b
+  - kind: function
+    name: preloadLanguages
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 4141f3418a95
+    body: 3d9a6c42a54a
+id: n_3c4f64
+deps: []

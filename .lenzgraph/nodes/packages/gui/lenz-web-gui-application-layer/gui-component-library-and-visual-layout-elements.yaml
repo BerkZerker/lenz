@@ -1,0 +1,11 @@
+kind: intent
+title: GUI Component Library and Visual Layout Elements
+spec: Provides the reusable UI components for the Lenz graphical interface, including the
+  hierarchical node navigation tree with search filtering, node detail inspector, application status
+  bar, keyboard shortcut help modal, and common presentation widgets for node cards, badges, and
+  formatting helpers.
+status: proposed
+derived: true
+id: n_9fe373
+parent: n_fc5e23
+deps: []

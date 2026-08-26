@@ -1,0 +1,133 @@
+kind: behavior
+title: Multi-Language Syntax and Import Rules
+spec: Configures Tree-sitter grammars, query paths, export criteria, and import parsing / resolution
+  logic for supported languages (TypeScript, TSX, Python, and Go).
+parent: n_424a45
+status: proposed
+examples:
+  - id: ex_517f1e
+    name: Resolve TypeScript file definition
+    given: A file path 'src/components/Button.tsx'
+    when: languageForFile is called
+    then: The tsx LanguageDef configuration is returned.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: ImportBinding
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ab7a9da81398
+    body: a65e71b0da46
+  - kind: interface
+    name: LanguageDef
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ab7a9da81398
+    body: abeace007b36
+  - kind: const
+    name: wasmDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 2f17139d8744
+    body: 8753fcfe11eb
+  - kind: const
+    name: queryDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 2f17139d8744
+    body: 945651ad9f74
+  - kind: function
+    name: tsResolve
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 21a042bcdab0
+    body: 02802f474b2b
+  - kind: function
+    name: isDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: f772155e444d
+    body: 41c76bc47481
+  - kind: function
+    name: tsIsExported
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 7bf1a89c48cb
+    body: 9d9f0efd68a0
+  - kind: function
+    name: tsParseImport
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ebd47ec31ac1
+    body: d67e5852126c
+  - kind: const
+    name: typescript
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 1cb73a856f5c
+  - kind: const
+    name: tsx
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: f3985f628fb6
+  - kind: const
+    name: python
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 236af8f58659
+  - kind: method
+    name: parseImport
+    container: python.python
+    file: packages/structure/src/languages.ts
+    sig: 1249705f1b89
+    body: 8c000f8200c7
+  - kind: method
+    name: resolveModule
+    container: python.python
+    file: packages/structure/src/languages.ts
+    sig: d4c231dc2ec0
+    body: ed1849e6e23a
+  - kind: const
+    name: go
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 7dab2938ec1c
+  - kind: method
+    name: parseImport
+    container: go.go
+    file: packages/structure/src/languages.ts
+    sig: 1249705f1b89
+    body: f191daf804a9
+  - kind: const
+    name: LANGUAGES
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 8887d2199a4b
+    body: e410afde69e2
+  - kind: function
+    name: languageForFile
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 8dce0b83eac4
+    body: 8a18c7cfce5e
+  - kind: function
+    name: wasmPath
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 5d51dcd81ed6
+    body: cecace143b58
+  - kind: function
+    name: queryPath
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 5d51dcd81ed6
+    body: 7cf2b366a148
+id: n_2e36f0
+deps: []

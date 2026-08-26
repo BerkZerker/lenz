@@ -1,0 +1,8 @@
+kind: intent
+title: gui
+spec: "Folder packages/gui: Lenz Web GUI Application Layer"
+status: proposed
+derived: true
+id: n_647af6
+parent: n_3bbc53
+deps: []

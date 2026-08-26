@@ -1,0 +1,31 @@
+kind: behavior
+title: Run Event Logging and History
+spec: Visualizes task run histories and renders individual execution event entries along with
+  timestamps, logs, and statuses.
+parent: n_742e8a
+status: proposed
+examples:
+  - id: ex_1781d7
+    name: inspect run events
+    given: A completed task run with emitted lifecycle events
+    when: The user opens the Runs lens and selects a run
+    then: Renders a formatted event stream detailing run progress and outputs.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: RunsLens
+    container: ""
+    file: packages/gui/src/lenses/Runs.tsx
+    sig: a9d0d8e95e12
+    body: 29ffd2156a12
+  - kind: function
+    name: renderEvent
+    container: ""
+    file: packages/gui/src/lenses/Runs.tsx
+    sig: 9e94c5b4ca84
+    body: 32e1c722ec1f
+id: n_775536
+deps: []

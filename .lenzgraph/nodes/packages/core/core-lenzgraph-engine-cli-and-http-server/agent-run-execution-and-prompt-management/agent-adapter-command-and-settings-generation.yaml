@@ -1,0 +1,77 @@
+kind: behavior
+title: Agent Adapter Command and Settings Generation
+spec: Loads agent adapter configurations, parses command-line argument strings with quotes and
+  escapes, generates execution commands with variable replacements, renders Claude settings for tool
+  hook interception, and parses streamed agent event lines into structured event objects.
+parent: n_000dd8
+status: proposed
+examples:
+  - id: ex_2f352a
+    name: Build command with substituted template variables
+    given: An adapter with command template 'claude -p {prompt_file} -s {settings_file}' and variable
+      mappings for prompt and settings files
+    when: buildCommand is invoked with the adapter and variables
+    then: Returns the command array with variables replaced by their actual file paths.
+    expect:
+      mode: exit0
+    derived: true
+  - id: ex_970127
+    name: Parse streaming JSON line
+    given: A single line of NDJSON output emitted from Claude containing an assistant message text block
+    when: parseStreamJsonLine is called with the line
+    then: Returns a ParsedEvent with the extracted text, session ID, or tool usage payload.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: AgentAdapter
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ab7a9da81398
+    body: a63199aa9bcf
+  - kind: function
+    name: loadAdapter
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 14a6bc3d7283
+    body: 1559ea684638
+  - kind: function
+    name: splitArgs
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 0a80a277429c
+    body: 18c7008b222a
+  - kind: function
+    name: buildCommand
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 966682560b31
+    body: e202f85fe4ae
+  - kind: function
+    name: writeClaudeSettings
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ca925e88ec0a
+    body: ed3e55390915
+  - kind: function
+    name: shq
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: c3487862de8e
+    body: "120e72897862"
+  - kind: interface
+    name: ParsedEvent
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ab7a9da81398
+    body: 925acd5dbdfe
+  - kind: function
+    name: parseStreamJsonLine
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 523fb4a87820
+    body: 355a7c6502f3
+id: n_02fb82
+deps: []

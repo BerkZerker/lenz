@@ -1,0 +1,31 @@
+kind: behavior
+title: Help and shortcut modal overlay
+spec: Renders a modal dialog detailing keyboard shortcuts and help guides defined in HELP when
+  triggered by the user.
+parent: n_9fe373
+status: proposed
+examples:
+  - id: ex_770632
+    name: Show keyboard shortcuts dialog
+    given: Modal visibility state is set to open
+    when: Modal renders
+    then: Presents an overlay listing shortcut keys and descriptions from HELP with a dismiss action
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: HELP
+    container: ""
+    file: packages/gui/src/components/Modal.tsx
+    sig: 2bf72538f51d
+    body: de20f1846645
+  - kind: function
+    name: Modal
+    container: ""
+    file: packages/gui/src/components/Modal.tsx
+    sig: a9d0d8e95e12
+    body: 58558afa3472
+id: n_f6c0ca
+deps: []

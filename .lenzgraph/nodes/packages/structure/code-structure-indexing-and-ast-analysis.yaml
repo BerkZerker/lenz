@@ -1,0 +1,10 @@
+kind: intent
+title: Code Structure Indexing and AST Analysis
+spec: Provides multi-language AST extraction, syntactic reference resolution, SCIP index
+  integration, SQLite-backed structural caching, anchor drift tracking, and incremental file
+  watching to maintain a real-time semantic structural model of a codebase.
+status: proposed
+derived: true
+id: n_424a45
+parent: n_3ccaac
+deps: []

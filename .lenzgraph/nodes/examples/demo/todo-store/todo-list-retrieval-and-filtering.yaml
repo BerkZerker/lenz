@@ -1,0 +1,25 @@
+kind: behavior
+title: Todo list retrieval and filtering
+spec: Retrieves todo items from the store, supporting optional filtering by status ('open' or
+  'done') or returning all todos when no filter is specified.
+parent: n_b7cf79
+status: proposed
+examples:
+  - id: ex_e3b0ea
+    name: Filter open todos
+    given: A store containing one open todo and one completed todo
+    when: list('open') is called
+    then: Only the open todo item is returned
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: list
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 233669d98703
+    body: c3902eefbcdb
+id: n_f2e1f4
+deps: []

@@ -1,0 +1,39 @@
+kind: behavior
+title: Backend API Communication Client
+spec: Executes HTTP requests against the backend REST endpoints with JSON payload serialization,
+  error handling, and method routing for query and mutation actions including deletion.
+parent: n_fc5e23
+status: proposed
+examples:
+  - id: ex_050cdb
+    name: fetch data with GET
+    given: a backend running API endpoints
+    when: calling api('/api/nodes')
+    then: dispatches a GET fetch request and resolves with the JSON-decoded response
+    expect:
+      mode: exit0
+    derived: true
+  - id: ex_6ff068
+    name: delete resource
+    given: a resource identifier path '/api/runs/123'
+    when: invoking del('/api/runs/123')
+    then: dispatches a DELETE fetch request to the server
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: api
+    container: ""
+    file: packages/gui/src/api.ts
+    sig: 5a6e0d2f8c98
+    body: 9f7e60e8f64a
+  - kind: const
+    name: del
+    container: ""
+    file: packages/gui/src/api.ts
+    sig: f6519b1d6077
+    body: 8b8909df25dc
+id: n_f9f10a
+deps: []

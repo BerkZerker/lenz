@@ -1,0 +1,8 @@
+kind: intent
+title: structure
+spec: "Folder packages/structure: Code Structure Indexing and AST Analysis"
+status: proposed
+derived: true
+id: n_3ccaac
+parent: n_3bbc53
+deps: []

@@ -1,0 +1,25 @@
+kind: behavior
+title: Task Queue Management
+spec: Displays pending and active execution tasks, enabling monitoring and prioritization of
+  background jobs.
+parent: n_742e8a
+status: proposed
+examples:
+  - id: ex_04e2ba
+    name: view pending tasks
+    given: Multiple tasks enqueued for verification and build
+    when: The user views the Queue lens
+    then: Displays the ordered task list with their current execution states.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: QueueLens
+    container: ""
+    file: packages/gui/src/lenses/Queue.tsx
+    sig: a9d0d8e95e12
+    body: 47181a32f551
+id: n_7e8263
+deps: []

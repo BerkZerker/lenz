@@ -1,0 +1,8 @@
+kind: intent
+title: demo
+spec: "Folder examples/demo: Todo Store"
+status: proposed
+derived: true
+id: n_82bce8
+parent: n_6461e1
+deps: []

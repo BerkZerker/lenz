@@ -1,0 +1,161 @@
+kind: behavior
+title: Run Queueing, Lifecycle Management, and Symbol Attribution
+spec: Manages execution queues, process spawning, in-process Gemini invocations, timeouts, process
+  termination, run status queries, and attributes symbol changes occurring during runs back to the
+  responsible run records.
+parent: n_000dd8
+status: proposed
+examples:
+  - id: ex_a670b1
+    name: Submit and execute run within concurrency limits
+    given: A RunManager configured with max concurrency 2 and no active processes
+    when: A new build RunSpec is submitted
+    then: The run is started immediately, tracked in the active list, emits events to the event bus, and
+      resolves a RunOutcome upon completion.
+    expect:
+      mode: exit0
+    derived: true
+  - id: ex_575b15
+    name: Attribute symbol changes to active run
+    given: A run holding lock on file 'foo.ts'
+    when: SymbolsChanged event occurs with modified symbols for 'foo.ts'
+    then: The modified symbols are recorded under the active run record's change list.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: RunSpec
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 3e3bec44148e
+  - kind: interface
+    name: RunOutcome
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 02953599972b
+  - kind: interface
+    name: Active
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 7208cd0e7e81
+  - kind: interface
+    name: RunManagerOpts
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: f33c4a43f4a1
+  - kind: class
+    name: RunManager
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 53f82707abe6
+    body: 586b26297860
+  - kind: method
+    name: constructor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: dbe1d8f212c5
+    body: cde26be0da4c
+  - kind: method
+    name: list
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d7b0a4d6f984
+    body: 1e6e7d3f3553
+  - kind: method
+    name: get
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b9efcf67d26e
+    body: 83c5b859bc49
+  - kind: method
+    name: runningFor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 74a198af36a8
+    body: 71356a41be22
+  - kind: method
+    name: buildingNodes
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d7b0a4d6f984
+    body: 7599d79b2056
+  - kind: method
+    name: submit
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b97bb2960fef
+    body: 3e3a21fca937
+  - kind: method
+    name: pump
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 75dacf142e68
+    body: 4d91b3d2d296
+  - kind: method
+    name: start
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: c6e11de7eb3e
+    body: 95ad538274d7
+  - kind: method
+    name: consume
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d1fc6a665bcc
+    body: b02f13eb950e
+  - kind: method
+    name: finish
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d1fc6a665bcc
+    body: 84d554fb93ef
+  - kind: method
+    name: startGemini
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: "19393e996637"
+    body: 35f371baaeaf
+  - kind: method
+    name: kill
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b7dcc3325c40
+    body: 500dd0420ac3
+  - kind: method
+    name: onSymbolsChanged
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: ad5809d4e15d
+    body: 03c9af966098
+  - kind: method
+    name: changesFor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: fc93756c1c7a
+    body: f9f758698d55
+  - kind: method
+    name: changedSymbolsInFile
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b2c4f395446b
+    body: 160b64800b88
+  - kind: function
+    name: summarize
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 4854381e6a73
+    body: dcc5a716d1b0
+  - kind: function
+    name: shortInput
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 444cb33484d4
+    body: dd871f085452
+id: n_cb5689
+deps: []

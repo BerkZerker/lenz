@@ -1,0 +1,10 @@
+kind: intent
+title: Lenz Web GUI Application Layer
+spec: Provides the top-level Single Page Application (SPA) architecture for the Lenz web dashboard,
+  including domain data typing, global reactive state management, REST API client integration with
+  Server-Sent Events (SSE), modal dialogues, and responsive keyboard/lens navigation routing.
+status: proposed
+derived: true
+id: n_fc5e23
+parent: n_647af6
+deps: []

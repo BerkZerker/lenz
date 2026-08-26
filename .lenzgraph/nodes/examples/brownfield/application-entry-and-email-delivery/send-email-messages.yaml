@@ -1,0 +1,31 @@
+kind: behavior
+title: Send Email Messages
+spec: Logs and delivers outgoing email communications to a specified recipient with the provided
+  message body.
+parent: n_c89982
+status: proposed
+examples:
+  - id: ex_7386fa
+    name: Send notification email
+    given: An instantiated Mailer service
+    when: Calling send with recipient 'user@example.com' and body 'Welcome!'
+    then: The recipient and body are outputted to the console log
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: class
+    name: Mailer
+    container: ""
+    file: examples/brownfield/src/mailer.ts
+    sig: 53f82707abe6
+    body: 42aef496d159
+  - kind: method
+    name: send
+    container: Mailer
+    file: examples/brownfield/src/mailer.ts
+    sig: 19a4dc3c3eb7
+    body: 5570cb4aee1b
+id: n_efdeae
+deps: []

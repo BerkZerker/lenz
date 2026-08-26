@@ -1,0 +1,27 @@
+kind: behavior
+title: Running and reporting a suite of verification examples
+spec: Executes a collection of verification examples sequentially in a designated directory, passes
+  each command through execution and judgment, triggers an optional progress callback for each
+  evaluated example, and aggregates the results.
+parent: n_0cc4df
+status: proposed
+examples:
+  - id: ex_481dda
+    name: Running multiple examples sequentially
+    given: A list of two verification examples and a progress callback function
+    when: runExamples is executed
+    then: Each example is run and judged, the callback is invoked once per example with its result, and
+      a full list of example results is returned.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: runExamples
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: 95c9e3675db5
+    body: e9cbbea39604
+id: n_e0f803
+deps: []

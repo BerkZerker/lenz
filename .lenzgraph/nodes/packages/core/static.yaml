@@ -1,0 +1,8 @@
+kind: intent
+title: static
+spec: "Folder packages/core/static: Static Web Application Assets and Bundled Runtimes"
+status: proposed
+derived: true
+id: n_8acf92
+parent: n_d0fc17
+deps: []

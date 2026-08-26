@@ -1,0 +1,34 @@
+kind: behavior
+title: Evaluating example outputs against expected assertions and JSON subsets
+spec: Judges actual command execution outcomes against defined example expectations, checking exit
+  codes, verifying whether expected values or JSON structures are subsets of actual outputs, and
+  flagging timeout errors.
+parent: n_0cc4df
+status: proposed
+examples:
+  - id: ex_6b8c9b
+    name: JSON subset matches actual output
+    given: 'An example expecting `{ "status": "ok" }` and command output producing `{ "status": "ok",
+      "count": 5 }`'
+    when: judge is called with the example and output
+    then: The judgment returns pass true since the expected fields are a subset of the actual JSON
+      output.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: judge
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: b98c1d8830d8
+    body: 1648315068cb
+  - kind: function
+    name: isSubset
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: 82ede3c5f0af
+    body: 95f482067311
+id: n_881d0b
+deps: []

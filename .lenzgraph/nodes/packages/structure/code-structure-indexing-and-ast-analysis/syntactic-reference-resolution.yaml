@@ -1,0 +1,38 @@
+kind: behavior
+title: Syntactic Reference Resolution
+spec: Resolves raw syntactic references within a file to exact symbol keys by checking local file
+  scopes and tracing import bindings across re-exports, storing unresolved identifiers in the
+  database.
+parent: n_424a45
+status: proposed
+examples:
+  - id: ex_7614bf
+    name: Resolve imported function call
+    given: A raw call ref 'format' in 'src/index.ts' which imports '{ format }' from './utils'
+    when: resolveFileRefs is invoked
+    then: A 'calls' reference edge is created pointing to the symbol in 'src/utils.ts'.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: resolveFileRefs
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: c3a298093e6e
+    body: 97810b9a16bc
+  - kind: function
+    name: pickLocal
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: a68215c2ed68
+    body: 355b55124b1a
+  - kind: function
+    name: lookupExport
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: 17a7b54a4c40
+    body: de4149b040d3
+id: n_cc80b0
+deps: []

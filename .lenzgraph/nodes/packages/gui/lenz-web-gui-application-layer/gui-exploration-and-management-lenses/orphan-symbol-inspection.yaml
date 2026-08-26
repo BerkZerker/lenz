@@ -1,0 +1,25 @@
+kind: behavior
+title: Orphan Symbol Inspection
+spec: Detects and lists unanchored or disconnected symbols in the codebase, enabling users to
+  inspect or assign them to behavior nodes.
+parent: n_742e8a
+status: proposed
+examples:
+  - id: ex_b5332f
+    name: list unassigned symbols
+    given: Several symbols not anchored to any intent or behavior node
+    when: The user opens the Orphans lens
+    then: Renders the full list of orphan symbols categorized by file.
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: OrphansLens
+    container: ""
+    file: packages/gui/src/lenses/Orphans.tsx
+    sig: a9d0d8e95e12
+    body: cf44154bc6f1
+id: n_4c452b
+deps: []

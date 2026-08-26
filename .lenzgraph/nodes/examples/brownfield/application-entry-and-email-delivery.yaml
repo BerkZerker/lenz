@@ -1,0 +1,9 @@
+kind: intent
+title: Application Entry and Email Delivery
+spec: Provides the top-level application entry point and mail delivery infrastructure to support
+  user communications alongside underlying authentication and credential management systems.
+status: proposed
+derived: true
+id: n_c89982
+parent: n_6647ac
+deps: []

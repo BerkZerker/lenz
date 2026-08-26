@@ -1,0 +1,8 @@
+kind: intent
+title: core
+spec: "Folder packages/core: Core LenzGraph Engine, CLI, and HTTP Server, static"
+status: proposed
+derived: true
+id: n_d0fc17
+parent: n_3bbc53
+deps: []

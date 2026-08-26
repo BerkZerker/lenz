@@ -1,0 +1,10 @@
+kind: intent
+title: LLM Integration and Environment Setup
+spec: Provides minimal REST-based client capabilities for invoking Google Gemini models for
+  non-agentic content and structured data generation without external SDK dependencies, alongside
+  lightweight utilities for loading environment variable files.
+status: proposed
+derived: true
+id: n_0bc597
+parent: n_87c287
+deps: []

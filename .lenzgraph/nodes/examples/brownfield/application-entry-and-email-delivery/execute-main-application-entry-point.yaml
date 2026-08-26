@@ -1,0 +1,24 @@
+kind: behavior
+title: Execute Main Application Entry Point
+spec: Serves as the root execution entry point for running the application.
+parent: n_c89982
+status: proposed
+examples:
+  - id: ex_d53a63
+    name: Run main entry point
+    given: The application runtime environment is initialized
+    when: The main function is invoked
+    then: The primary application workflow executes
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: main
+    container: ""
+    file: examples/brownfield/src/index.ts
+    sig: a9d0d8e95e12
+    body: ea38f6203363
+id: n_2652aa
+deps: []

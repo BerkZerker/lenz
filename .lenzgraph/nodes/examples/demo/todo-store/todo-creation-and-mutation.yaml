@@ -1,0 +1,58 @@
+kind: behavior
+title: Todo creation and mutation
+spec: Manages the lifecycle of todo items in memory, allowing clients to instantiate a store, add
+  new todos with auto-incremented identifiers and open status, mark existing todos as completed, and
+  remove todos by identifier.
+parent: n_b7cf79
+status: proposed
+examples:
+  - id: ex_a093bf
+    name: Add and complete todo
+    given: An empty todo store created via createStore
+    when: A todo with title 'Buy milk' is added and then marked as done using its id
+    then: The todo is updated and returned with done set to true
+    expect:
+      mode: exit0
+    derived: true
+  - id: ex_8ec2b7
+    name: Remove todo
+    given: A todo store containing a todo item
+    when: remove is called with the todo id
+    then: The todo item is removed from the store
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: Todo
+    container: ""
+    file: examples/demo/src/store.ts
+    sig: ab7a9da81398
+    body: c24ff599bdc8
+  - kind: function
+    name: createStore
+    container: ""
+    file: examples/demo/src/store.ts
+    sig: a9d0d8e95e12
+    body: 6a86fdb5609d
+  - kind: method
+    name: add
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 5d98de16fe76
+    body: 2814738b30be
+  - kind: method
+    name: done
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 554609dab365
+    body: edacae8c08b0
+  - kind: method
+    name: remove
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 52498d6f472a
+    body: 9e91cfa9f12b
+id: n_bbcc25
+deps: []

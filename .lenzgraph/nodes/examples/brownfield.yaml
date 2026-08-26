@@ -1,0 +1,8 @@
+kind: intent
+title: brownfield
+spec: "Folder examples/brownfield: Application Entry and Email Delivery"
+status: proposed
+derived: true
+id: n_6647ac
+parent: n_6461e1
+deps: []
