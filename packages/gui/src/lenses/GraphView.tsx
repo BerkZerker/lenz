@@ -24,7 +24,7 @@ export function GraphView() {
   const [layout, setLayout] = useState<Layout>(() => { try { return (localStorage.getItem("lg.graphLayout") as Layout) || "tree"; } catch { return "tree"; } });
   const [seed, setSeed] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
-  const [view, setViewRaw] = useState({ x: 0, y: 0, k: 1.1 });
+  const [view, setViewRaw] = useState({ x: 0, y: 0, k: 1.3 });
   const viewRef = useRef(view); viewRef.current = view;
   const [, tick] = useState(0);
   const pos = useRef(new Map<string, P>());
@@ -61,7 +61,7 @@ export function GraphView() {
     const ps = [...pos.current.values()].map((p) => ({ x: p.tx, y: p.ty })); if (!ps.length || !svgRef.current) return;
     const xs = ps.map((p) => p.x), ys = ps.map((p) => p.y);
     const w = Math.max(...xs) - Math.min(...xs) + 360, h = Math.max(...ys) - Math.min(...ys) + 160;
-    const k = Math.min(1.6, Math.max(0.7, Math.min(svgRef.current.clientWidth / w, svgRef.current.clientHeight / h)));
+    const k = Math.min(1.8, Math.max(0.8, Math.min(svgRef.current.clientWidth / w, svgRef.current.clientHeight / h)));
     setView({ k, x: -((Math.max(...xs) + Math.min(...xs)) / 2) * k, y: -((Math.max(...ys) + Math.min(...ys)) / 2) * k });
   };
 
@@ -76,7 +76,10 @@ export function GraphView() {
     if (parentId) { const p = m.get(parentId)!; p.tx = 0; p.ty = -LEVEL_GAP; p.pinned = true; }
     const n = children.length;
     if (layout === "tree" || n === 0) {
-      children.forEach((ch, i) => { const p = m.get(ch.id)!; p.tx = (i - (n - 1) / 2) * LEAF_GAP; p.ty = LEVEL_GAP; p.pinned = true; });
+      // fan: children on an arc below the cursor; wider arcs for more children, labels placed outward (see angleOf)
+      const R = n <= 3 ? 190 : 170 + n * 22;
+      const span = n <= 2 ? 0.5 : n <= 5 ? 0.8 : 1.0; // fraction of the lower half-circle
+      children.forEach((ch, i) => { const p = m.get(ch.id)!; const t = n === 1 ? 0.5 : i / (n - 1); const a = Math.PI / 2 + (t - 0.5) * Math.PI * span; p.tx = Math.cos(a) * R * 1.35; p.ty = Math.sin(a) * R; p.pinned = true; });
     } else {
       // force: children start on an arc below the cursor and relax
       children.forEach((ch, i) => { const p = m.get(ch.id)!; const a = Math.PI * (0.15 + 0.7 * (n === 1 ? 0.5 : i / (n - 1))); p.tx = Math.cos(a) * 260 * (n > 4 ? 1.3 : 1); p.ty = Math.sin(a) * 200 + 60; p.pinned = false; });
@@ -142,7 +145,7 @@ export function GraphView() {
           {/* containment edges */}
           {[...loaded.keys()].filter((id) => id !== cursor).map((id) => { const A = pos.current.get(id), C = pos.current.get(cursor); if (!A || !C) return null; const dim = hi && !hi.has(id) && hover !== id; return <line key={"c" + id} className="g-link" x1={C.x} y1={C.y} x2={A.x} y2={A.y} stroke={id === parentId ? "#555" : withAlpha(colorOf(id), 0.45)} strokeWidth={1.2} opacity={dim ? 0.25 : 1} />; })}
           {/* relation edges between siblings */}
-          {relEdges.map((e, i) => { const A = pos.current.get(e.a), B = pos.current.get(e.b); if (!A || !B) return null; const on = hover === e.a || hover === e.b; const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const x2 = B.x - (dx / d) * 12, y2 = B.y - (dy / d) * 12; const bend = 28 * (i % 2 ? 1 : -1); return <path key={"r" + i} className="g-link" d={`M ${A.x} ${A.y} Q ${(A.x + B.x) / 2 - (dy / d) * bend} ${(A.y + B.y) / 2 + (dx / d) * bend} ${x2} ${y2}`} fill="none" stroke={e.kind === "dep" ? "#d97757" : colorOf(e.a)} strokeDasharray={e.kind === "dep" ? "5 3" : "2 3"} strokeWidth={on ? 1.8 : 1} opacity={hover && !on ? 0.15 : 0.7} markerEnd="url(#arrow)" />; })}
+          {relEdges.map((e, i) => { const A = pos.current.get(e.a), B = pos.current.get(e.b); if (!A || !B) return null; const on = hover === e.a || hover === e.b; const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const x2 = B.x - (dx / d) * 12, y2 = B.y - (dy / d) * 12; const bend = 28 * (i % 2 ? 1 : -1); return <path key={"r" + i} className="g-link" d={`M ${A.x} ${A.y} Q ${(A.x + B.x) / 2 - (dy / d) * bend} ${(A.y + B.y) / 2 + (dx / d) * bend} ${x2} ${y2}`} fill="none" stroke={e.kind === "dep" ? "#d97757" : colorOf(e.a)} strokeDasharray={e.kind === "dep" ? "5 3" : "2 3"} strokeWidth={on ? 1.8 : 1} opacity={hover ? (on ? 0.95 : 0.08) : 0.32} markerEnd="url(#arrow)" />; })}
           {[...loaded].map(([id, n]) => {
             const P = pos.current.get(id); if (!P) return null;
             const isCursor = id === cursor, isParent = id === parentId, isSel = id === selected, isIntent = !n || n.kind === "intent";
@@ -158,8 +161,10 @@ export function GraphView() {
                 {ring && <circle r={r + 4} fill="none" stroke={ring} strokeWidth={1.5} opacity={0.9} />}
                 {isIntent && kids > 0 && <text textAnchor="middle" dy="3.5" fontSize={9} fill={col} style={{ pointerEvents: "none" }}>{kids}</text>}
                 {isParent && <text textAnchor="middle" y={-r - 6} fontSize={9} fill="#737373" style={{ pointerEvents: "none" }}>▲ up</text>}
-                <text className="lbl" textAnchor="middle" y={r + 14} fontSize={isCursor ? 13 : 12} fontWeight={isCursor ? 700 : 400} fill={isSel ? "#fff" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, 28)}</text>
-                {n?.staged && <text textAnchor="middle" y={r + 26} fontSize={10} fill="#d97757">staged</text>}
+                {(() => { const lp = labelPos(P, r, isCursor || isParent); return <>
+                  <text className="lbl" textAnchor={lp.anchor} x={lp.x} y={lp.y} fontSize={isCursor ? 13 : 12} fontWeight={isCursor ? 700 : 400} fill={isSel ? "#fff" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, 30)}</text>
+                  {n?.staged && <text textAnchor={lp.anchor} x={lp.x} y={lp.y + 12} fontSize={10} fill="#d97757">staged</text>}
+                </>; })()}
               </g>);
           })}
         </g>
@@ -228,5 +233,12 @@ function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; o
       </div>
     </div>
   );
+}
+/** Labels go outward from the cursor (which sits at the origin): left nodes read leftward, right nodes rightward, bottom nodes below. */
+function labelPos(P: { x: number; y: number }, r: number, centered: boolean): { x: number; y: number; anchor: "start" | "middle" | "end" } {
+  if (centered || (Math.abs(P.x) < 40 && P.y >= 0)) return { x: 0, y: r + 14, anchor: "middle" };
+  if (Math.abs(P.x) < 40) return { x: 0, y: -r - 6, anchor: "middle" };
+  const below = P.y > 60 ? 4 : 4;
+  return P.x < 0 ? { x: -r - 6, y: below, anchor: "end" } : { x: r + 6, y: below, anchor: "start" };
 }
 function trunc(s: string, n: number) { s = s.replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }

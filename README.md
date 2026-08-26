@@ -56,6 +56,20 @@ Spec edits stage the node (`8` Stage shows the staged set and its blast radius).
 topological dispatch; `i` toggles immediate mode. Manual code edits under an anchored symbol flag
 `drifted` (lazy — nothing is auto-dispatched); resolve with "spec still holds" or "re-build".
 
+## Graph lens
+
+The Graph lens (`1`) is a local, voxel-style view: only the **cursor** (an intent or the root), its parent
+(`▲ up`) and its ≤ 9 children are loaded. Click an intent to move the cursor there (old nodes unload);
+click a behavior to open its frosted panel. Layouts: `tree` (fan below the cursor) or `force`; `re-sort`
+re-lays; `fit` refits; wheel zooms; drag pans. Zoom never changes on a click. Node fill = **area** (one
+color per top-level subtree, used across the tree pane and links); ring = status. Dashed edges between
+siblings are `deps` (orange) and code-level calls (area color). The minimap (bottom-left) shows your path
+root → cursor with the siblings at each level. URLs deep-link: `#graph/<node id>`.
+
+Each node carries a Gemini-written **summary** ("does X, hands off to [[A]], relies on [[B]]") derived
+from the symbol graph; `[[links]]` render color-coded and navigate. Summaries are written after
+derive/propose/build, or on demand (`summarize` button, `lenzgraph summarize [--force]`).
+
 ## Keys
 
 `j/k` move · `enter` drill · `esc/h` up · `/` search · `1–6` lenses (graph, queue, verify, orphans,

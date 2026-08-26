@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import YAML from "yaml";
 import { api } from "./api";
 import { useStore } from "./store";
@@ -24,13 +24,18 @@ const LENSES: { id: Lens; key: string; title: string; q: string }[] = [
 
 export function App() {
   const { lens, setLens, connect } = useStore();
+  const pendingFocus = useRef<string | null>(null);
   useEffect(() => {
     connect();
-    const fromHash = () => { const h = location.hash.replace("#", "") as Lens; if (LENSES.some((l) => l.id === h)) setLens(h); };
+    // #<lens>[/<node id>] — the node id sets the graph cursor (deep link to a location)
+    const fromHash = () => { const [h, id] = location.hash.replace("#", "").split("/") as [Lens, string?]; if (LENSES.some((l) => l.id === h)) setLens(h); if (id && id.startsWith("n_")) pendingFocus.current = id; applyPending(); };
+    const applyPending = () => { const id = pendingFocus.current; if (!id) return; const s = useStore.getState(); const n = s.nodes[id]; if (!n) return; pendingFocus.current = null; if (n.kind === "intent") { s.setFocus(id); s.setSelected(id); } else { s.setFocus(n.parent); s.setSelected(id); } };
     fromHash(); window.addEventListener("hashchange", fromHash);
-    return () => window.removeEventListener("hashchange", fromHash);
+    const unsub = useStore.subscribe((s, prev) => { if (s.nodes !== prev.nodes) applyPending(); });
+    return () => { window.removeEventListener("hashchange", fromHash); unsub(); };
   }, []);
-  useEffect(() => { if (location.hash !== "#" + lens) history.replaceState(null, "", "#" + lens); }, [lens]);
+  const focus = useStore((s) => s.focus);
+  useEffect(() => { const want = "#" + lens + (lens === "graph" && focus ? "/" + focus : ""); if (location.hash !== want) history.replaceState(null, "", want); }, [lens, focus]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
