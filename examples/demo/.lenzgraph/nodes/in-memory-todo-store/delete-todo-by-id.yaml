@@ -1,0 +1,160 @@
+kind: behavior
+title: Delete todo by id
+spec: 'Add `remove(id: number): void` to the store. Input: a todo id. If no todo has that id, throw
+  an `Error` with message `"todo not found: <id>"`. Otherwise remove that todo from the store.
+  Deleting does not affect the id counter: the next added todo still gets the next sequential id, so
+  ids are never reused.'
+parent: n_9f47be
+status: built
+examples:
+  - id: ex_11a4b9
+    name: deletes a todo
+    given: a store containing todos id 1 and id 2
+    when: remove(1) is called
+    then: list() contains only id 2
+    expect:
+      mode: exit0
+    run: bun test tests/remove.test.ts -t ex_11a4b9
+  - id: ex_aebac8
+    name: unknown id errors
+    given: a store containing only todo id 1
+    when: remove(5) is called
+    then: 'it throws Error("todo not found: 5") and list() still contains id 1'
+    expect:
+      mode: exit0
+    run: bun test tests/remove.test.ts -t ex_aebac8
+  - id: ex_92e142
+    name: ids not reused
+    given: a store where id 1 was added then removed
+    when: add("x") is called
+    then: the new todo has id 2, not 1
+    expect:
+      mode: exit0
+    run: bun test tests/remove.test.ts -t ex_92e142
+anchors:
+  - kind: method
+    name: remove
+    container: createStore
+    file: src/store.ts
+    sig: 52498d6f472a
+    body: 9e91cfa9f12b
+id: n_874e6b
+deps:
+  - n_8217f9
+last_run: r_mt9ghy468j2
+staged: false
+machine:
+  run: bun test tests/remove.test.ts
+proposed_anchors:
+  - kind: function
+    name: createStore
+    container: ""
+    file: src/store.ts
+    sig: a9d0d8e95e12
+    body: 7e322ed6b089
+    change: changed
+    owner: n_8217f9
+verification:
+  examples:
+    pass: 3
+    fail: 0
+    pending: 0
+    at: 2026-08-26T02:10:34.535Z
+    results:
+      - id: ex_11a4b9
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           1 expect() calls
+          Ran 1 test across 1 file. [2.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:34.337Z
+      - id: ex_aebac8
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [3.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:34.403Z
+      - id: ex_92e142
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           1 expect() calls
+          Ran 1 test across 1 file. [3.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:34.469Z
+  machine:
+    ok: true
+    exit: 0
+    tail: |-
+      bun test v1.4.0 (34cbb9a40)
+
+
+       3 pass
+       0 fail
+       4 expect() calls
+      Ran 3 tests across 1 file. [3.00ms]
+    at: 2026-08-26T02:10:34.601Z
+  reconstruction:
+    verdict: match
+    reasons: []
+    at: 2026-08-26T02:15:51.446Z
+reconstruction: >-
+  `remove(id)` deletes the todo whose `id` equals the given number from the store's in-memory
+  `todos` array, mutating the array in place.
+
+
+  **Behavior**
+
+
+  - It searches `todos` for the first element whose `id` strictly equals (`===`) the argument.
+
+  - If no match is found, it throws an `Error` with the message `todo not found: <id>` and leaves
+  `todos` unchanged.
+
+  - If a match is found, it removes exactly that one element (via `splice(i, 1)`), shifting later
+  elements down by one index. It returns nothing (`void`).
+
+
+  **Edge cases and invariants**
+
+
+  - Only the first matching todo is removed. If the array contained duplicate ids, later duplicates
+  would remain.
+
+  - Matching is strict equality on a `number`, so an `id` that is `NaN` never matches (throws), and
+  a string id like `"3"` would not match a numeric `3`.
+
+  - There is no validation of the argument beyond the type annotation; any number is accepted and
+  simply either matches or throws "not found".
+
+  - The operation is synchronous and has no return value; callers cannot distinguish success other
+  than by the absence of a thrown error.
+
+  - The function does not copy the array — it mutates the closure-captured `todos`, so any external
+  reference to that same array will observe the removal. Indices of remaining todos after the
+  removed position change.
+
+  - Removing from an empty store always throws.
+
+  - Nothing else is touched: no persistence, events, or side effects beyond the array mutation.

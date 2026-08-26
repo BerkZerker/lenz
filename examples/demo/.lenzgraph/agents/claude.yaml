@@ -1,0 +1,5 @@
+# Claude Code adapter. {prompt_file} is fed on stdin; {settings_file} carries the lock hooks.
+command: claude -p --output-format stream-json --verbose --permission-mode bypassPermissions --settings {settings_file}
+resume: claude -p --output-format stream-json --verbose --permission-mode bypassPermissions --settings {settings_file} --resume {session_id}
+events: claude-stream-json
+hooks: claude-settings

@@ -1,0 +1,164 @@
+kind: behavior
+title: Mark todo done by id
+spec: "Add `done(id: number): Todo` to the store. Input: a todo id. If no todo has that id, throw an
+  `Error` with message `\"todo not found: <id>\"` and do not mutate the store. Otherwise set the
+  todo's `done` flag to `true` and return the updated todo. Marking an already-done todo is
+  idempotent (still returns it, no error)."
+parent: n_9f47be
+status: built
+examples:
+  - id: ex_67cbac
+    name: marks done
+    given: "a store containing todo id 1 with done: false"
+    when: done(1) is called
+    then: "it returns { id: 1, title, done: true } and list() shows id 1 as done"
+    expect:
+      mode: exit0
+    run: bun test tests/done.test.ts -t ex_67cbac
+  - id: ex_47e6d2
+    name: unknown id errors
+    given: a store containing only todo id 1
+    when: done(99) is called
+    then: 'it throws Error("todo not found: 99") and the store is unchanged'
+    expect:
+      mode: exit0
+    run: bun test tests/done.test.ts -t ex_47e6d2
+  - id: ex_0affda
+    name: idempotent
+    given: a store where done(1) was already called
+    when: done(1) is called again
+    then: "it returns the todo with done: true and does not throw"
+    expect:
+      mode: exit0
+    run: bun test tests/done.test.ts -t ex_0affda
+id: n_8f56e6
+deps:
+  - n_8217f9
+last_run: r_mt9gp4zi09z
+staged: false
+machine:
+  run: bun test tests/done.test.ts
+anchors:
+  - kind: method
+    name: done
+    container: createStore
+    file: src/store.ts
+    sig: 554609dab365
+    body: edacae8c08b0
+proposed_anchors:
+  - kind: method
+    name: done
+    container: createStore
+    file: src/store.ts
+    sig: 554609dab365
+    body: edacae8c08b0
+    change: added
+    owner: null
+  - kind: function
+    name: createStore
+    container: ""
+    file: src/store.ts
+    sig: a9d0d8e95e12
+    body: 7552559a1753
+    change: changed
+    owner: n_8217f9
+verification:
+  examples:
+    pass: 3
+    fail: 0
+    pending: 0
+    at: 2026-08-26T02:16:02.184Z
+    results:
+      - id: ex_67cbac
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [2.00ms]
+        exit: 0
+        at: 2026-08-26T02:16:01.966Z
+      - id: ex_47e6d2
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [3.00ms]
+        exit: 0
+        at: 2026-08-26T02:16:02.035Z
+      - id: ex_0affda
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           2 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [3.00ms]
+        exit: 0
+        at: 2026-08-26T02:16:02.111Z
+  machine:
+    ok: true
+    exit: 0
+    tail: |-
+      bun test v1.4.0 (34cbb9a40)
+
+
+       3 pass
+       0 fail
+       6 expect() calls
+      Ran 3 tests across 1 file. [3.00ms]
+    at: 2026-08-26T02:16:02.261Z
+  reconstruction:
+    verdict: match
+    reasons: []
+    at: 2026-08-26T02:16:12.715Z
+reconstruction: >-
+  **`done(id)` — mark a todo as completed**
+
+
+  Behavior:
+
+  - Looks up the first todo in the store's in-memory `todos` array whose `id` strictly equals
+  (`===`) the given `id`.
+
+  - If no matching todo exists, throws an `Error` with the message `todo not found: <id>`. Nothing
+  is modified in that case.
+
+  - If found, sets that todo's `done` property to `true` — mutating the object in place inside the
+  array — and returns that same object (not a copy).
+
+
+  Edge cases and invariants:
+
+  - Idempotent: calling `done` on a todo that is already done leaves it `done: true` and returns it
+  without error.
+
+  - Only the first match is affected; if duplicate IDs existed in the array, only the first would be
+  marked. (Whether duplicates can exist is not determined by this code.)
+
+  - No validation of `id` beyond the equality check: a non-integer, negative, `NaN`, or otherwise
+  unmatched value results in the "not found" error. `NaN` never matches since `NaN === NaN` is
+  false.
+
+  - The returned object is a live reference: callers who modify it will modify the store's state.
+
+  - No other fields of the todo are touched; no timestamps or side effects beyond the `done` flag
+  are recorded.
+
+  - The method is synchronous and returns a `Todo`; it never returns `undefined` — failure is
+  signaled only by the thrown error.

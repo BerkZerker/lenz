@@ -115,7 +115,7 @@ const typescript: LanguageDef = {
   isExported: tsIsExported,
   parseImport: tsParseImport,
   resolveModule: tsResolve,
-  containerTypes: ["class_declaration", "abstract_class_declaration", "internal_module", "object"],
+  containerTypes: ["class_declaration", "abstract_class_declaration", "internal_module", "object", "function_declaration", "variable_declarator"],
   bodyField: "body",
 };
 const tsx: LanguageDef = { ...typescript, id: "tsx", wasm: "tree-sitter-tsx.wasm", query: "tsx.scm", extensions: [".tsx", ".jsx", ".js", ".mjs", ".cjs"] };

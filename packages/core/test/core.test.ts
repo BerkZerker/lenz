@@ -22,6 +22,7 @@ PROMPT=$(cat)
 SETTINGS=""
 while [ $# -gt 0 ]; do case "$1" in --settings) SETTINGS="$2"; shift;; esac; shift; done
 echo '{"type":"system","subtype":"init","session_id":"sess-1","model":"fake"}'
+if ! echo "$PROMPT" | grep -q "Output contract"; then echo '{"type":"result","subtype":"success","result":"This code hashes passwords.","session_id":"sess-1"}'; exit 0; fi
 HOOK=$(python3 -c "import json,sys; print(json.load(open('$SETTINGS'))['hooks']['PreToolUse'][0]['hooks'][0]['command'])")
 NODE=$(echo "$PROMPT" | grep -o 'node set n_[a-z0-9]*' | head -1 | awk '{print $3}')
 # simulate a Write tool call through the PreToolUse hook
@@ -153,6 +154,7 @@ describe("dispatch → build → verify (fake agent)", () => {
     writeFileSync(join(root, "src/auth/hash.ts"), 'export function hashPassword(pw: string) { return "md5:" + pw; }\nexport function verifyPassword(pw: string, h: string) { return hashPassword(pw) === h; }\n');
     for (let i = 0; i < 50 && core.store.get(hashNode.id)!.status !== "drifted"; i++) await Bun.sleep(100);
     const d = core.store.get(hashNode.id)!;
+    if (false) console.log("DEBUG anchors", JSON.stringify(d.anchors), "db:", JSON.stringify(core.idx.db.symbolsInFile("src/auth/hash.ts").map((s) => [s.key, s.body])), "synced:", core.bus.history.filter((e) => e.type === "structure.synced").map((e) => e.data.files.join(",") + "=" + e.data.changed.length).join(" / "), "file:", readFileSync(join(root, "src/auth/hash.ts"), "utf8").slice(0, 60), "runs:", core.runs.list().map((r) => r.id + ":" + r.kind + ":" + r.status + ":" + r.started_at).join(" "), "now", new Date().toISOString());
     expect(d.status).toBe("drifted"); expect(d.prev_status).toBe("verified"); expect(d.drift!.reasons[0]).toContain("hashPassword");
     core.resolveDrift(hashNode.id, "holds");
     expect(core.store.get(hashNode.id)!.status).toBe("verified");

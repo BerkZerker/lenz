@@ -47,10 +47,10 @@ export function writeClaudeSettings(path: string, opts: { cli: string[]; runId: 
   const settings: any = {
     hooks: {
       PreToolUse: [
-        { matcher: "Write|Edit|MultiEdit|NotebookEdit", hooks: [hook("pre")] },
-        { matcher: "Bash|Read|Glob|Grep", hooks: [hook("notices")] },
+        { matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash", hooks: [hook("pre")] },
+        { matcher: "Read|Glob|Grep", hooks: [hook("notices")] },
       ],
-      PostToolUse: [{ matcher: "Write|Edit|MultiEdit|NotebookEdit", hooks: [hook("post")] }],
+      PostToolUse: [{ matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash", hooks: [hook("post")] }],
     },
   };
   if (opts.model) settings.model = opts.model;

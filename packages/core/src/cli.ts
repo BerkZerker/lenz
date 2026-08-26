@@ -102,18 +102,23 @@ async function main() {
 async function hook(sub: string) {
   const run = flag("--run", process.env.LENZGRAPH_RUN)!;
   const input = JSON.parse(await Bun.stdin.text().catch(() => "{}") || "{}");
+  const toRel = (fp: string) => relative(root, resolve(input.cwd ?? root, fp)).split("\\").join("/");
   const fp: string | undefined = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
-  const rel = fp ? relative(root, resolve(input.cwd ?? root, fp)).split("\\").join("/") : null;
+  const files: string[] = fp ? [toRel(fp)] : input.tool_name === "Bash" ? bashWriteTargets(String(input.tool_input?.command ?? ""), input.cwd ?? root).map(toRel) : [];
+  const inRepo = files.filter((f) => f && !f.startsWith("..") && !f.startsWith(".lenzgraph/"));
   const emit = (o: any) => { process.stdout.write(JSON.stringify(o)); };
   try {
     if (sub === "pre") {
-      if (!rel || rel.startsWith("..")) return;
-      const r = await api("/locks/acquire", { file: rel, run });
-      const ctx = r.notices?.length ? r.notices.join("\n") : undefined;
-      if (!r.granted) { emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: `lenzgraph lock denied: ${r.reason}` } }); return; }
-      if (ctx) emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", additionalContext: ctx }, additionalContext: ctx });
+      let notices: string[] = [];
+      if (!inRepo.length) { const r = await api("/locks/notices", { run }); notices = r.notices ?? []; }
+      for (const f of inRepo) {
+        const r = await api("/locks/acquire", { file: f, run });
+        notices.push(...(r.notices ?? []));
+        if (!r.granted) { emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: `lenzgraph lock denied: ${r.reason}` } }); return; }
+      }
+      if (notices.length) { const ctx = notices.join("\n"); emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", additionalContext: ctx }, additionalContext: ctx }); }
     } else if (sub === "post") {
-      if (rel) await api("/locks/touch", { file: rel, run });
+      for (const f of inRepo) await api("/locks/touch", { file: f, run });
     } else if (sub === "notices") {
       const r = await api("/locks/notices", { run });
       if (r.notices?.length) { const ctx = r.notices.join("\n"); emit({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", additionalContext: ctx }, additionalContext: ctx }); }
@@ -122,6 +127,25 @@ async function hook(sub: string) {
     // broker unreachable → fail open (never wedge the agent), but say so
     process.stderr.write(`lenzgraph hook: ${e}\n`);
   }
+}
+
+/**
+ * Heuristic: which repo files does a shell command write? Only used when the agent bypasses Write/Edit.
+ * If the command carries a write indicator, every quoted/bare path token that exists on disk (or sits under an
+ * existing directory) is treated as a write target.
+ */
+export function bashWriteTargets(cmd: string, cwd: string): string[] {
+  const writeIndicators = /(^|[^<>])>{1,2}\s*[^&\s]|\btee\b|\bsed\s+(-[a-zA-Z]*i|--in-place)|\bmv\b|\bcp\b|\brm\b|\bopen\([^)]*['"](w|a|r\+)|\.write\(|\bwriteFile|\btouch\b|\bpatch\b|\bgit\s+(apply|checkout|stash)\b|\bmkdir\b/;
+  if (!writeIndicators.test(cmd)) return [];
+  const out = new Set<string>();
+  for (const m of cmd.matchAll(/[\w.\/-]*\.(ts|tsx|js|jsx|mjs|cjs|py|go|json|md|yaml|yml|toml|css|html)\b/g)) {
+    const tok = m[0];
+    if (tok.startsWith("-") || tok.includes("://")) continue;
+    const abs = resolve(cwd, tok);
+    const dir = abs.slice(0, abs.lastIndexOf("/"));
+    if (existsSync(abs) || existsSync(dir)) out.add(abs);
+  }
+  return [...out];
 }
 
 main().catch((e) => { console.error(`error: ${e.message ?? e}`); process.exit(1); });

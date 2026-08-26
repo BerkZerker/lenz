@@ -1,0 +1,12 @@
+kind: intent
+title: In-memory todo store
+spec: "A tiny in-memory todo service in TypeScript for bun, exposed as pure functions/methods on the
+  store returned by `createStore()` in `src/store.ts` (re-exported from `src/index.ts`). A todo is
+  `{ id: number; title: string; done: boolean }`; ids are assigned sequentially starting at 1 and
+  never reused within a store. No HTTP, no persistence, no external dependencies. Errors are thrown
+  as `Error` instances with a descriptive message. Tests live in `tests/` and run with `bun test`.
+  Keep files small."
+parent: null
+status: specified
+id: n_9f47be
+deps: []

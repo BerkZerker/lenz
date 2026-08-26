@@ -112,7 +112,7 @@ export async function extractFile(absPath: string, relPath: string, source?: str
       if (seen.has(rangeKey)) continue; // first (most specific) pattern wins
       seen.add(rangeKey);
       const name = nameCap.node.text.replace(/^\[|\]$/g, "");
-      if (isFunctionLocal(node)) continue; // locals inside function bodies are not symbols
+      if (kind !== "method" && isFunctionLocal(node)) continue; // locals inside function bodies are not symbols (methods of returned object literals are)
       const container = containerOf(node, def);
       const row: SymbolRow = {
         key: symbolKey({ kind, name, container, file: relPath }),

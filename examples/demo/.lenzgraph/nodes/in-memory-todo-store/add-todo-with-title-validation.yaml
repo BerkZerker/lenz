@@ -1,0 +1,185 @@
+kind: behavior
+title: Add todo with title validation
+spec: 'Extend `add(title: string): Todo` on the store. Input: a title string. If the title is empty
+  or consists only of whitespace (per `String.prototype.trim()`), throw an `Error` with message
+  `"title is required"` and do not mutate the store. Otherwise create `{ id, title, done: false }`
+  where `id` is the next sequential integer (starting at 1), append it to the store, and return the
+  new todo. The title is stored exactly as given (not trimmed).'
+parent: n_9f47be
+status: drifted
+examples:
+  - id: ex_684af7
+    name: adds a todo
+    given: an empty store
+    when: add("buy milk") is called
+    then: 'it returns { id: 1, title: "buy milk", done: false } and list() contains that todo'
+    expect:
+      mode: exit0
+    run: bun test tests/add.test.ts -t ex_684af7
+  - id: ex_143fbd
+    name: rejects empty title
+    given: an empty store
+    when: add("") is called
+    then: it throws Error("title is required") and list() is still empty
+    expect:
+      mode: exit0
+    run: bun test tests/add.test.ts -t ex_143fbd
+  - id: ex_31c1fb
+    name: rejects whitespace-only title
+    given: an empty store
+    when: add("   ") is called
+    then: it throws Error("title is required") and list() is still empty
+    expect:
+      mode: exit0
+    run: bun test tests/add.test.ts -t ex_31c1fb
+  - id: ex_ca5516
+    name: ids increment
+    given: a store where add("a") returned id 1
+    when: add("b") is called
+    then: it returns a todo with id 2
+    expect:
+      mode: exit0
+    run: bun test tests/add.test.ts -t ex_ca5516
+anchors:
+  - kind: function
+    name: createStore
+    container: ""
+    file: src/store.ts
+    sig: a9d0d8e95e12
+    body: 7e322ed6b089
+  - kind: method
+    name: add
+    container: createStore
+    file: src/store.ts
+    sig: 5d98de16fe76
+    body: 2814738b30be
+id: n_8217f9
+deps: []
+last_run: r_mt9ghy3z3wt
+staged: false
+machine:
+  run: bun test tests/add.test.ts
+proposed_anchors:
+  - kind: function
+    name: createStore
+    container: ""
+    file: src/store.ts
+    sig: a9d0d8e95e12
+    body: 7e322ed6b089
+    change: changed
+    owner: null
+verification:
+  examples:
+    pass: 4
+    fail: 0
+    pending: 0
+    at: 2026-08-26T02:10:26.846Z
+    results:
+      - id: ex_684af7
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           3 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [3.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:26.584Z
+      - id: ex_143fbd
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           3 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [2.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:26.650Z
+      - id: ex_31c1fb
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           3 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [2.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:26.715Z
+      - id: ex_ca5516
+        pass: true
+        actual: |-
+          bun test v1.4.0 (34cbb9a40)
+
+          [stderr]
+
+           1 pass
+           3 filtered out
+           0 fail
+           2 expect() calls
+          Ran 1 test across 1 file. [2.00ms]
+        exit: 0
+        at: 2026-08-26T02:10:26.780Z
+  machine:
+    ok: true
+    exit: 0
+    tail: |-
+      bun test v1.4.0 (34cbb9a40)
+
+
+       4 pass
+       0 fail
+       8 expect() calls
+      Ran 4 tests across 1 file. [2.00ms]
+    at: 2026-08-26T02:10:26.912Z
+  reconstruction:
+    verdict: match
+    reasons: []
+    at: 2026-08-26T02:10:41.698Z
+reconstruction: >-
+  `createStore()` builds an in-memory to-do store and returns an object with three operations. State
+  lives in two closure variables: a `todos` array and a counter `next` starting at 1. Nothing is
+  persisted; each call to `createStore()` yields an independent store with its own list and counter.
+
+
+  **`list()`** returns a shallow copy of the array. Callers can reorder or truncate the returned
+  array without affecting the store, but the `Todo` objects inside are the same references held by
+  the store, so mutating a returned todo's fields (e.g. setting `done = true`) does change the
+  store's data. Items are returned in insertion order.
+
+
+  **`add(title)`** creates and returns a new todo. It first rejects titles that are empty or consist
+  only of whitespace by throwing `Error("title is required")`; no todo is created and the id counter
+  does not advance. Otherwise it stores the title *exactly as given* (leading/trailing whitespace is
+  preserved, not trimmed), assigns `id` from the counter and then increments the counter, and sets
+  `done: false`. The returned object is the same reference stored internally. Ids are therefore
+  strictly increasing positive integers, unique for the store's lifetime, and never reused after
+  removal. Duplicate titles are allowed. A non-string `title` is not guarded against; calling
+  `.trim()` on a non-string would throw a TypeError.
+
+
+  **`remove(id)`** deletes the first todo whose `id` strictly equals the argument. If none matches,
+  it throws `Error("todo not found: <id>")` and leaves the store unchanged. On success it removes
+  that one element in place and returns nothing. Because ids are unique, at most one item is ever
+  removed.
+
+
+  There is no way to update a todo through the API (no toggle/edit method), no way to look up a
+  single item by id, and no way to clear the store other than removing items one by one. The store
+  is not thread-safe or concurrency-aware in any special sense; it is plain synchronous JavaScript.
+prev_status: built
+drift:
+  reasons:
+    - createStore in src/store.ts changed
+  at: 2026-08-26T02:15:49.283Z

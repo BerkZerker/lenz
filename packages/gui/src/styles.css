@@ -1,0 +1,76 @@
+:root {
+  --bg: #000000; --panel: #0a0a0a; --border: #262626; --text: #d4d4d4; --dim: #737373; --accent: #d97757;
+  --specified: #737373; --building: #3b82f6; --built: #eab308; --verified: #22c55e; --rejected: #ef4444; --drifted: #ef4444; --proposed: #a3a3a3;
+}
+* { box-sizing: border-box; border-radius: 0 !important; box-shadow: none !important; }
+html, body, #root { height: 100%; margin: 0; background: var(--bg); color: var(--text); }
+body { font: 13px/1.45 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+button, input, textarea, select { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border); padding: 2px 8px; }
+button { cursor: pointer; } button:hover { border-color: var(--text); } button.primary { border-color: var(--accent); color: var(--accent); }
+button:disabled { opacity: .4; cursor: default; }
+textarea { width: 100%; min-height: 200px; resize: vertical; }
+*:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+a { color: var(--accent); }
+.app { display: grid; grid-template-rows: 1fr auto; height: 100%; }
+.panes { display: grid; grid-template-columns: 260px 1fr 380px; min-height: 0; }
+.pane { border-right: 1px solid var(--border); overflow: auto; min-height: 0; display: flex; flex-direction: column; }
+.pane:last-child { border-right: none; }
+.pane-header { color: var(--dim); text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 1; display: flex; justify-content: space-between; }
+.pane-header::before { content: "▸ "; }
+.pane-body { padding: 8px 10px; flex: 1; }
+.statusbar { border-top: 1px solid var(--border); padding: 4px 10px; color: var(--dim); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.statusbar b { color: var(--text); font-weight: normal; }
+.statusbar .link { cursor: pointer; } .statusbar .link:hover { color: var(--accent); }
+.statusbar .active { color: var(--accent); }
+.tree-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; padding: 0 4px; }
+.tree-item.dimmed { opacity: .4; }
+.tree-item.focused { background: #171717; }
+.tree-item.selected { outline: 1px solid var(--accent); outline-offset: -1px; }
+.dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: middle; }
+.dot.intent { border: 1px solid var(--dim); background: transparent; }
+.status-specified { background: var(--specified); } .status-building { background: var(--building); } .status-built { background: var(--built); }
+.status-verified { background: var(--verified); } .status-rejected, .status-drifted { background: var(--rejected); }
+.status-proposed { background: transparent; border: 1px dashed var(--proposed); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.card { border: 1px solid var(--border); padding: 8px 10px; cursor: pointer; background: var(--panel); }
+.card.selected { border-color: var(--accent); }
+.card.proposed { border-style: dashed; }
+.card .title { display: flex; justify-content: space-between; gap: 8px; }
+.card .spec { color: var(--dim); margin-top: 4px; white-space: pre-wrap; max-height: 5.8em; overflow: hidden; }
+.card .meta { color: var(--dim); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+.tag { border: 1px solid var(--border); padding: 0 5px; color: var(--dim); }
+.tag.status-specified { color: var(--specified); border-color: var(--specified); background: none; }
+.tag.status-building { color: var(--building); border-color: var(--building); background: none; }
+.tag.status-built { color: var(--built); border-color: var(--built); background: none; }
+.tag.status-verified { color: var(--verified); border-color: var(--verified); background: none; }
+.tag.status-rejected, .tag.status-drifted { color: var(--rejected); border-color: var(--rejected); background: none; }
+.tag.status-proposed { color: var(--proposed); border-style: dashed; background: none; }
+.breadcrumb { color: var(--dim); margin-bottom: 10px; } .breadcrumb span { cursor: pointer; } .breadcrumb span:hover { color: var(--accent); }
+.breadcrumb .here { color: var(--text); }
+.section { margin-bottom: 14px; }
+.section-h { color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
+.section-h::before { content: "▸ "; }
+pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+.dim { color: var(--dim); } .accent { color: var(--accent); } .ok { color: var(--verified); } .bad { color: var(--rejected); } .warn { color: var(--built); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+.box { border: 1px solid var(--border); padding: 6px 8px; margin: 6px 0; background: var(--panel); }
+.box.selected { border-color: var(--accent); }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.tabs div { padding: 2px 10px; cursor: pointer; color: var(--dim); border-right: 1px solid var(--border); }
+.tabs div.active { color: var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.modal { background: var(--panel); border: 1px solid var(--border); padding: 12px; width: min(760px, 90vw); max-height: 85vh; overflow: auto; }
+.modal h3 { margin: 0 0 8px; color: var(--dim); text-transform: uppercase; font-weight: normal; }
+.modal h3::before { content: "▸ "; }
+table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid var(--border); padding: 2px 6px; text-align: left; vertical-align: top; } th { color: var(--dim); font-weight: normal; text-transform: uppercase; }
+.events { font-size: 12px; } .events div { border-bottom: 1px solid #171717; padding: 1px 0; }
+.kbd { border: 1px solid var(--border); padding: 0 4px; color: var(--text); }
+.flow-node { padding-left: 16px; border-left: 1px solid var(--border); }
+.flow-node.syntactic > .flow-label { color: var(--dim); font-style: italic; }
+.flow-label { cursor: pointer; } .flow-label:hover { color: var(--accent); }
+.search { width: 100%; margin-bottom: 6px; }
+.orphan-file { margin-bottom: 8px; } .orphan-file .fname { color: var(--dim); }
+.orphan-sym { padding-left: 12px; display: flex; gap: 8px; align-items: center; }
+.orphan-sym.selected { outline: 1px solid var(--accent); outline-offset: -1px; }
+.hint { color: var(--dim); margin-top: 12px; }
