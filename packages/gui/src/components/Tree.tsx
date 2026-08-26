@@ -38,7 +38,7 @@ export function Tree() {
         {treeMode === "nodes" ? <>
           <Row depth={0} chevron={null} cls={focus === null ? "focused" : ""} onClick={() => { setFocus(null); setSelected(null); }}><span className="ttl">app</span><span className="ln">{Object.keys(nodes).length}</span></Row>
           {renderNodes(tree, 1)}
-          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. press <span className="kbd">7</span> to propose from a brain-dump, or run <code>lenzgraph derive</code> on existing code.</div>}
+          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. press <span className="kbd">7</span> to propose from a brain-dump, or run <code>lenz derive</code> on existing code.</div>}
         </> : <>
           {root.folders.map((f) => renderFolder(f, 0))}{root.files.map((f) => renderFile(f, 0))}
           {!files.length && <div className="hint" style={{ padding: "0 6px" }}>no indexed files yet.</div>}
