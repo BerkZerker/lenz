@@ -159,3 +159,8 @@ anchors:
     body: dd871f085452
 id: n_cb5689
 deps: []
+summary: This node oversees the lifecycle of execution runs, managing task queueing, process
+  spawning and termination, status tracking, and the attribution of symbol changes back to specific
+  runs. To execute and configure these tasks, it relies on [[n_02fb82]] to prepare adapter commands
+  and settings, and hands off in-process model calls directly to [[n_e5a71e]].
+summary_at: 2026-08-26T03:48:41.265Z

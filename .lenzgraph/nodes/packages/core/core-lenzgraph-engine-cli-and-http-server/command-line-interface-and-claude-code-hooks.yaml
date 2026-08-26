@@ -146,3 +146,10 @@ anchors:
     body: 8b44703d234f
 id: n_b01b1f
 deps: []
+summary: This node serves as the primary command-line entry point, parsing terminal flags and
+  commands while managing PreToolUse and PostToolUse agent hooks. It initializes workspace setups
+  via [[n_d5ecfb]], boots the orchestrator in [[n_4b6671]], and launches background service daemons
+  with [[n_14d144]]. Additionally, it dispatches indexing workflows through [[n_848ccb]], queries
+  structural data directly using [[n_f35ac5]], and processes hook execution formats with
+  [[n_b7bebc]].
+summary_at: 2026-08-26T03:47:33.724Z

@@ -55,3 +55,8 @@ anchors:
     body: c8a84dc71637
 id: n_d5ecfb
 deps: []
+summary: This node manages project setup and settings by resolving the workspace path, scaffolding
+  initial project files, and loading configuration defaults and templates. It provides baseline
+  agent templates needed by [[n_000dd8]] while supplying initialization and configuration loading
+  services consumed by [[n_b01b1f]] and [[n_4b6671]].
+summary_at: 2026-08-26T03:47:21.804Z

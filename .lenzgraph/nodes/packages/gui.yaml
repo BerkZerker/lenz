@@ -6,3 +6,9 @@ derived: true
 id: n_647af6
 parent: n_3bbc53
 deps: []
+summary: This module implements the Lenz web user interface, providing the single-page application
+  dashboard and reactive state management for visualizing project data. It drives data ingestion and
+  analysis workflows by interfacing directly with [[n_d0fc17]] for core processing tasks. For graph
+  presentation and spatial views, it hands off rendering and structural representations to
+  [[n_3ccaac]].
+summary_at: 2026-08-26T03:44:35.609Z

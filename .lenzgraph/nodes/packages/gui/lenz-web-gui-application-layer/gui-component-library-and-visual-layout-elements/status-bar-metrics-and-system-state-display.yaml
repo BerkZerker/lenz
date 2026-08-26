@@ -23,3 +23,9 @@ anchors:
     body: be9d6d755de7
 id: n_2a6526
 deps: []
+summary: This behavior provides a high-level operational overview by presenting vital workspace
+  indicators and application health data in the footer interface. It aggregates total node counts,
+  synchronization and coverage standings, and live system metrics into a persistent status view for
+  quick reference. Operating as a self-contained informational display, it keeps users continuously
+  informed of background conditions and overall project state.
+summary_at: 2026-08-26T03:48:05.768Z

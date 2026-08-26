@@ -7,7 +7,8 @@ import { EventBus } from "./events.ts";
 import { LockBroker } from "./locks.ts";
 import { FanOutError, NodeStore, newId, FAN_OUT_CAP } from "./nodes.ts";
 import { RunManager } from "./runs/manager.ts";
-import { DERIVE_SCHEMA, PROPOSAL_SCHEMA, buildPrompt, comparePrompt, derivePrompt, oneLine, proposePrompt, reconstructPrompt } from "./runs/prompt.ts";
+import { DERIVE_SCHEMA, PROPOSAL_SCHEMA, buildPrompt, comparePrompt, derivePrompt, oneLine, proposePrompt, reconstructPrompt, summaryPrompt } from "./runs/prompt.ts";
+import { computeRelations, type NodeRelations } from "./relations.ts";
 import { runCommand, runExamples } from "./verify/examples.ts";
 import { loadEnvFiles } from "./llm/gemini.ts";
 import { homedir } from "node:os";
@@ -20,6 +21,8 @@ export class Core {
   idx: StructureIndex; store: NodeStore; locks: LockBroker; runs: RunManager;
   immediate = false;
   port: number;
+  private relCache: { at: number; data: Record<string, NodeRelations> } | null = null;
+  private summarizing = new Set<string>();
   cli: string[];
 
   constructor(opts: CoreOpts) {
@@ -32,7 +35,9 @@ export class Core {
     this.store = new NodeStore(join(this.dir, "nodes"), this.idx.db, this.bus);
     this.locks = new LockBroker(this.bus, () => this.cfg.lock_cooldown);
     this.runs = new RunManager({ root: this.root, lenzDir: this.dir, runsDir: join(this.dir, "runs"), port: this.port, cli: this.cli, maxConcurrent: () => this.cfg.max_concurrent_runs, timeoutSec: () => this.cfg.run_timeout, model: () => this.cfg.model, llm: () => this.cfg.llm }, this.bus, this.locks, this.idx);
-    this.idx.on("symbols_changed", (ev: SymbolsChanged) => { this.bus.publish("structure.synced", ev); this.detectDrift(ev); });
+    this.idx.on("symbols_changed", (ev: SymbolsChanged) => { this.relCache = null; this.bus.publish("structure.synced", ev); this.detectDrift(ev); });
+    this.bus.on("node.updated", () => { this.relCache = null; });
+    this.bus.on("node.deleted", () => { this.relCache = null; });
     this.idx.on("error", (e: any) => this.bus.publish("log", { level: "error", msg: String(e) }));
   }
 
@@ -202,6 +207,7 @@ export class Core {
     for (const p of proposed) if (p.change !== "removed" && !p.owner && !anchors.some((a) => anchorKey(a) === anchorKey(p))) anchors.push({ kind: p.kind, name: p.name, container: p.container, file: p.file, sig: p.sig, body: p.body });
     this.store.update(nodeId, { status: "built", anchors, proposed_anchors: proposed, prev_status: undefined, drift: undefined });
     await this.verify(nodeId);
+    void this.summarize(nodeId).catch((e) => this.log(String(e), "warn"));
   }
 
   /** Execute examples + machine check, then dispatch blind reconstruction. */
@@ -288,7 +294,9 @@ export class Core {
       if (!parsed?.nodes) { lastErr = out.run.error ?? "no JSON tree in output"; continue; }
       const viol = fanOutViolation(parsed.nodes, this.store.children(parent).length);
       if (viol) { lastErr = viol; continue; }
-      return { created: this.materialize(parsed.nodes, parent, false), attempt };
+      const created = this.materialize(parsed.nodes, parent, false);
+      void this.summarizeAll(false).catch((e) => this.log(String(e), "warn"));
+      return { created, attempt };
     }
     throw new Error(`proposal failed: ${lastErr}`);
   }
@@ -349,6 +357,7 @@ export class Core {
       for (const s of subs) if (s.parent !== intent.id) { try { this.store.update(s.id, { parent: intent.id }); } catch (e) { this.log(String(e), "warn"); } }
       void parentDir;
     }
+    void this.summarizeAll(false, (m) => this.log(m)).catch((e) => this.log(String(e), "warn"));
     return { created };
   }
 
@@ -361,6 +370,38 @@ export class Core {
       if (lines.length >= maxLines) { lines.push("…"); break; }
     }
     return lines.join("\n");
+  }
+
+  // ---------- relations / summaries ----------
+  relations(): Record<string, NodeRelations> {
+    if (!this.relCache) this.relCache = { at: Date.now(), data: computeRelations(this.store, this.idx.db) };
+    return this.relCache.data;
+  }
+
+  /** Gemini-written orientation summary with [[node_id]] links. */
+  async summarize(id: string): Promise<LenzNode | null> {
+    const n = this.store.get(id); if (!n || this.summarizing.has(id)) return n;
+    this.summarizing.add(id);
+    try {
+      const rel = this.relations()[id] ?? { out: [], in: [] };
+      const named = (r: { id: string; via: string[] }[]) => r.map((x) => ({ id: x.id, title: this.store.get(x.id)?.title ?? x.id, via: x.via })).filter((x) => this.store.get(x.id));
+      const prompt = summaryPrompt(n, n.parent ? this.store.get(n.parent) : null, this.store.children(id), named(rel.out), named(rel.in));
+      const r = await this.runs.submit({ kind: "compare", node: id, prompt, extra: ["--tools", ""], light: true }).done;
+      const text = r.text.trim();
+      if (!text) { this.log(`summary ${id}: ${r.run.error ?? "empty"}`, "warn"); return this.store.get(id); }
+      const known = new Set(this.store.all().map((x) => x.id));
+      const clean = text.replace(/\[\[(n_[a-z0-9]+)\]\]/g, (m, nid) => (known.has(nid) ? m : this.store.get(nid)?.title ?? "")); // drop hallucinated links
+      return this.store.update(id, { summary: clean, summary_at: new Date().toISOString() });
+    } finally { this.summarizing.delete(id); }
+  }
+  /** Summarize every node lacking a summary (or all with force), sequentially in the background. */
+  async summarizeAll(force = false, onProgress?: (msg: string) => void) {
+    const todo = this.store.all().filter((n) => force || !n.summary);
+    // parents after children is not required (summaries are independent); go top-down for nicer UX
+    const order = [...todo].sort((a, b) => this.store.ancestors(a.id).length - this.store.ancestors(b.id).length);
+    let done = 0;
+    for (const n of order) { await this.summarize(n.id); done++; onProgress?.(`summarized ${done}/${order.length}: ${n.title}`); }
+    return { summarized: done };
   }
 
   status() {

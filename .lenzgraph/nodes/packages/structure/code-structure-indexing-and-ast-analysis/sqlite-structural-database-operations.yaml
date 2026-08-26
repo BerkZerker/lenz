@@ -235,3 +235,10 @@ anchors:
     body: 58aa05b072f9
 id: n_f35ac5
 deps: []
+summary: This node provides a local SQLite persistence layer that manages queries and transactional
+  updates for structural code metadata, including files, symbols, references, and anchors. It shapes
+  query results according to schema types in [[n_401412]] and coordinates file and symbol mappings
+  with [[n_5b9044]]. In turn, it serves as the primary structural database queried and updated by
+  [[n_848ccb]], [[n_4b6671]], [[n_cc80b0]], [[n_594be4]], and [[n_f07e54]], while directly
+  supporting entry-point access from [[n_b01b1f]] and [[n_14d144]].
+summary_at: 2026-08-26T03:46:49.863Z

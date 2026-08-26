@@ -56,3 +56,9 @@ anchors:
     body: d7d6886ea3d0
 id: n_43e587
 deps: []
+summary: This node provides a shared library of UI presentation primitives and formatting helpers,
+  standardizing visual indicators, clickable cards, and formatted text across the application. It
+  acts as a foundational visual layer with no downstream handoffs, supplying reusable components
+  directly to consuming views including [[n_7f8ddf]], [[n_f7d4cf]], [[n_7e8263]], [[n_775536]],
+  [[n_522746]], [[n_a8a9bd]], and [[n_073f18]].
+summary_at: 2026-08-26T03:48:00.408Z

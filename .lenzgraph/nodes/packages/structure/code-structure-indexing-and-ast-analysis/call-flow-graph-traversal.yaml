@@ -29,3 +29,9 @@ anchors:
     body: 2133ebaa2425
 id: n_594be4
 deps: []
+summary: This behavior builds a static call tree starting from an entry point symbol, tracing
+  downstream invocations within configurable depth and node limits while handling recursive cycles.
+  It relies on [[n_f35ac5]] to query symbols and outgoing reference relationships from the
+  structural database. As it explores paths, it constructs flow nodes and provenance details
+  formatted according to the schema types in [[n_401412]].
+summary_at: 2026-08-26T03:46:34.652Z

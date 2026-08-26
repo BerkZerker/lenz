@@ -6,3 +6,10 @@ derived: true
 id: n_d0fc17
 parent: n_3bbc53
 deps: []
+summary: This package implements the core LenzGraph engine, CLI, and HTTP server, providing the
+  foundational data model, storage, concurrency control, and lifecycle orchestration alongside
+  bundled static web assets. It delegates codebase analysis and symbol indexing to [[n_3ccaac]],
+  executes background processes through [[n_f81a34]], and triggers verification workflows in
+  [[n_e0f803]]. In turn, it serves as the underlying backbone consumed by [[n_647af6]],
+  [[n_6647ac]], and evaluation routines in [[n_881d0b]].
+summary_at: 2026-08-26T03:44:30.080Z

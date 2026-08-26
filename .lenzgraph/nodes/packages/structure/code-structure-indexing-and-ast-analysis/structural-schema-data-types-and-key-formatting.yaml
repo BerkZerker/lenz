@@ -84,3 +84,10 @@ anchors:
     body: 8283698c5d96
 id: n_401412
 deps: []
+summary: This node establishes the core structural data models and canonical key parsing utilities,
+  defining domain representations for symbols, references, imports, anchors, and change events. It
+  serves as the foundational schema layer consumed during AST extraction in [[n_3c4f64]], database
+  persistence in [[n_f35ac5]], and incremental synchronization in [[n_848ccb]]. These shared
+  definitions also directly underpin reference resolution in [[n_cc80b0]], anchor drift detection in
+  [[n_f07e54]], and call flow graph analysis in [[n_594be4]].
+summary_at: 2026-08-26T03:46:46.606Z

@@ -6,3 +6,7 @@ derived: true
 id: n_6461e1
 parent: null
 deps: []
+summary: This area contains runnable example applications and integration demonstrations that
+  illustrate how the project's architecture functions in practice. It showcases practical usage
+  patterns by calling directly into [[n_3bbc53]] for core functionality and supporting packages.
+summary_at: 2026-08-26T03:44:24.038Z

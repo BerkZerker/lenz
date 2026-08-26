@@ -9,3 +9,10 @@ derived: true
 id: n_9fe373
 parent: n_fc5e23
 deps: []
+summary: This module provides the reusable visual components and presentation layout elements for
+  the graphical interface, including the node navigation tree, inspector panel, status bar, modal
+  overlays, and UI cards. These building blocks are integrated into the primary application shell in
+  [[n_639b5c]] and utilized across the specialized views in [[n_742e8a]]. To render and manage
+  interactive states, the components rely on data schema definitions from [[n_833082]], retrieve
+  live application state via [[n_4b092f]], and execute direct backend requests through [[n_f9f10a]].
+summary_at: 2026-08-26T03:46:03.057Z

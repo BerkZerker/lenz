@@ -37,3 +37,10 @@ anchors:
     body: 8b8909df25dc
 id: n_f9f10a
 deps: []
+summary: This node provides a centralized HTTP client for interfacing with backend REST services,
+  serializing JSON payloads and managing query, mutation, and deletion requests alongside standard
+  error handling. Rather than calling downstream application behaviors, it serves as a foundational
+  transport utility relied upon across the frontend. It is invoked directly by [[n_639b5c]] for
+  top-level shell actions, [[n_742e8a]] for view-specific data management, [[n_9fe373]] for
+  inspector and status components, and [[n_4b092f]] for store synchronizations.
+summary_at: 2026-08-26T03:46:16.881Z

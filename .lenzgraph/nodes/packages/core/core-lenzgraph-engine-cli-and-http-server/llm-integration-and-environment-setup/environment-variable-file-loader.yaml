@@ -33,3 +33,8 @@ anchors:
     body: 1dab0fb0d23c
 id: n_12cfca
 deps: []
+summary: This behavior handles application configuration by reading key-value pair files and loading
+  their definitions into the runtime environment. It populates `process.env` with the parsed
+  properties while safely preserving any variables that are already set. This utility operates
+  independently with no direct upstream or downstream connections registered in the project graph.
+summary_at: 2026-08-26T03:48:34.206Z

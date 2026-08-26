@@ -23,3 +23,8 @@ anchors:
     body: cf44154bc6f1
 id: n_4c452b
 deps: []
+summary: This behavior helps maintain project mapping accuracy by identifying and presenting
+  unanchored symbols from the codebase. It allows users to review these disconnected elements and
+  integrate them into the behavioral model. Currently, it functions as a standalone utility with no
+  direct upstream prerequisites or downstream handoffs.
+summary_at: 2026-08-26T03:48:10.648Z

@@ -29,3 +29,8 @@ anchors:
     body: ff67fa568cd5
 id: n_f7d4cf
 deps: []
+summary: This behavior provides workflows for drafting change proposals, reviewing pending edits,
+  and staging modifications prior to committing or applying them. When rendering these staged edits
+  and proposal views within the interface, it hands off display and card-formatting responsibilities
+  to [[n_43e587]].
+summary_at: 2026-08-26T03:48:19.512Z

@@ -109,3 +109,10 @@ anchors:
     body: 3d9a6c42a54a
 id: n_3c4f64
 deps: []
+summary: This behavior parses source files with WebAssembly-based Tree-sitter parsers to extract
+  structural symbols, hashes, import bindings, and syntactic references from code. It leverages
+  language configurations from [[n_2e36f0]] and asset runtimes from [[n_b7bebc]], formatting
+  extracted data according to [[n_401412]] and storing state in [[n_5b9044]]. Triggered by indexing
+  and synchronization workflows in [[n_848ccb]], it produces the raw reference data consumed by
+  [[n_cc80b0]] for downstream resolution.
+summary_at: 2026-08-26T03:46:23.362Z

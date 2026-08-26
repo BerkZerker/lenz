@@ -25,3 +25,9 @@ anchors:
     body: a37ff278a03e
 id: n_f81a34
 deps: []
+summary: This behavior handles the execution of external shell commands within a target directory,
+  enforcing per-command timeouts while capturing output streams and exit states. It delegates
+  low-level process termination and control routines directly to [[n_d0fc17]]. In turn, this utility
+  is invoked by broader workflows in [[n_d0fc17]] as well as during verification example runs in
+  [[n_e0f803]].
+summary_at: 2026-08-26T03:45:41.553Z

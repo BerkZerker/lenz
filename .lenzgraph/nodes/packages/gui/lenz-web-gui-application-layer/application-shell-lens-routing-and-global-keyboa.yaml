@@ -50,3 +50,10 @@ anchors:
     body: ac2cff82c351
 id: n_639b5c
 deps: []
+summary: This node serves as the top-level application shell, orchestrating the root interface
+  layout and handling global keyboard navigation for lens switching, modal interactions, and item
+  traversal. It renders core structural elements from [[n_9fe373]] alongside specialized exploration
+  views from [[n_742e8a]], adhering to data schemas defined in [[n_833082]]. To keep the interface
+  interactive and synchronized, it integrates state updates from [[n_4b092f]], triggers server
+  operations through [[n_f9f10a]], and incorporates runtime parsing assets from [[n_b7bebc]].
+summary_at: 2026-08-26T03:46:06.398Z

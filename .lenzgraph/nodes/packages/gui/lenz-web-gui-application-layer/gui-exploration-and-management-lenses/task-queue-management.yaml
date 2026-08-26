@@ -23,3 +23,7 @@ anchors:
     body: 47181a32f551
 id: n_7e8263
 deps: []
+summary: This behavior provides visibility into scheduled and ongoing background jobs, allowing
+  operators to monitor execution states and adjust task priorities. To render these task views and
+  format status information, it delegates directly to reusable presentation widgets in [[n_43e587]].
+summary_at: 2026-08-26T03:48:14.941Z

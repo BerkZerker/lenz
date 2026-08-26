@@ -23,3 +23,7 @@ anchors:
     body: c3902eefbcdb
 id: n_f2e1f4
 deps: []
+summary: This behavior is responsible for reading todo items from the store, returning either the
+  complete list or a filtered subset based on open or done status. Within the current project graph,
+  it functions independently with no designated callers or downstream handoffs.
+summary_at: 2026-08-26T03:47:35.730Z

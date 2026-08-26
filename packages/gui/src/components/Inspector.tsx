@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useStore } from "../store";
 import { StatusTag } from "./common";
+import { Summary } from "./Summary";
+import { areaColor } from "../colors";
 
 export function Inspector() {
   const { selected, focus, nodes, runs } = useStore();
@@ -17,14 +19,18 @@ export function Inspector() {
     <div className="pane">
       <div className="pane-header"><span>inspector</span><span>{n.id}</span></div>
       <div className="pane-body">
-        <div className="row"><b>{n.title}</b><StatusTag status={n.status} />{n.staged && <span className="tag accent">staged</span>}{n.needs_reverify && <span className="tag warn">needs-reverify</span>}</div>
+        <div className="row"><b style={{ color: areaColor(nodes, n.id) }}>{n.title}</b><StatusTag status={n.status} />{n.staged && <span className="tag accent">staged</span>}{n.needs_reverify && <span className="tag warn">needs-reverify</span>}</div>
         <div className="dim">{n.kind}{n.parent ? ` · under ${nodes[n.parent]?.title ?? n.parent}` : " · root"}{n.deps.length ? ` · deps: ${n.deps.map((d) => nodes[d]?.title ?? d).join(", ")}` : ""}</div>
         {n.status === "drifted" && <div className="box bad">drift: {n.drift?.reasons.join("; ")}<div className="row"><button onClick={() => api(`/nodes/${n.id}/drift`, { action: "holds" })}>spec still holds</button><button onClick={() => api(`/nodes/${n.id}/drift`, { action: "rebuild" })}>re-build</button></div></div>}
         {v?.rejection_note && n.status !== "verified" && <div className="box"><span className="dim">rejection note:</span> {v.rejection_note}</div>}
         <div className="tabs" style={{ marginTop: 8 }}>
           {(["spec", "examples", "anchors", "verify", "reconstruction"] as const).map((t) => <div key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</div>)}
         </div>
-        {tab === "spec" && <pre>{n.spec || <span className="dim">(no spec — press e to edit)</span>}</pre>}
+        {tab === "spec" && <>
+          {n.summary && <div className="box" style={{ lineHeight: 1.5 }}><div className="dim" style={{ marginBottom: 4 }}>summary</div><Summary text={n.summary} /></div>}
+          <pre>{n.spec || <span className="dim">(no spec — press e to edit)</span>}</pre>
+          <div className="row"><button onClick={() => api(`/nodes/${n.id}/summarize`, {})}>{n.summary ? "re-summarize" : "summarize"}</button></div>
+        </>}
         {tab === "examples" && (n.examples?.length ? n.examples.map((e) => (
           <div className="box" key={e.id}><div><b>{e.name}</b> <span className="dim">{e.id}{e.derived ? " · derived" : ""}</span></div>
             <div><span className="dim">given</span> {e.given}</div><div><span className="dim">when </span> {e.when}</div><div><span className="dim">then </span> {e.then}</div>

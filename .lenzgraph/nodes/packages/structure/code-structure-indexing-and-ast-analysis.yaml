@@ -8,3 +8,9 @@ derived: true
 id: n_424a45
 parent: n_3ccaac
 deps: []
+summary: This module builds and maintains a real-time structural model of a codebase through
+  multi-language AST extraction, reference resolution, SCIP ingestion, and SQLite-backed symbol
+  caching. It performs anchor drift tracking and call tree traversal, delegating parsing and hashing
+  tasks to [[n_8acf92]] and [[n_87c287]]. Upstream, its structural data and change events are
+  consumed by [[n_87c287]] for engine orchestration and [[n_fc5e23]] for graph visualization.
+summary_at: 2026-08-26T03:44:47.387Z

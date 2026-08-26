@@ -45,6 +45,7 @@ const usage = `lenzgraph — agent dev kit
   lenzgraph verify <node>                execute a node's examples + machine check (needs daemon)
   lenzgraph lock acquire|release <file> --run <id>
   lenzgraph node set <id> <path> <value> set a field in a node (path may address examples by id)
+  lenzgraph summarize [--force]          write relational summaries for nodes (needs daemon)
   lenzgraph status
 `;
 
@@ -75,6 +76,7 @@ async function main() {
       console.log(`indexed ${core.idx.db.allFiles().length} files, ${core.idx.db.allSymbols().length} symbols, ${core.idx.db.allRefs().length} refs${scip !== null ? ` (${scip} from scip)` : ""}; +${ev.added.length} ~${ev.changed.length} -${ev.removed.length}`);
       await core.close(); return;
     }
+    case "summarize": { await api("/summarize", { force: has("--force") }); console.log("summarizing in the background; watch the daemon log"); return; }
     case "status": { console.log(JSON.stringify(await api("/status"), null, 2)); return; }
     case "derive": { const r = await api("/derive", {}); console.log(`derived ${r.created.length} proposed nodes`); return; }
     case "propose": { const f = positional[0]; if (!f) throw new Error("propose <file>"); const r = await api("/propose", { text: readFileSync(f, "utf8"), parent: flag("--parent") ?? null }); console.log(`proposed ${r.created.length} nodes`); return; }

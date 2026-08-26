@@ -25,3 +25,7 @@ anchors:
     body: bf72cca6501f
 id: n_7f8ddf
 deps: []
+summary: This behavior renders the detail inspection panel that presents the active node's full
+  metadata, specification text, code anchors, and example scenarios. It hands off formatting and
+  standard visual elements like status badges to [[n_43e587]].
+summary_at: 2026-08-26T03:47:57.343Z

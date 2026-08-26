@@ -247,3 +247,12 @@ anchors:
     body: f07bf39923e6
 id: n_4b6671
 deps: []
+summary: This node serves as the central orchestration engine that drives graph node management,
+  code indexing, drift detection, verification, and automated flow execution across the project. It
+  coordinates these operations by initializing settings through [[n_d5ecfb]] and [[n_0bc597]],
+  publishing system events via [[n_73f39f]], managing files and locks using [[n_5b9044]] and
+  [[n_6e459a]], querying code structural metadata from [[n_848ccb]] and [[n_f35ac5]], executing
+  agent workflows with [[n_000dd8]], and handling runtime parsing with [[n_b7bebc]]. In turn, it is
+  invoked by entry points like [[n_b01b1f]] and [[n_14d144]], while connecting with [[n_efdeae]] for
+  message logging and delivery.
+summary_at: 2026-08-26T03:47:19.255Z

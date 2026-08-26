@@ -5,7 +5,7 @@ export interface LenzNode {
   id: string; kind: "intent" | "behavior"; title: string; parent: string | null; deps: string[]; status: string; spec: string;
   examples?: Example[]; anchors?: Anchor[]; machine?: { run: string };
   verification?: { examples?: { pass: number; fail: number; pending: number; at: string; results: ExampleResult[] }; machine?: { ok: boolean; exit: number; tail: string; at: string }; reconstruction?: { verdict: string; reasons: string[]; at: string }; approved_by?: string; approved_at?: string; rejection_note?: string };
-  reconstruction?: string; staged?: boolean; needs_reverify?: boolean; prev_status?: string; drift?: { reasons: string[]; at: string };
+  reconstruction?: string; summary?: string; summary_at?: string; staged?: boolean; needs_reverify?: boolean; prev_status?: string; drift?: { reasons: string[]; at: string };
   proposed_anchors?: (Anchor & { change: string; owner?: string | null })[]; last_run?: string; derived?: boolean;
 }
 export interface TreeItem { id: string; kind: string; title: string; status: string; staged: boolean; needs_reverify: boolean; children: TreeItem[] }

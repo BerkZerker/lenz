@@ -8,7 +8,7 @@ export function GraphLens() {
   const [mode, setMode] = useState<"graph" | "cards">(() => { try { return (localStorage.getItem("lg.graphMode") as any) || "graph"; } catch { return "graph"; } });
   const toggle = (m: "graph" | "cards") => { setMode(m); try { localStorage.setItem("lg.graphMode", m); } catch {} };
   const switcher = <div className="row" style={{ marginBottom: 6 }}><span className="dim">view:</span><button className={mode === "graph" ? "primary" : ""} onClick={() => toggle("graph")}>graph</button><button className={mode === "cards" ? "primary" : ""} onClick={() => toggle("cards")}>cards</button></div>;
-  if (mode === "graph") return <div style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column" }}>{switcher}<GraphView /></div>;
+  if (mode === "graph") return <div style={{ height: "calc(100vh - 62px)", display: "flex", flexDirection: "column", margin: "-8px -10px" }}><GraphView /><div style={{ position: "absolute", right: 10, bottom: 34, zIndex: 3 }} className="dim"><span className="link" onClick={() => toggle("cards")}>[cards view]</span></div></div>;
   const children = Object.values(nodes).filter((n) => n.parent === focus).sort((a, b) => a.title.localeCompare(b.title));
   const crumbs: { id: string | null; title: string }[] = [{ id: null, title: "app" }];
   let p = focus ? nodes[focus] : null; const chain: typeof crumbs = [];

@@ -40,3 +40,9 @@ anchors:
     body: e82ce56cb92f
 id: n_e5a71e
 deps: []
+summary: This node manages direct HTTP communication with Gemini's content generation REST endpoints
+  to produce raw text or structured JSON outputs based on prompts, system instructions, and schemas.
+  It processes API response payloads while tracking token usage and handling network errors or
+  request timeouts. While it does not hand off to any downstream behaviors, it is called by
+  [[n_cb5689]] during task execution and lifecycle management.
+summary_at: 2026-08-26T03:48:36.575Z

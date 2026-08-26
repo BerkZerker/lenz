@@ -42,3 +42,8 @@ anchors:
     body: a11f9fcb9cc7
 id: n_f07e54
 deps: []
+summary: This behavior tracks code evolution by verifying whether behavioral anchors remain intact,
+  relocated, modified, or deleted across codebase revisions. To assess drift, it queries structural
+  database records and symbols via [[n_f35ac5]]. It then processes and maps these states using the
+  schema data types and key formatting utilities provided by [[n_401412]].
+summary_at: 2026-08-26T03:46:43.507Z

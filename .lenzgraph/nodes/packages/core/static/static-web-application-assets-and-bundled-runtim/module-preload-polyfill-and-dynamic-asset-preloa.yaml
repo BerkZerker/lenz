@@ -44,8 +44,13 @@ anchors:
   - kind: const
     name: B
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-CW8TEWYt.js
     sig: 53a0acfad593
     body: 2086f68e30cf
 id: n_d89803
 deps: []
+summary: This behavior ensures cross-browser performance optimization by polyfilling standard
+  `modulepreload` support where natively absent. It scans document link tags to fetch and cache
+  targeted JavaScript modules early during the page lifecycle, functioning independently without
+  explicit upstream triggers or downstream handoffs in the project graph.
+summary_at: 2026-08-26T03:48:28.637Z

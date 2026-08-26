@@ -6,3 +6,8 @@ derived: true
 id: n_8acf92
 parent: n_d0fc17
 deps: []
+summary: This module provides the bundled client-side JavaScript assets and runtime files used to
+  deliver the platform's static web interface. It relies on frontend structures from [[n_fc5e23]],
+  code indexing data from [[n_424a45]], and integration hooks from [[n_87c287]]. At runtime, these
+  static resources hand off operational flows and server interactions directly to [[n_87c287]].
+summary_at: 2026-08-26T03:44:41.545Z

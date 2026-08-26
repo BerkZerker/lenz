@@ -60,3 +60,8 @@ anchors:
     body: 2ff45040d7ac
 id: n_073f18
 deps: []
+summary: This behavior provides an interactive force-directed graph view for visualizing project
+  nodes, status colors, and relationships around a currently focused item. It enables direct user
+  exploration through single-click expansion and double-click refocusing, handing off detailed
+  component rendering and presentation formatting to [[n_43e587]].
+summary_at: 2026-08-26T03:48:17.372Z

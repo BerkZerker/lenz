@@ -41,6 +41,9 @@ export interface LenzNode {
   machine?: { run: string };
   verification?: Verification;
   reconstruction?: string; // living docs
+  /** core-written relational summary; other nodes referenced as [[node_id]] */
+  summary?: string;
+  summary_at?: string;
   staged?: boolean;
   needs_reverify?: boolean;
   prev_status?: NodeStatus; // for drifted

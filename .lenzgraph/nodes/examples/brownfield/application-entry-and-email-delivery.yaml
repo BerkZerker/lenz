@@ -7,3 +7,8 @@ derived: true
 id: n_c89982
 parent: n_6647ac
 deps: []
+summary: This module serves as the top-level execution entry point for the application while
+  providing email delivery and credential management infrastructure. It coordinates application
+  startup, oversees password handling, and dispatches outgoing user communications. When processing
+  messaging actions, it delegates logging and execution tasks downstream to [[n_87c287]].
+summary_at: 2026-08-26T03:46:00.088Z

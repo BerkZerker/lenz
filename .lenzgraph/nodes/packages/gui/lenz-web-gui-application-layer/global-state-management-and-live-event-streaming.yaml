@@ -50,3 +50,10 @@ anchors:
     body: e4cbf440710e
 id: n_4b092f
 deps: []
+summary: This node provides central state management and real-time event streaming across the
+  application, coordinating modal dialogs, selection tracking, staged items, and live run updates.
+  It is consumed by [[n_639b5c]], [[n_9fe373]], and [[n_742e8a]] to drive reactive UI rendering and
+  user action dispatching. In turn, it structures its state around schemas from [[n_833082]],
+  synchronizes hierarchy data with [[n_5b9044]], issues backend requests through [[n_f9f10a]], and
+  utilizes parsing utilities from [[n_b7bebc]].
+summary_at: 2026-08-26T03:46:20.362Z

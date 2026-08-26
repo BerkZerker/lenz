@@ -36,3 +36,10 @@ anchors:
     body: de4149b040d3
 id: n_cc80b0
 deps: []
+summary: This behavior matches raw file-level identifier references to exact symbol keys by
+  evaluating local scopes and chasing import bindings across modules. Invoked during indexing cycles
+  coordinated by [[n_848ccb]], it operates on parsed references extracted by [[n_3c4f64]] while
+  working with structural schema types from [[n_401412]]. It relies on [[n_f35ac5]] to look up
+  existing file-level imports and symbols, as well as to persist the resulting resolved or
+  unresolved reference records.
+summary_at: 2026-08-26T03:46:28.189Z

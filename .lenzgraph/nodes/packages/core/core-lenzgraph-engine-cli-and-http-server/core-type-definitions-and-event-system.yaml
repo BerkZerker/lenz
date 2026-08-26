@@ -127,3 +127,10 @@ anchors:
     body: 46c7b44a66dd
 id: n_73f39f
 deps: []
+summary: This node establishes the foundational domain models, shared type contracts, and an
+  in-memory event bus for broadcasting lifecycle events across the architecture. It acts as a core
+  dependency called upon by [[n_4b6671]] for orchestration signals and by [[n_5b9044]] for node data
+  models and change notifications. Additionally, its locking types and execution definitions feed
+  directly into the operational tracking in [[n_6e459a]] and the agent lifecycle workflows in
+  [[n_000dd8]].
+summary_at: 2026-08-26T03:47:12.191Z

@@ -131,3 +131,9 @@ anchors:
     body: 7cf2b366a148
 id: n_2e36f0
 deps: []
+summary: This node provides language-specific parsing configurations, Tree-sitter grammar
+  definitions, and import resolution rules across supported languages like TypeScript, Python, and
+  Go. It is called by `[[n_848ccb]]` to identify language types during incremental indexing and file
+  synchronization. It also supplies grammar definitions and binding rules to `[[n_3c4f64]]` to
+  enable syntax-driven AST symbol and reference extraction.
+summary_at: 2026-08-26T03:46:40.433Z

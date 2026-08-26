@@ -53,3 +53,8 @@ anchors:
     body: d760fb3c54b6
 id: n_5a2ee7
 deps: []
+summary: This behavior decodes raw protobuf-formatted SCIP index documents into structured code
+  navigation data by extracting symbol definitions, references, and occurrences. It is invoked
+  directly by [[n_848ccb]] during incremental indexing and file-watching workflows to process
+  incoming index files.
+summary_at: 2026-08-26T03:46:37.773Z

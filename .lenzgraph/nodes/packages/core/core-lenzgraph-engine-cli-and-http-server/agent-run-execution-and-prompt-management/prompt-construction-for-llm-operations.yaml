@@ -93,3 +93,8 @@ anchors:
     body: 92a06bb208e8
 id: n_d386d6
 deps: []
+summary: This behavior is responsible for preparing structured prompt strings and JSON schemas
+  tailored for various model-driven processes, including build runs, code reconstruction,
+  specification comparisons, and symbol derivations. It serves to standardize and centralize input
+  formatting and schema constraints across these downstream LLM tasks.
+summary_at: 2026-08-26T03:48:38.969Z

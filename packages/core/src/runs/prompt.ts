@@ -92,3 +92,22 @@ export function derivePrompt(folder: string, symbols: { key: string; kind: strin
 }
 
 export function nodeToYamlForPrompt(n: LenzNode) { return YAML.stringify({ title: n.title, spec: n.spec, examples: n.examples }); }
+
+export function summaryPrompt(n: LenzNode, parent: LenzNode | null, children: LenzNode[], out: { id: string; title: string; via: string[] }[], inn: { id: string; title: string; via: string[] }[]): string {
+  const level = n.kind === "intent" ? (parent ? "a module inside " + parent.title : "a top-level area of the project") : "a single behavior";
+  return `Write a short orientation summary (2–4 sentences, plain prose, no headings, no bullet lists) for one node of a software project graph. The reader is a human deciding where to look next. Stay at the abstraction level of this node (${level}): say what it is for, what it does in one breath, then how it connects — what it hands off to, and what it relies on. Reference other nodes ONLY with their id in double brackets, e.g. [[n_ab12cd]] — the UI turns these into links; never write their titles. Do not mention nodes that are not listed below. Do not restate the spec verbatim.
+
+## This node
+id: ${n.id}
+kind: ${n.kind}
+title: ${n.title}
+spec: ${oneLine(n.spec, 900)}
+${children.length ? `\n## Its parts (children, for context; do not link them individually unless essential)\n${children.map((c) => `- ${c.title}: ${oneLine(c.spec, 140)}`).join("\n")}\n` : ""}
+## Hands off to / calls (link these)
+${out.length ? out.map((o) => `- [[${o.id}]] ${o.title} — e.g. ${o.via.join("; ")}`).join("\n") : "(none known)"}
+
+## Relies on / is called by (link these)
+${inn.length ? inn.map((o) => `- [[${o.id}]] ${o.title} — e.g. ${o.via.join("; ")}`).join("\n") : "(none known)"}
+
+Respond with the summary text only.`;
+}

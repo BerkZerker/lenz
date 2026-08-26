@@ -6,3 +6,8 @@ derived: true
 id: n_82bce8
 parent: n_6461e1
 deps: []
+summary: This module provides a standalone demonstration of a task management interface,
+  implementing an in-memory Todo store. It handles core lifecycle operations including creating,
+  updating, deleting, and filtering Todo items. As a self-contained example, it operates
+  independently without direct dependencies or handoffs to other modules in the project.
+summary_at: 2026-08-26T03:45:52.919Z

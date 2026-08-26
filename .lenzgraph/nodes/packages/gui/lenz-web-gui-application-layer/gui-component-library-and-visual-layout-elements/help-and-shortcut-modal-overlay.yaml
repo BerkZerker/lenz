@@ -29,3 +29,9 @@ anchors:
     body: 58558afa3472
 id: n_f6c0ca
 deps: []
+summary: This behavior provides on-demand user guidance by presenting a modal overlay containing
+  application help guides and keyboard shortcuts. It activates upon user interaction to display
+  reference material directly over the interface without navigating away from the current view.
+  Currently, it operates as a self-contained component with no documented upstream dependencies or
+  downstream handoffs.
+summary_at: 2026-08-26T03:48:03.089Z

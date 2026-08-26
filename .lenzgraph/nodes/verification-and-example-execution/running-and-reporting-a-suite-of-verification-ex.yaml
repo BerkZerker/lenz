@@ -25,3 +25,9 @@ anchors:
     body: e9cbbea39604
 id: n_e0f803
 deps: []
+summary: This behavior orchestrates the sequential execution and outcome aggregation for a
+  collection of verification examples, reporting incremental progress along the way. It delegates
+  command execution to [[n_f81a34]] and output assertion checking to [[n_881d0b]]. In turn, it is
+  invoked by the broader verification workflows and utilizes the core example models provided by
+  [[n_d0fc17]].
+summary_at: 2026-08-26T03:45:50.157Z

@@ -126,3 +126,10 @@ anchors:
     body: 086b9c4319a9
 id: n_848ccb
 deps: []
+summary: This node orchestrates full-project extraction, debounced filesystem watching, and
+  incremental synchronization across codebase modifications. To parse and persist structural data,
+  it delegates file language detection to [[n_2e36f0]], AST parsing to [[n_3c4f64]], reference
+  linking to [[n_cc80b0]] and [[n_5a2ee7]], and schemas via [[n_401412]] into [[n_f35ac5]]. Upstream
+  systems including [[n_4b6671]], [[n_b01b1f]], [[n_14d144]], [[n_000dd8]], and [[n_742e8a]] invoke
+  these indexing routines to maintain and query live symbol definitions.
+summary_at: 2026-08-26T03:46:32.604Z

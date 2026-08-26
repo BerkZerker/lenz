@@ -1,191 +1,232 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { api } from "../api";
 import { useStore } from "../store";
+import { areaColor, STATUS_RING, withAlpha } from "../colors";
+import { Summary } from "../components/Summary";
+import { StatusTag } from "../components/common";
 import type { LenzNode } from "../types";
 
-interface P { id: string; x: number; y: number; vx: number; vy: number; pinned?: boolean }
+interface P { id: string; x: number; y: number; tx: number; ty: number; vx: number; vy: number; pinned?: boolean }
 type Layout = "force" | "tree";
-const COLORS: Record<string, string> = { specified: "#737373", building: "#3b82f6", built: "#eab308", verified: "#22c55e", rejected: "#ef4444", drifted: "#ef4444", proposed: "#a3a3a3" };
 const ROOT = "__root__";
-const LEAF_GAP = 250, LEVEL_GAP = 130;
+const LEAF_GAP = 230, LEVEL_GAP = 150;
+/** rAF is paused in hidden tabs; fall back to a timer so layouts still settle (e.g. for screenshots). */
+const schedule = (fn: (t: number) => void): number => (document.hidden ? (setTimeout(() => fn(performance.now()), 16) as unknown as number) | 0x40000000 : requestAnimationFrame(fn));
+const unschedule = (id: number) => { if (id & 0x40000000) clearTimeout(id & ~0x40000000); else cancelAnimationFrame(id); };
 
 /**
- * Obsidian-style local graph. Shows the focused node and its direct children (≤ 9); click a node to select it
- * and expand its children, click again to collapse, double-click an intent to re-center on it.
- * Layouts: force (physics) or tree (inverted tree: center on top, children fan down by level).
+ * Voxel-style local graph: only the cursor (an intent or the root), its parent (the way up) and its ≤9 children are
+ * loaded. Clicking an intent child moves the cursor there; clicking a behavior opens its panel. Zoom is never
+ * changed by a click — only pans, smoothly. Node color = area (top-level subtree); ring = status.
  */
 export function GraphView() {
-  const { nodes, focus, selected, setSelected, setFocus } = useStore();
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [layout, setLayout] = useState<Layout>(() => { try { return (localStorage.getItem("lg.graphLayout") as Layout) || "force"; } catch { return "force"; } });
+  const { nodes, focus, selected, setSelected, setFocus, relations } = useStore();
+  const [layout, setLayout] = useState<Layout>(() => { try { return (localStorage.getItem("lg.graphLayout") as Layout) || "tree"; } catch { return "tree"; } });
   const [seed, setSeed] = useState(0);
-  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  const [hover, setHover] = useState<string | null>(null);
+  const [view, setViewRaw] = useState({ x: 0, y: 0, k: 1.1 });
+  const viewRef = useRef(view); viewRef.current = view;
   const [, tick] = useState(0);
   const pos = useRef(new Map<string, P>());
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string | null; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
-  const userView = useRef(false);
-  const anchorId = useRef<string | null>(null); // node to keep in view when the layout is too big to fit
-  const centerId = focus ?? ROOT;
+  const anim = useRef(0);
+  const lastCursorPos = useRef<{ x: number; y: number } | null>(null);
+  const cursor = focus ?? ROOT;
+  const parentId = focus ? (nodes[focus]?.parent ?? ROOT) : null;
 
-  useEffect(() => { setExpanded(new Set()); userView.current = false; anchorId.current = null; }, [focus]);
-  const pickLayout = (l: Layout) => { setLayout(l); userView.current = false; try { localStorage.setItem("lg.graphLayout", l); } catch {} };
-  const resort = () => { pos.current.clear(); userView.current = false; setSeed((s) => s + 1); };
-
-  // visible: center + its children + children of expanded nodes (recursively, if their parent is visible)
-  const visible = useMemo(() => {
-    const all = Object.values(nodes);
-    const set = new Map<string, LenzNode | null>();
-    set.set(centerId, focus ? nodes[focus] ?? null : null);
-    const addChildren = (pid: string | null) => { for (const n of all.sort((a, b) => a.title.localeCompare(b.title))) if (n.parent === pid && !set.has(n.id)) { set.set(n.id, n); if (expanded.has(n.id)) addChildren(n.id); } };
-    addChildren(focus);
-    return set;
-  }, [nodes, focus, expanded, centerId]);
-
-  const links = useMemo(() => {
-    const out: { a: string; b: string; kind: "child" | "dep" }[] = [];
-    for (const [id, n] of visible) {
-      if (id === centerId) continue;
-      const p = n?.parent && visible.has(n.parent) ? n.parent : centerId;
-      out.push({ a: p, b: id, kind: "child" });
-      for (const d of n?.deps ?? []) if (visible.has(d)) out.push({ a: d, b: id, kind: "dep" });
+  // ---- loaded set: parent + cursor + children ----
+  const children = useMemo(() => Object.values(nodes).filter((n) => n.parent === focus).sort((a, b) => a.title.localeCompare(b.title)), [nodes, focus]);
+  const loaded = useMemo(() => { const s = new Map<string, LenzNode | null>(); if (parentId) s.set(parentId, parentId === ROOT ? null : nodes[parentId]); s.set(cursor, focus ? nodes[focus] : null); for (const c of children) s.set(c.id, c); return s; }, [nodes, focus, children, cursor, parentId]);
+  const relEdges = useMemo(() => {
+    const out: { a: string; b: string; kind: "dep" | "calls" }[] = [];
+    const ids = new Set(children.map((c) => c.id));
+    for (const c of children) {
+      for (const d of c.deps) if (ids.has(d)) out.push({ a: d, b: c.id, kind: "dep" });
+      for (const r of relations[c.id]?.out ?? []) if (ids.has(r.id) && !c.deps.includes(r.id)) out.push({ a: c.id, b: r.id, kind: "calls" });
     }
     return out;
-  }, [visible, centerId]);
+  }, [children, relations]);
 
-  const fit = () => {
-    if (userView.current || !svgRef.current) return;
-    const ps = [...pos.current.values()]; if (!ps.length) return;
+  // ---- view animation ----
+  const setView = (v: { x: number; y: number; k: number }, animate = true) => {
+    unschedule(anim.current);
+    if (!animate) { setViewRaw(v); return; }
+    const from = { ...viewRef.current }; const t0 = performance.now(); const D = 380;
+    const step = (t: number) => { const u = Math.min(1, (t - t0) / D); const e = 1 - Math.pow(1 - u, 3); setViewRaw({ x: from.x + (v.x - from.x) * e, y: from.y + (v.y - from.y) * e, k: from.k + (v.k - from.k) * e }); if (u < 1) anim.current = schedule(step); };
+    anim.current = schedule(step);
+  };
+  const centerOn = (x: number, y: number, k = viewRef.current.k) => setView({ k, x: -x * k, y: -y * k });
+  const fitAll = () => {
+    const ps = [...pos.current.values()].map((p) => ({ x: p.tx, y: p.ty })); if (!ps.length || !svgRef.current) return;
     const xs = ps.map((p) => p.x), ys = ps.map((p) => p.y);
-    const w = Math.max(...xs) - Math.min(...xs) + 340, h = Math.max(...ys) - Math.min(...ys) + 100;
-    const W = svgRef.current.clientWidth, H = svgRef.current.clientHeight;
-    const MIN_K = 0.8; // never below readable; if it doesn't fit, keep the last expanded node in view instead
-    const fitK = Math.min(W / w, H / h);
-    const k = Math.min(2.4, Math.max(MIN_K, fitK));
-    let cx = (Math.max(...xs) + Math.min(...xs)) / 2 + 70, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-    const a = anchorId.current ? pos.current.get(anchorId.current) : null;
-    if (fitK < MIN_K && a) { cx = a.x + 70; cy = a.y + (layout === "tree" ? 60 : 0); }
-    setView({ k, x: -cx * k, y: -cy * k });
+    const w = Math.max(...xs) - Math.min(...xs) + 360, h = Math.max(...ys) - Math.min(...ys) + 160;
+    const k = Math.min(1.6, Math.max(0.7, Math.min(svgRef.current.clientWidth / w, svgRef.current.clientHeight / h)));
+    setView({ k, x: -((Math.max(...xs) + Math.min(...xs)) / 2) * k, y: -((Math.max(...ys) + Math.min(...ys)) / 2) * k });
   };
 
-  // ---- layout ----
+  // ---- layout targets ----
   useEffect(() => {
     const m = pos.current;
-    for (const id of [...m.keys()]) if (!visible.has(id)) m.delete(id);
-    if (layout === "tree") {
-      // tidy inverted tree: center at top, subtrees fan downward; leaf slots are LEAF_GAP apart
-      const kids = (id: string) => [...visible].filter(([, n]) => (n?.parent ?? ROOT) === id || (id === centerId && n?.parent === focus)).map(([k]) => k).filter((k) => k !== id);
-      const width = new Map<string, number>();
-      const measure = (id: string): number => { const c = kids(id); const w = c.length ? c.reduce((s, k) => s + measure(k), 0) : 1; width.set(id, w); return w; };
-      measure(centerId);
-      const place = (id: string, x0: number, depth: number) => {
-        const w = width.get(id)!; const cx = x0 + (w * LEAF_GAP) / 2;
-        m.set(id, { id, x: cx, y: depth * LEVEL_GAP, vx: 0, vy: 0, pinned: true });
-        let x = x0; for (const k of kids(id)) { place(k, x, depth + 1); x += width.get(k)! * LEAF_GAP; }
-      };
-      place(centerId, -(width.get(centerId)! * LEAF_GAP) / 2, 0);
-      tick((t) => t + 1); requestAnimationFrame(fit);
-      return;
+    const spawn = lastCursorPos.current ?? { x: 0, y: 0 };
+    for (const id of [...m.keys()]) if (!loaded.has(id)) m.delete(id);
+    for (const id of loaded.keys()) if (!m.has(id)) m.set(id, { id, x: spawn.x, y: spawn.y, tx: spawn.x, ty: spawn.y, vx: 0, vy: 0 });
+    // re-anchor the coordinate system on the cursor: cursor at (0,0), parent above, children below
+    const c = m.get(cursor)!; c.tx = 0; c.ty = 0; c.pinned = true;
+    if (parentId) { const p = m.get(parentId)!; p.tx = 0; p.ty = -LEVEL_GAP; p.pinned = true; }
+    const n = children.length;
+    if (layout === "tree" || n === 0) {
+      children.forEach((ch, i) => { const p = m.get(ch.id)!; p.tx = (i - (n - 1) / 2) * LEAF_GAP; p.ty = LEVEL_GAP; p.pinned = true; });
+    } else {
+      // force: children start on an arc below the cursor and relax
+      children.forEach((ch, i) => { const p = m.get(ch.id)!; const a = Math.PI * (0.15 + 0.7 * (n === 1 ? 0.5 : i / (n - 1))); p.tx = Math.cos(a) * 260 * (n > 4 ? 1.3 : 1); p.ty = Math.sin(a) * 200 + 60; p.pinned = false; });
     }
-    let i = 0;
-    for (const id of visible.keys()) {
-      if (!m.has(id)) {
-        const parent = visible.get(id)?.parent ?? centerId; const pp = m.get(parent) ?? m.get(centerId);
-        const a = (i++ / Math.max(1, visible.size)) * Math.PI * 2;
-        m.set(id, { id, x: (pp?.x ?? 0) + Math.cos(a) * 200 + (Math.random() - 0.5) * 40, y: (pp?.y ?? 0) + Math.sin(a) * 200 + (Math.random() - 0.5) * 40, vx: 0, vy: 0 });
-      }
-    }
-    for (const p of m.values()) p.pinned = false;
-    const c = m.get(centerId)!; c.x = 0; c.y = 0; c.pinned = true;
+    lastCursorPos.current = { x: 0, y: 0 };
     let alpha = 1; let raf = 0;
     const step = () => {
       const ps = [...m.values()];
-      for (let a = 0; a < ps.length; a++) for (let b = a + 1; b < ps.length; b++) {
-        const A = ps[a], B = ps[b]; let dx = B.x - A.x, dy = B.y - A.y; const d2 = dx * dx + dy * dy || 1; const d = Math.sqrt(d2);
-        const f = Math.min(120, 90000 / d2); dx /= d; dy /= d;
-        A.vx -= dx * f; A.vy -= dy * f; B.vx += dx * f; B.vy += dy * f;
+      let moving = false;
+      if (layout === "force" && n > 0) {
+        for (let a = 0; a < ps.length; a++) for (let b = a + 1; b < ps.length; b++) {
+          const A = ps[a], B = ps[b]; let dx = B.tx - A.tx, dy = B.ty - A.ty; const d2 = dx * dx + dy * dy || 1; const d = Math.sqrt(d2); const f = Math.min(80, 60000 / d2); dx /= d; dy /= d;
+          if (!A.pinned) { A.vx -= dx * f; A.vy -= dy * f; } if (!B.pinned) { B.vx += dx * f; B.vy += dy * f; }
+        }
+        for (const ch of ps) { if (ch.pinned) continue; const dx = ch.tx - c.tx, dy = ch.ty - c.ty, d = Math.sqrt(dx * dx + dy * dy) || 1; const f = (d - 240) * 0.05; ch.vx -= (dx / d) * f; ch.vy -= (dy / d) * f; ch.vy += 0.6; /* gravity: children hang below */ }
+        for (const p of ps) { if (p.pinned) continue; p.vx *= 0.55; p.vy *= 0.55; p.tx += p.vx * alpha; p.ty += p.vy * alpha; }
+        alpha = Math.max(0.05, alpha * 0.98);
       }
-      for (const l of links) {
-        const A = m.get(l.a), B = m.get(l.b); if (!A || !B) continue;
-        const rest = l.kind === "dep" ? 300 : 230 + Math.min(4, childCount(nodes, l.b)) * 15;
-        const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const f = (d - rest) * (l.kind === "dep" ? 0.01 : 0.04);
-        A.vx += (dx / d) * f; A.vy += (dy / d) * f; B.vx -= (dx / d) * f; B.vy -= (dy / d) * f;
-      }
-      for (const p of ps) {
-        p.vx -= p.x * 0.01; p.vy -= p.y * 0.01;
-        if (p.pinned) { p.vx = p.vy = 0; continue; }
-        p.vx *= 0.6; p.vy *= 0.6; p.x += p.vx * alpha; p.y += p.vy * alpha;
-      }
-      alpha = Math.max(0.05, alpha * 0.985);
+      for (const p of ps) { const dx = p.tx - p.x, dy = p.ty - p.y; if (Math.abs(dx) + Math.abs(dy) > 0.3) { p.x += dx * 0.18; p.y += dy * 0.18; moving = true; } else { p.x = p.tx; p.y = p.ty; } }
       tick((t) => t + 1);
-      if (alpha > 0.06) raf = requestAnimationFrame(step); else fit();
+      if (moving || (layout === "force" && alpha > 0.06)) raf = schedule(step);
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [visible, links, centerId, layout, seed]);
+    raf = schedule(step);
+    // keep the cursor centered (pan only — zoom untouched)
+    centerOn(0, LEVEL_GAP / 2);
+    return () => unschedule(raf);
+  }, [loaded, layout, seed, cursor]);
+
+  useEffect(() => { const t = setTimeout(fitAll, 450); return () => clearTimeout(t); }, [layout, seed]); // fit only on layout switch / re-sort / mount
 
   // ---- interaction ----
-  const onDown = (e: React.MouseEvent, id: string | null) => { e.stopPropagation(); const p = id ? pos.current.get(id) : null; drag.current = { id, sx: e.clientX, sy: e.clientY, ox: p ? p.x : view.x, oy: p ? p.y : view.y, moved: false }; if (p) p.pinned = true; };
+  const onDown = (e: React.MouseEvent, id: string | null) => { e.stopPropagation(); const p = id ? pos.current.get(id) : null; drag.current = { id, sx: e.clientX, sy: e.clientY, ox: p ? p.tx : viewRef.current.x, oy: p ? p.ty : viewRef.current.y, moved: false }; };
   const onMove = (e: React.MouseEvent) => {
     const d = drag.current; if (!d) return; const dx = e.clientX - d.sx, dy = e.clientY - d.sy; if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
-    if (d.id) { const p = pos.current.get(d.id); if (p) { p.x = d.ox + dx / view.k; p.y = d.oy + dy / view.k; tick((t) => t + 1); } } else { userView.current = true; setView((v) => ({ ...v, x: d.ox + dx, y: d.oy + dy })); }
+    if (d.id) { const p = pos.current.get(d.id); if (p) { p.tx = p.x = d.ox + dx / viewRef.current.k; p.ty = p.y = d.oy + dy / viewRef.current.k; p.pinned = true; tick((t) => t + 1); } } else setView({ ...viewRef.current, x: d.ox + dx, y: d.oy + dy }, false);
   };
-  const onUp = () => { const d = drag.current; if (d?.id && d.id !== centerId && layout === "force") { const p = pos.current.get(d.id); if (p) p.pinned = false; } drag.current = null; };
-  const onWheel = (e: React.WheelEvent) => { userView.current = true; const k = Math.min(3, Math.max(0.2, view.k * (e.deltaY < 0 ? 1.1 : 0.9))); setView((v) => ({ ...v, k })); };
+  const onUp = () => { drag.current = null; };
+  const onWheel = (e: React.WheelEvent) => { const k = Math.min(3, Math.max(0.3, viewRef.current.k * (e.deltaY < 0 ? 1.1 : 0.9))); setView({ ...viewRef.current, k }, false); };
+  const navigate = (id: string | null) => { const p = id ? pos.current.get(id) : pos.current.get(ROOT); lastCursorPos.current = p ? { x: p.x, y: p.y } : null; setFocus(id); setSelected(id); };
   const click = (id: string) => {
     if (drag.current?.moved) return;
-    if (id === ROOT) { setSelected(null); return; }
-    const already = useStore.getState().selected === id; setSelected(id);
-    setExpanded((s) => { const n = new Set(s); if (already && n.has(id)) n.delete(id); else n.add(id); return n; });
-    anchorId.current = id; userView.current = false;
+    if (id === ROOT) { if (cursor !== ROOT) navigate(null); else setSelected(null); return; }
+    const n = nodes[id]; if (!n) return;
+    if (id === parentId) { navigate(n.id); return; }
+    if (id !== cursor && n.kind === "intent") { navigate(id); return; }
+    setSelected(selected === id ? null : id);
   };
-  const dbl = (id: string) => { userView.current = false; if (id === ROOT) { setFocus(null); return; } const n = nodes[id]; if (n?.kind === "intent") { setFocus(id); setSelected(null); } };
 
+  const sel = selected ? nodes[selected] : null;
   const crumbs: { id: string | null; title: string }[] = [{ id: null, title: "app" }];
   let p = focus ? nodes[focus] : null; const chain: typeof crumbs = [];
   while (p) { chain.unshift({ id: p.id, title: p.title }); p = p.parent ? nodes[p.parent] : null; }
   crumbs.push(...chain);
-  const shown = visible.size - 1, total = childCount(nodes, focus);
+  const colorOf = (id: string) => (id === ROOT ? "#d4d4d4" : areaColor(nodes, id));
+  const connected = (id: string) => new Set(relEdges.filter((e) => e.a === id || e.b === id).flatMap((e) => [e.a, e.b]));
+  const hi = hover ? connected(hover) : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <div className="breadcrumb" style={{ margin: 0 }}>{crumbs.map((c, i) => <span key={c.id ?? "root"} className={i === crumbs.length - 1 ? "here" : ""} onClick={() => { setFocus(c.id); setSelected(null); }}>{c.title}{i < crumbs.length - 1 ? " ▸ " : ""}</span>)}
-          <span className="dim"> · {total} children{shown > total ? `, ${shown - total} expanded` : ""}</span></div>
-        <div className="row" style={{ margin: 0 }}>
-          <span className="dim">layout:</span>
-          <button className={layout === "force" ? "primary" : ""} onClick={() => pickLayout("force")}>force</button>
-          <button className={layout === "tree" ? "primary" : ""} onClick={() => pickLayout("tree")}>tree</button>
-          <button onClick={resort}>re-sort</button>
-          <button onClick={() => { setExpanded(new Set()); userView.current = false; anchorId.current = null; }} disabled={!expanded.size}>collapse all</button>
-        </div>
-      </div>
-      <div className="dim" style={{ fontSize: 12, margin: "2px 0 4px" }}>click: select + expand · click again: collapse · double-click: center on it · drag: pan · wheel: zoom</div>
-      <svg ref={svgRef} style={{ flex: 1, width: "100%", minHeight: 400, cursor: drag.current ? "grabbing" : "default" }} onMouseDown={(e) => onDown(e, null)} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp} onWheel={onWheel}>
+    <div className="graph-wrap">
+      <svg ref={svgRef} onMouseDown={(e) => onDown(e, null)} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp} onWheel={onWheel} style={{ cursor: drag.current && !drag.current.id ? "grabbing" : "default" }}>
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#666" /></marker></defs>
         <g transform={`translate(${(svgRef.current?.clientWidth ?? 800) / 2 + view.x}, ${(svgRef.current?.clientHeight ?? 500) / 2 + view.y}) scale(${view.k})`}>
-          {links.map((l, i) => { const A = pos.current.get(l.a), B = pos.current.get(l.b); if (!A || !B) return null; return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={l.kind === "dep" ? "#d97757" : "#333"} strokeDasharray={l.kind === "dep" ? "4 3" : undefined} strokeWidth={1} />; })}
-          {[...visible].map(([id, n]) => {
+          {/* containment edges */}
+          {[...loaded.keys()].filter((id) => id !== cursor).map((id) => { const A = pos.current.get(id), C = pos.current.get(cursor); if (!A || !C) return null; const dim = hi && !hi.has(id) && hover !== id; return <line key={"c" + id} className="g-link" x1={C.x} y1={C.y} x2={A.x} y2={A.y} stroke={id === parentId ? "#555" : withAlpha(colorOf(id), 0.45)} strokeWidth={1.2} opacity={dim ? 0.25 : 1} />; })}
+          {/* relation edges between siblings */}
+          {relEdges.map((e, i) => { const A = pos.current.get(e.a), B = pos.current.get(e.b); if (!A || !B) return null; const on = hover === e.a || hover === e.b; const dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1; const x2 = B.x - (dx / d) * 12, y2 = B.y - (dy / d) * 12; const bend = 28 * (i % 2 ? 1 : -1); return <path key={"r" + i} className="g-link" d={`M ${A.x} ${A.y} Q ${(A.x + B.x) / 2 - (dy / d) * bend} ${(A.y + B.y) / 2 + (dx / d) * bend} ${x2} ${y2}`} fill="none" stroke={e.kind === "dep" ? "#d97757" : colorOf(e.a)} strokeDasharray={e.kind === "dep" ? "5 3" : "2 3"} strokeWidth={on ? 1.8 : 1} opacity={hover && !on ? 0.15 : 0.7} markerEnd="url(#arrow)" />; })}
+          {[...loaded].map(([id, n]) => {
             const P = pos.current.get(id); if (!P) return null;
-            const isCenter = id === centerId; const sel = id === selected; const isIntent = !n || n.kind === "intent";
-            const kids = id === ROOT ? childCount(nodes, null) : childCount(nodes, id);
-            const r = isCenter ? 14 : isIntent ? 10 : 7;
-            const col = n ? COLORS[n.status] ?? "#737373" : "#d4d4d4";
+            const isCursor = id === cursor, isParent = id === parentId, isSel = id === selected, isIntent = !n || n.kind === "intent";
+            const kids = Object.values(nodes).filter((x) => x.parent === (id === ROOT ? null : id)).length;
+            const r = isCursor ? 15 : isParent ? 9 : isIntent ? 11 : 8;
+            const col = colorOf(id); const ring = n ? STATUS_RING[n.status] : undefined;
             const title = id === ROOT ? "app" : n!.title;
-            const exp = expanded.has(id);
-            const labelBelow = layout === "tree";
+            const dim = hi && !hi.has(id) && hover !== id && !isCursor && !isParent;
             return (
-              <g key={id} transform={`translate(${P.x},${P.y})`} onMouseDown={(e) => onDown(e, id)} onClick={() => click(id)} onDoubleClick={() => dbl(id)} style={{ cursor: "pointer" }}>
-                <circle r={r} fill={isIntent ? "#0a0a0a" : col} stroke={sel ? "#d97757" : col} strokeWidth={sel ? 2 : 1.5} strokeDasharray={n?.status === "proposed" ? "3 2" : undefined} />
-                {isIntent && kids > 0 && <text textAnchor="middle" dy="3.5" fontSize={9} fill="#d4d4d4">{kids}</text>}
-                {!isIntent && kids > 0 && !exp && <circle r={2} cx={r + 1} cy={-r} fill="#737373" />}
-                <text x={labelBelow ? 0 : r + 5} y={labelBelow ? r + 13 : 0} dy={labelBelow ? 0 : 4} textAnchor={labelBelow ? "middle" : "start"} fontSize={isCenter ? 13 : 12} fill={sel ? "#d97757" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, isCenter ? 60 : 30)}</text>
-                {n?.staged && <text x={labelBelow ? 0 : r + 5} y={labelBelow ? r + 25 : 16} textAnchor={labelBelow ? "middle" : "start"} fontSize={10} fill="#d97757">staged</text>}
-                {sel && n && n.spec && <foreignObject x={labelBelow ? 90 : r + 5} y={labelBelow ? -52 : 10} width={260} height={110}><div style={{ font: "10.5px/1.35 JetBrains Mono, monospace", color: "#737373", background: "#0a0a0a", border: "1px solid #262626", padding: "3px 5px", overflow: "hidden", maxHeight: 104 }}>{trunc(n.spec, 260)}</div></foreignObject>}
+              <g key={id} className="g-node" transform={`translate(${P.x},${P.y})`} opacity={dim ? 0.35 : isParent ? 0.75 : 1} onMouseDown={(e) => onDown(e, id)} onClick={() => click(id)} onMouseEnter={() => setHover(id)} onMouseLeave={() => setHover(null)}>
+                <circle className="halo" r={r + 10} fill={col} />
+                <circle r={r} fill={isIntent ? "#0a0a0a" : col} stroke={isSel ? "#fff" : col} strokeWidth={isSel ? 2.5 : isIntent ? 1.8 : 1.2} strokeDasharray={n?.status === "proposed" ? "3 2" : undefined} />
+                {ring && <circle r={r + 4} fill="none" stroke={ring} strokeWidth={1.5} opacity={0.9} />}
+                {isIntent && kids > 0 && <text textAnchor="middle" dy="3.5" fontSize={9} fill={col} style={{ pointerEvents: "none" }}>{kids}</text>}
+                {isParent && <text textAnchor="middle" y={-r - 6} fontSize={9} fill="#737373" style={{ pointerEvents: "none" }}>▲ up</text>}
+                <text className="lbl" textAnchor="middle" y={r + 14} fontSize={isCursor ? 13 : 12} fontWeight={isCursor ? 700 : 400} fill={isSel ? "#fff" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, 28)}</text>
+                {n?.staged && <text textAnchor="middle" y={r + 26} fontSize={10} fill="#d97757">staged</text>}
               </g>);
           })}
         </g>
       </svg>
+
+      <div className="graph-toolbar glass">
+        <span className="breadcrumb" style={{ margin: 0 }}>{crumbs.map((c, i) => <span key={c.id ?? "root"} className={i === crumbs.length - 1 ? "here" : ""} onClick={() => navigate(c.id)}>{trunc(c.title, 22)}{i < crumbs.length - 1 ? " ▸ " : ""}</span>)}</span>
+        <span className="dim">· {children.length} loaded</span>
+        <span style={{ width: 8 }} />
+        <button className={layout === "force" ? "primary" : ""} onClick={() => { setLayout("force"); try { localStorage.setItem("lg.graphLayout", "force"); } catch {} }}>force</button>
+        <button className={layout === "tree" ? "primary" : ""} onClick={() => { setLayout("tree"); try { localStorage.setItem("lg.graphLayout", "tree"); } catch {} }}>tree</button>
+        <button onClick={() => { pos.current.clear(); setSeed((s) => s + 1); }}>re-sort</button>
+        <button onClick={fitAll}>fit</button>
+      </div>
+      <div className="graph-hint">click intent: go there · click behavior: details · ▲ up · drag: pan · wheel: zoom</div>
+
+      <Minimap nodes={nodes} focus={focus} onGo={navigate} />
+      {sel && <NodePanel n={sel} onClose={() => setSelected(null)} onOpen={() => navigate(sel.id)} />}
     </div>
   );
 }
-function childCount(nodes: Record<string, LenzNode>, id: string | null) { let c = 0; for (const n of Object.values(nodes)) if (n.parent === id) c++; return c; }
+
+function Minimap({ nodes, focus, onGo }: { nodes: Record<string, LenzNode>; focus: string | null; onGo: (id: string | null) => void }) {
+  const levels: { parent: string | null; current: string | null }[] = [];
+  let cur: string | null = focus;
+  const chain: string[] = []; while (cur) { chain.unshift(cur); cur = nodes[cur]?.parent ?? null; }
+  let parent: string | null = null;
+  for (const id of chain) { levels.push({ parent, current: id }); parent = id; }
+  levels.push({ parent: focus, current: null }); // the loaded children row
+  return (
+    <div className="minimap glass" title="where you are: each row is one level; the outlined dot is your path">
+      <div className="lvl"><div className={`mdot ${focus === null ? "cur" : ""}`} style={{ background: "#d4d4d4" }} onClick={() => onGo(null)} /><span className="lbl">app</span></div>
+      {levels.map((l, i) => {
+        const sibs = Object.values(nodes).filter((n) => n.parent === l.parent).sort((a, b) => a.title.localeCompare(b.title));
+        if (!sibs.length) return null;
+        return <div className="lvl" key={i} style={{ paddingLeft: 6 * (i + 1) }}>
+          {sibs.map((s) => <div key={s.id} className={`mdot ${s.id === l.current ? "cur" : ""}`} style={{ background: s.kind === "intent" ? "transparent" : areaColor(nodes, s.id), borderColor: areaColor(nodes, s.id) }} title={s.title} onClick={() => onGo(s.kind === "intent" ? s.id : s.parent)} />)}
+          <span className="lbl">{l.current ? nodes[l.current]?.title : `${sibs.length} here`}</span>
+        </div>;
+      })}
+    </div>
+  );
+}
+
+function NodePanel({ n, onClose, onOpen }: { n: LenzNode; onClose: () => void; onOpen: () => void }) {
+  const nodes = useStore((s) => s.nodes); const notify = useStore((s) => s.notify);
+  const col = areaColor(nodes, n.id);
+  const v = n.verification;
+  const act = (path: string, body?: any) => api(path, body ?? {}).catch((e) => notify(e.message));
+  return (
+    <div className="node-panel glass" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="bar" style={{ background: col }} />
+      <button className="close" onClick={onClose} title="close (esc)">×</button>
+      <h4 style={{ color: col, paddingRight: 20 }}>{n.title}</h4>
+      <div className="row" style={{ margin: "0 0 6px" }}><span className="dim">{n.kind}</span><StatusTag status={n.status} />{n.staged && <span className="tag accent">staged</span>}{n.needs_reverify && <span className="tag warn">needs-reverify</span>}{n.derived && <span className="tag">derived</span>}</div>
+      {n.summary ? <div className="summary"><Summary text={n.summary} /></div> : <div className="summary dim">{n.spec ? trunc(n.spec, 420) : "(no spec)"}</div>}
+      {n.summary && n.spec && <details><summary className="dim" style={{ cursor: "pointer" }}>spec</summary><pre className="dim" style={{ fontSize: 12, marginTop: 4 }}>{n.spec}</pre></details>}
+      {n.kind === "behavior" && <div className="dim" style={{ marginTop: 6 }}>{(n.examples ?? []).length} examples · {(n.anchors ?? []).length} symbols{v?.examples ? ` · ex ${v.examples.pass}/${v.examples.pass + v.examples.fail + v.examples.pending}` : ""}{v?.reconstruction ? ` · recon ${v.reconstruction.verdict}` : ""}</div>}
+      {n.status === "drifted" && <div className="bad" style={{ marginTop: 6 }}>drift: {n.drift?.reasons.join("; ")}</div>}
+      <div className="actions">
+        {n.kind === "intent" && <button className="primary" onClick={onOpen}>open →</button>}
+        {n.status === "proposed" && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
+        {(n.status === "specified" || n.status === "rejected") && n.kind === "behavior" && <button className="primary" onClick={() => act(`/nodes/${n.id}/dispatch`)}>dispatch</button>}
+        {(n.status === "built" || n.status === "drifted") && <button className="primary" onClick={() => act(`/nodes/${n.id}/approve`)}>approve</button>}
+        <button onClick={() => act(`/nodes/${n.id}/summarize`)} title="rewrite the summary with Gemini">{n.summary ? "re-summarize" : "summarize"}</button>
+      </div>
+    </div>
+  );
+}
 function trunc(s: string, n: number) { s = s.replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }

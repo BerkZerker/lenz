@@ -35,3 +35,7 @@ anchors:
     body: 19c3bd0b406c
 id: n_522746
 deps: []
+summary: This behavior presents verification overviews alongside granular check and test execution
+  results for selected nodes and their runs. To construct and style these views, it hands off
+  rendering tasks to the reusable formatting and UI components in [[n_43e587]].
+summary_at: 2026-08-26T03:48:22.015Z

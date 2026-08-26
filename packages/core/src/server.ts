@@ -26,6 +26,9 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/nodes/:id/anchors/assign", async (req, p) => { try { const b = await body(req); return json(core.assignAnchor(p.id, b.key, b.owner ?? null)); } catch (e) { return err(e); } });
   on("POST", "/api/nodes/:id/set", async (req, p) => { try { const b = await body(req); return json(core.nodeSet(p.id, b.path, b.value)); } catch (e) { return err(e); } });
   on("GET", "/api/tree", () => json(core.store.tree()));
+  on("GET", "/api/relations", () => json(core.relations()));
+  on("POST", "/api/nodes/:id/summarize", async (_r, p) => { try { return json(await core.summarize(p.id)); } catch (e) { return err(e); } });
+  on("POST", "/api/summarize", async (req) => { const b = await body(req); void core.summarizeAll(!!b.force, (m) => core.log(m)).catch((e) => core.log(String(e), "warn")); return json({ started: true }); });
   on("GET", "/api/orphans", () => json(core.orphans()));
   on("GET", "/api/flow", (_r, _p, url) => json(core.flow(url.searchParams.get("from") ?? undefined)));
   on("POST", "/api/flow/pin", async (req) => { const b = await body(req); core.idx.db.pinEntryPoint(b.key, b.pinned !== false); return json(core.flow()); });

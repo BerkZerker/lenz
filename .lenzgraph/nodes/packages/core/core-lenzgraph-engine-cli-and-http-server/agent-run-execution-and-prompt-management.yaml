@@ -8,3 +8,11 @@ derived: true
 id: n_000dd8
 parent: n_87c287
 deps: []
+summary: This module manages the execution lifecycle, concurrency, adapter command construction, and
+  prompt rendering for background agent and LLM operations. It is driven by [[n_4b6671]] during
+  engine workflows and queried by [[n_14d144]] to track run progress, inspect changed symbols, or
+  cancel active tasks. To prepare and execute runs, it pulls structural and index context from
+  [[n_5b9044]] and [[n_848ccb]], manages concurrency via [[n_6e459a]], executes generations through
+  [[n_0bc597]], and relies on utilities and definitions from [[n_d5ecfb]], [[n_b7bebc]], and
+  [[n_73f39f]].
+summary_at: 2026-08-26T03:47:15.249Z

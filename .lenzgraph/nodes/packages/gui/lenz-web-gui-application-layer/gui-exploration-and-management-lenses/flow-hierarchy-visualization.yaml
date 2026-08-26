@@ -30,3 +30,8 @@ anchors:
     body: 964ea926128a
 id: n_3c0dd7
 deps: []
+summary: This behavior provides an interactive visualization for hierarchical symbol relationships
+  and node flow structures alongside their provenance metadata. It enables users to trace
+  connections across linked elements and jump directly to their respective source positions during
+  code navigation.
+summary_at: 2026-08-26T03:48:08.261Z

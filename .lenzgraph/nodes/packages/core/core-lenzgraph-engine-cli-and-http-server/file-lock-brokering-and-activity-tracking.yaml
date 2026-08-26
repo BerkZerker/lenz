@@ -104,3 +104,8 @@ anchors:
     body: 6ce0dc43a2fe
 id: n_6e459a
 deps: []
+summary: This behavior manages file concurrency across active runs by arbitrating lock acquisitions,
+  activity-based transfers, and advisory notices. It records write touches and emits lock lifecycle
+  events through [[n_73f39f]]. Lock requests and cleanup routines are driven by [[n_14d144]],
+  [[n_000dd8]], and [[n_4b6671]].
+summary_at: 2026-08-26T03:47:09.277Z

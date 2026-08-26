@@ -75,3 +75,8 @@ anchors:
     body: 355a7c6502f3
 id: n_02fb82
 deps: []
+summary: This node prepares agent execution configurations and interprets their output by
+  constructing parameterized launch commands, rendering tool interception settings, and parsing raw
+  streaming logs into structured event streams. It serves as an adapter layer called by [[n_cb5689]]
+  during run initialization and lifecycle execution.
+summary_at: 2026-08-26T03:48:43.213Z

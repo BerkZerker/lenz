@@ -68,3 +68,9 @@ anchors:
     body: 03e2b026ee88
 id: n_14d144
 deps: []
+summary: This node provides the communication layer that serves REST endpoints and real-time
+  WebSocket feeds to user interfaces and integration hooks. Started by [[n_b01b1f]], it translates
+  client actions into backend operations across the workspace. It delegates lifecycle management to
+  [[n_4b6671]], node storage to [[n_5b9044]], agent execution to [[n_000dd8]], structural database
+  operations to [[n_f35ac5]], indexing to [[n_848ccb]], and lock synchronization to [[n_6e459a]].
+summary_at: 2026-08-26T03:47:00.401Z

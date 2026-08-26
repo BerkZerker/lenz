@@ -30,3 +30,8 @@ anchors:
     body: a8c384867788
 id: n_a8a9bd
 deps: []
+summary: This behavior provides an expandable hierarchical tree navigation interface for browsing
+  specs and behavior nodes, using recursive search filtering to dynamically expand and highlight
+  matching elements along with their ancestor paths. For visual styling and component formatting
+  within the tree, it hands off rendering responsibilities to [[n_43e587]].
+summary_at: 2026-08-26T03:47:54.546Z

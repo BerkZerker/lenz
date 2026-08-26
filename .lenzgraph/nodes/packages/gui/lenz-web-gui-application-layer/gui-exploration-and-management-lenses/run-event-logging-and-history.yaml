@@ -29,3 +29,7 @@ anchors:
     body: 32e1c722ec1f
 id: n_775536
 deps: []
+summary: This component provides visibility into past task runs by rendering execution event streams
+  complete with logs, timestamps, and status details. It hands off rendering and display duties to
+  [[n_43e587]] for formatting timestamps and shared interface widgets.
+summary_at: 2026-08-26T03:48:12.800Z

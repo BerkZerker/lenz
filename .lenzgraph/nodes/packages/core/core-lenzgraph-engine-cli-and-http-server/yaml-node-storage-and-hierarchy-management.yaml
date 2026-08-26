@@ -177,3 +177,11 @@ anchors:
     body: 6c8e19df3976
 id: n_5b9044
 deps: []
+summary: This node manages the filesystem persistence and hierarchical organization of intent and
+  behavior nodes, storing them as YAML files while enforcing structural fan-out caps and generating
+  topological tree views. It processes node data using [[n_b7bebc]], instantiates core models and
+  emits lifecycle updates via [[n_73f39f]], and mirrors node anchors into [[n_f35ac5]]. It is
+  primarily queried by [[n_4b6671]], [[n_000dd8]], [[n_14d144]], and [[n_4b092f]] for hierarchy
+  access and prompt construction, while collaborating with [[n_3c4f64]] to track symbol hashing and
+  AST updates.
+summary_at: 2026-08-26T03:47:04.498Z

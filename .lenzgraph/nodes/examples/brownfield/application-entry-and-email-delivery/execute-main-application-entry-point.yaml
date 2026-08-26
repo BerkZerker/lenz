@@ -22,3 +22,8 @@ anchors:
     body: ea38f6203363
 id: n_2652aa
 deps: []
+summary: This node serves as the primary runtime entry point that initializes and orchestrates the
+  application's core processes. From this root execution path, control is handed off to [[n_0e751a]]
+  for handling identity and password operations, as well as [[n_efdeae]] for dispatching outbound
+  email communications.
+summary_at: 2026-08-26T03:47:41.955Z

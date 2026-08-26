@@ -1,6 +1,13 @@
 import type { LenzNode } from "../types";
+import { areaColor, STATUS_RING } from "../colors";
+import { useStore } from "../store";
 export const StatusTag = ({ status }: { status: string }) => <span className={`tag status-${status}`}>{status}</span>;
-export const Dot = ({ n }: { n: { kind: string; status: string } }) => <span className={`dot ${n.kind === "intent" ? "intent" : ""} status-${n.status}`} />;
+export const Dot = ({ n }: { n: { id?: string; kind: string; status: string } }) => {
+  const nodes = useStore((s) => s.nodes);
+  const col = n.id ? areaColor(nodes, n.id) : "#737373";
+  const ring = STATUS_RING[n.status];
+  return <span className="dot" style={{ background: n.kind === "intent" ? "transparent" : col, border: `1px ${n.status === "proposed" ? "dashed" : "solid"} ${col}`, boxShadow: ring ? `0 0 0 1px #000, 0 0 0 2px ${ring}` : undefined }} title={n.status} />;
+};
 export function NodeCard({ n, selected, onClick, extra }: { n: LenzNode; selected: boolean; onClick: () => void; extra?: React.ReactNode }) {
   return (
     <div className={`card ${selected ? "selected" : ""} ${n.status === "proposed" ? "proposed" : ""}`} onClick={onClick} data-id={n.id}>

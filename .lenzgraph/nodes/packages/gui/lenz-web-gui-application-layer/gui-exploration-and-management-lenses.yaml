@@ -9,3 +9,10 @@ derived: true
 id: n_742e8a
 parent: n_fc5e23
 deps: []
+summary: This module provides specialized exploration and management lenses for the web GUI,
+  enabling users to visualize node dependency graphs, audit verification runs, manage task queues,
+  and stage code proposals. It is mounted and navigated by [[n_639b5c]], rendering its interactive
+  views using layout primitives and widgets from [[n_9fe373]]. To populate and manipulate project
+  data, the lenses leverage domain models from [[n_833082]], coordinate with [[n_848ccb]], consume
+  live state via [[n_4b092f]], and execute server operations through [[n_f9f10a]].
+summary_at: 2026-08-26T03:46:10.530Z
