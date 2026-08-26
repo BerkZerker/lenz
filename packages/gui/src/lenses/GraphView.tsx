@@ -24,9 +24,10 @@ export function GraphView() {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string | null; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
   const userView = useRef(false);
+  const anchorId = useRef<string | null>(null); // node to keep in view when the layout is too big to fit
   const centerId = focus ?? ROOT;
 
-  useEffect(() => { setExpanded(new Set()); userView.current = false; }, [focus]);
+  useEffect(() => { setExpanded(new Set()); userView.current = false; anchorId.current = null; }, [focus]);
   const pickLayout = (l: Layout) => { setLayout(l); userView.current = false; try { localStorage.setItem("lg.graphLayout", l); } catch {} };
   const resort = () => { pos.current.clear(); userView.current = false; setSeed((s) => s + 1); };
 
@@ -57,8 +58,12 @@ export function GraphView() {
     const xs = ps.map((p) => p.x), ys = ps.map((p) => p.y);
     const w = Math.max(...xs) - Math.min(...xs) + 340, h = Math.max(...ys) - Math.min(...ys) + 100;
     const W = svgRef.current.clientWidth, H = svgRef.current.clientHeight;
-    const k = Math.min(2.4, Math.max(0.25, Math.min(W / w, H / h)));
-    const cx = (Math.max(...xs) + Math.min(...xs)) / 2 + 70, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    const MIN_K = 0.8; // never below readable; if it doesn't fit, keep the last expanded node in view instead
+    const fitK = Math.min(W / w, H / h);
+    const k = Math.min(2.4, Math.max(MIN_K, fitK));
+    let cx = (Math.max(...xs) + Math.min(...xs)) / 2 + 70, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    const a = anchorId.current ? pos.current.get(anchorId.current) : null;
+    if (fitK < MIN_K && a) { cx = a.x + 70; cy = a.y + (layout === "tree" ? 60 : 0); }
     setView({ k, x: -cx * k, y: -cy * k });
   };
 
@@ -131,7 +136,7 @@ export function GraphView() {
     if (id === ROOT) { setSelected(null); return; }
     const already = useStore.getState().selected === id; setSelected(id);
     setExpanded((s) => { const n = new Set(s); if (already && n.has(id)) n.delete(id); else n.add(id); return n; });
-    userView.current = false;
+    anchorId.current = id; userView.current = false;
   };
   const dbl = (id: string) => { userView.current = false; if (id === ROOT) { setFocus(null); return; } const n = nodes[id]; if (n?.kind === "intent") { setFocus(id); setSelected(null); } };
 
@@ -151,7 +156,7 @@ export function GraphView() {
           <button className={layout === "force" ? "primary" : ""} onClick={() => pickLayout("force")}>force</button>
           <button className={layout === "tree" ? "primary" : ""} onClick={() => pickLayout("tree")}>tree</button>
           <button onClick={resort}>re-sort</button>
-          <button onClick={() => { setExpanded(new Set()); userView.current = false; }} disabled={!expanded.size}>collapse all</button>
+          <button onClick={() => { setExpanded(new Set()); userView.current = false; anchorId.current = null; }} disabled={!expanded.size}>collapse all</button>
         </div>
       </div>
       <div className="dim" style={{ fontSize: 12, margin: "2px 0 4px" }}>click: select + expand · click again: collapse · double-click: center on it · drag: pan · wheel: zoom</div>
@@ -174,7 +179,7 @@ export function GraphView() {
                 {!isIntent && kids > 0 && !exp && <circle r={2} cx={r + 1} cy={-r} fill="#737373" />}
                 <text x={labelBelow ? 0 : r + 5} y={labelBelow ? r + 13 : 0} dy={labelBelow ? 0 : 4} textAnchor={labelBelow ? "middle" : "start"} fontSize={isCenter ? 13 : 12} fill={sel ? "#d97757" : "#d4d4d4"} style={{ userSelect: "none" }}>{trunc(title, isCenter ? 60 : 30)}</text>
                 {n?.staged && <text x={labelBelow ? 0 : r + 5} y={labelBelow ? r + 25 : 16} textAnchor={labelBelow ? "middle" : "start"} fontSize={10} fill="#d97757">staged</text>}
-                {sel && n && n.spec && <foreignObject x={labelBelow ? -130 : r + 5} y={labelBelow ? r + 30 : 10} width={260} height={110}><div style={{ font: "10.5px/1.35 JetBrains Mono, monospace", color: "#737373", background: "#0a0a0a", border: "1px solid #262626", padding: "3px 5px", overflow: "hidden", maxHeight: 104 }}>{trunc(n.spec, 260)}</div></foreignObject>}
+                {sel && n && n.spec && <foreignObject x={labelBelow ? 90 : r + 5} y={labelBelow ? -52 : 10} width={260} height={110}><div style={{ font: "10.5px/1.35 JetBrains Mono, monospace", color: "#737373", background: "#0a0a0a", border: "1px solid #262626", padding: "3px 5px", overflow: "hidden", maxHeight: 104 }}>{trunc(n.spec, 260)}</div></foreignObject>}
               </g>);
           })}
         </g>

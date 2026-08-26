@@ -300,7 +300,7 @@ anchors:
   - kind: const
     name: _c
     container: ""
-    file: packages/core/static/assets/index-ko_Bjw_J.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 288f8da3532c
   - kind: const
@@ -312,7 +312,7 @@ anchors:
   - kind: const
     name: Oc
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: b864afa66246
   - kind: const
@@ -456,7 +456,7 @@ anchors:
   - kind: const
     name: pr
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 7cf495a2452b
   - kind: const
@@ -2064,7 +2064,7 @@ anchors:
   - kind: const
     name: oo
     container: ""
-    file: packages/core/static/assets/index-ko_Bjw_J.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 91ae3c039c4e
   - kind: function
@@ -2334,7 +2334,7 @@ anchors:
   - kind: const
     name: fi
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: c8e5e9897ac3
   - kind: const
@@ -2760,7 +2760,7 @@ anchors:
   - kind: const
     name: he
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 46b1aec354c2
   - kind: const
@@ -3576,7 +3576,7 @@ anchors:
   - kind: const
     name: er
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 7105e7c02058
   - kind: const
@@ -3642,7 +3642,7 @@ anchors:
   - kind: const
     name: Bt
     container: ""
-    file: packages/core/static/assets/index-ko_Bjw_J.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: b9ee870321b6
   - kind: const
@@ -3876,7 +3876,7 @@ anchors:
   - kind: const
     name: xd
     container: ""
-    file: packages/core/static/assets/index-LUGJMQpN.js
+    file: packages/core/static/assets/index-rRzYRQtO.js
     sig: 53a0acfad593
     body: 7782391677c3
   - kind: function
