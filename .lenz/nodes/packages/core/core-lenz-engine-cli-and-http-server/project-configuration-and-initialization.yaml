@@ -1,16 +1,16 @@
 kind: behavior
 title: Project Configuration and Initialization
-spec: Loads configuration files from `.lenzgraph/config.json`, provides default settings and agent
-  YAML templates, resolves the `.lenzgraph` directory path, and initializes project directories and
+spec: Loads configuration files from `.lenz/config.json`, provides default settings and agent
+  YAML templates, resolves the `.lenz` directory path, and initializes project directories and
   scaffold files.
 parent: n_87c287
 status: proposed
 examples:
   - id: ex_525e07
-    name: Initialize new lenzgraph project
-    given: A project root directory without `.lenzgraph` folder
+    name: Initialize new lenz project
+    given: A project root directory without `.lenz` folder
     when: initProject(root) is executed
-    then: Creates `.lenzgraph/nodes`, `.lenzgraph/runs`, writes default `config.json` and default
+    then: Creates `.lenz/nodes`, `.lenz/runs`, writes default `config.json` and default
       `agent.yaml` files, and returns the project directory path.
     expect:
       mode: exit0

@@ -17,7 +17,7 @@ examples:
   - id: ex_f8c5f9
     name: Execute CLI hook pre tool use
     given: Stdin with JSON payload containing run id and Write tool target file
-    when: lenzgraph hook pre is executed
+    when: lenz hook pre is executed
     then: Attempts to acquire lock for target file and returns decision object to stdout.
     expect:
       mode: exit0

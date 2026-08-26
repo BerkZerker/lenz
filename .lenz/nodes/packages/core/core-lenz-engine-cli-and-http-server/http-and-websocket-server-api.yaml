@@ -8,7 +8,7 @@ status: proposed
 examples:
   - id: ex_61f635
     name: Connect via WebSocket
-    given: A running LenzGraph server
+    given: A running Lenz server
     when: A WebSocket client connects
     then: Receives an initial 'hello' frame containing full Core status.
     expect:
@@ -16,7 +16,7 @@ examples:
     derived: true
   - id: ex_4a7513
     name: GET /nodes endpoint
-    given: A running LenzGraph server with nodes in the store
+    given: A running Lenz server with nodes in the store
     when: GET /nodes is requested
     then: Responds with 200 OK and a JSON array of all nodes.
     expect:

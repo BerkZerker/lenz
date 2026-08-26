@@ -1,9 +1,9 @@
 node_modules/
 dist/
 packages/core/static/
-.lenzgraph/runs/
-.lenzgraph/structure.db*
-examples/*/.lenzgraph/runs/
-examples/*/.lenzgraph/structure.db*
+.lenz/runs/
+.lenz/structure.db*
+examples/*/.lenz/runs/
+examples/*/.lenz/structure.db*
 examples/*/node_modules/
 *.log

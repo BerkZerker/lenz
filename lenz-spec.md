@@ -1,4 +1,4 @@
-# lenzgraph — spec v1.0 (buildable)
+# lenz — spec v1.0 (buildable)
 
 > An agent dev kit for closing the human↔agent feedback loop. The core is a
 > multi-resolution graph of the project that both human and agent work through;
@@ -45,15 +45,15 @@ One graph, four resolutions of the same territory:
 - **L3 — Code**: the files
 
 L0/L1 are **authored** (proposed by agent, approved by human) and stored in
-`.lenzgraph/nodes/`. L2/L3 are **derived** by `packages/structure` and stored
-in `.lenzgraph/structure.db` (gitignored, rebuildable).
+`.lenz/nodes/`. L2/L3 are **derived** by `packages/structure` and stored
+in `.lenz/structure.db` (gitignored, rebuildable).
 
 ### Nodes
 
 Two kinds. **Intent** nodes group; **behavior** nodes are leaves that own code.
 
 ```yaml
-# .lenzgraph/nodes/auth/password-reset.yaml   (path = slug, id is stable)
+# .lenz/nodes/auth/password-reset.yaml   (path = slug, id is stable)
 id: n_7f3a2c
 kind: behavior            # intent | behavior
 title: Reset password via emailed token
@@ -171,7 +171,7 @@ use ~3% and the 3% is the easy part.)
   `scip-typescript`), read it (protobuf) for precise edges, `provenance:
   scip`. Otherwise resolve query-captured references through the import graph
   by name, `provenance: syntactic`. No confidence scores — an edge resolves or
-  it lands in `unresolved_refs`. `lenzgraph index --scip` runs the indexer if
+  it lands in `unresolved_refs`. `lenz index --scip` runs the indexer if
   installed.
 - **Entry points**: exported symbols from files matching `entry_globs` in
   config, plus anything human-pinned in the Flow lens.
@@ -197,7 +197,7 @@ are single joins.
 
 ## `packages/core`
 
-Headless daemon (`lenzgraph serve`, Bun) owning all state and orchestration.
+Headless daemon (`lenz serve`, Bun) owning all state and orchestration.
 Serves the GUI and exposes:
 
 - `GET/PUT /nodes`, `/nodes/:id`, `/tree`, `/orphans`, `/flow?from=`,
@@ -225,7 +225,7 @@ The GUI never touches disk.
 ### Agent dispatch
 
 Agents are headless CLI processes. Adapter is declarative
-(`.lenzgraph/agents/claude.yaml`):
+(`.lenz/agents/claude.yaml`):
 
 ```yaml
 command: claude -p {prompt_file} --output-format stream-json --verbose
@@ -233,19 +233,19 @@ command: claude -p {prompt_file} --output-format stream-json --verbose
 resume:  claude -p {prompt_file} --resume {session_id} …
 events:  claude-stream-json          # parser id in core
 hooks:   claude-settings             # generator id: writes PreToolUse/PostToolUse
-                                     # hooks that call `lenzgraph lock …`
+                                     # hooks that call `lenz lock …`
 ```
 
 Flags verified against current Claude Code docs at build time.
 
-**Prompt assembly** (ours, logged to `.lenzgraph/runs/<run_id>/prompt.md`):
-project conventions (`.lenzgraph/CONVENTIONS.md` if present) · target node
+**Prompt assembly** (ours, logged to `.lenz/runs/<run_id>/prompt.md`):
+project conventions (`.lenz/CONVENTIONS.md` if present) · target node
 spec + examples · parent intent title · sibling/dep node titles + one-line
 specs · source of currently anchored symbols · file-lock instructions · output
 contract: "make each example's `run` command pass; write `run` and `machine`
-commands back into the node yaml via `lenzgraph node set`".
+commands back into the node yaml via `lenz node set`".
 
-**Run record** (`.lenzgraph/runs/<run_id>/`): `prompt.md`, `events.jsonl`,
+**Run record** (`.lenz/runs/<run_id>/`): `prompt.md`, `events.jsonl`,
 `result.json` — `{changed_symbols, locks_held, exit, duration}`.
 `changed_symbols` comes from the watcher during the run window, not from the
 agent: every symbol added/changed while this run held the file is proposed as
@@ -259,7 +259,7 @@ mid-run steering — kill and re-dispatch with the rejection note appended.
 Agents edit the real tree concurrently; core is the lock broker.
 
 - Every write tool call in an agent goes through a **PreToolUse hook** that
-  runs `lenzgraph lock acquire <file> --run <id>`. Core grants immediately if
+  runs `lenz lock acquire <file> --run <id>`. Core grants immediately if
   free or held by the same run.
 - If held by another run: the holder's **consent is inferred from activity**.
   Grant if the holder hasn't written the file within `lock_cooldown` (default
@@ -270,7 +270,7 @@ Agents edit the real tree concurrently; core is the lock broker.
   (hook stdout injection): "run r_9 edited `src/x.ts` lines 40–72 while you
   held it; review before continuing." That's the *review* step of the
   protocol, mechanized.
-- Locks release on run end, or explicitly via `lenzgraph lock release`.
+- Locks release on run end, or explicitly via `lenz lock release`.
   Core times out holders whose run has died.
 - Every grant/deny/transfer is logged and streamed to the Runs lens.
 
@@ -294,7 +294,7 @@ channel.
 
 ### Brownfield
 
-1. `lenzgraph derive` walks the containment tree **bottom-up**: one LLM call
+1. `lenz derive` walks the containment tree **bottom-up**: one LLM call
    per folder, given its files' symbols (names, signatures, docstrings, first
    lines) and its subfolders' already-derived intent titles. Output: proposed
    behavior nodes over this folder's symbols (with anchor keys — core validates
@@ -392,15 +392,15 @@ nodes drifted during this run).
 ## Repository layout
 
 ```
-lenzgraph/
+lenz/
   package.json            bun workspace
   packages/
     structure/            tree-sitter engine, queries/*.scm, scip reader,
                           sqlite schema, watcher
     core/                 domain (nodes, anchors, staging, locks, dispatch,
-                          verification), daemon, `lenzgraph` CLI
+                          verification), daemon, `lenz` CLI
     gui/                  React app, built into core's static dir
-  .lenzgraph/             (in a target project)
+  .lenz/             (in a target project)
     config.yaml           languages, source_globs, ignore_globs, entry_globs,
                           orphan_exclude, test_command, max_concurrent_runs,
                           lock_cooldown, run_timeout, example_timeout
@@ -411,7 +411,7 @@ lenzgraph/
     structure.db          gitignored
 ```
 
-CLI: `lenzgraph init | serve | index [--scip] | derive | propose <file> |
+CLI: `lenz init | serve | index [--scip] | derive | propose <file> |
 dispatch <node> | verify <node> | lock acquire|release | node set <id> <path>
 <value>`.
 

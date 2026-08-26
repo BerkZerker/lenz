@@ -1,7 +1,7 @@
 kind: behavior
 title: Core Type Definitions and Event System
 spec: Defines domain interfaces, types (Node, RunRecord, Verification, Locks), constants, and an
-  in-memory EventEmitter-based EventBus for publishing and subscribing to LenzGraph lifecycle
+  in-memory EventEmitter-based EventBus for publishing and subscribing to Lenz lifecycle
   events.
 parent: n_87c287
 status: proposed

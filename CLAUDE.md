@@ -1,4 +1,4 @@
-# lenzgraph — notes for agents working on this repo
+# lenz — notes for agents working on this repo
 
 - Runtime is **bun** (`~/.bun/bin/bun`); tests are `bun test packages`, typecheck `bun run typecheck`.
 - Workspace: `packages/structure` (tree-sitter + sqlite index), `packages/core` (daemon/CLI), `packages/gui` (React; `bun run build:gui` writes `packages/core/static`).

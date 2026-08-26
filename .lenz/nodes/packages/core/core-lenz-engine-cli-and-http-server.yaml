@@ -1,15 +1,15 @@
 kind: intent
-title: Core LenzGraph Engine, CLI, and HTTP Server
+title: Core Lenz Engine, CLI, and HTTP Server
 spec: Provides the foundational data model, file-based node storage, event bus, concurrent lock
   broker, core orchestration lifecycle (dispatch, drift detection, verification, tree
   reconstruction, and flow), project configuration management, and the user-facing CLI and
-  HTTP/WebSocket server APIs for LenzGraph.
+  HTTP/WebSocket server APIs for Lenz.
 status: proposed
 derived: true
 id: n_87c287
 parent: n_d0fc17
 deps: []
-summary: This module serves as the core orchestration backbone and service layer for LenzGraph,
+summary: This module serves as the core orchestration backbone and service layer for Lenz,
   managing graph node lifecycle, concurrency locks, configuration, and developer interfaces across
   the CLI and HTTP/WebSocket servers. To analyze codebases and parse structured inputs, it hands off
   tasks to [[n_424a45]] and [[n_8acf92]]. In turn, its services and event streams are driven by

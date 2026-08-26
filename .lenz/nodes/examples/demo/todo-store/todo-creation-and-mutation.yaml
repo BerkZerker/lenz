@@ -62,3 +62,110 @@ summary: This node manages the in-memory lifecycle of todo items, providing the 
   tasks by ID. It functions as a self-contained behavior with no currently recorded upstream callers
   or downstream dependencies in the graph.
 summary_at: 2026-08-26T03:47:37.848Z
+verification:
+  examples:
+    pass: 0
+    fail: 2
+    pending: 0
+    at: 2026-08-26T12:14:46.763Z
+    results:
+      - id: ex_a093bf
+        pass: false
+        actual: ""
+        exit: null
+        at: 2026-08-26T12:14:46.763Z
+        note: no run command
+      - id: ex_8ec2b7
+        pass: false
+        actual: ""
+        exit: null
+        at: 2026-08-26T12:14:46.763Z
+        note: no run command
+  reconstruction:
+    verdict: match
+    reasons: []
+    at: 2026-08-26T12:14:57.429Z
+reconstruction: >-
+  ### Overview
+
+  The `createStore` function initializes an isolated, in-memory store for managing a list of To-Do
+  items. Each To-Do item consists of a unique numeric identifier (`id`), a text label (`title`), and
+  a completion status (`done`).
+
+
+  ---
+
+
+  ### State and Data Lifecycle
+
+  * **Initial State:** Every new store instance starts with an empty list of items and an internal
+  ID counter initialized to `1`.
+
+  * **Item Properties:**
+    * `id` (`number`): Assigned sequentially starting at `1`.
+    * `title` (`string`): The text of the To-Do item.
+    * `done` (`boolean`): Completion status; always initialized to `false`.
+
+  ---
+
+
+  ### Operations
+
+
+  #### 1. `add(title: string): Todo`
+
+  * **Behavior:** Creates a new To-Do item with the next available numeric `id`, the provided
+  `title`, and `done` set to `false`. Appends the item to the internal store and returns the newly
+  created item.
+
+  * **Validation & Errors:**
+    * Throws an error (`"title is required"`) if `title` is empty or contains only whitespace characters.
+  * **Edge Case:** If the title contains leading or trailing whitespace around non-whitespace text,
+  the whitespace is preserved as-is.
+
+
+  #### 2. `done(id: number): Todo`
+
+  * **Behavior:** Locates the item matching the given `id`, sets its `done` status to `true`, and
+  returns the updated item.
+
+  * **Validation & Errors:**
+    * Throws an error (`"todo not found: <id>"`) if no item with the specified `id` exists.
+  * **Edge Case:** Calling `done` on an item that is already marked as completed succeeds without
+  error (idempotent).
+
+
+  #### 3. `remove(id: number): void`
+
+  * **Behavior:** Locates and deletes the item matching the specified `id` from the store.
+
+  * **Validation & Errors:**
+    * Throws an error (`"todo not found: <id>"`) if no item with the specified `id` exists.
+
+  #### 4. `list(filter?: "open" | "done"): Todo[]`
+
+  * **Behavior:**
+    * **No filter provided (`undefined`):** Returns a shallow copy of all items in the store in the order they were added.
+    * **Filter `"open"`:** Returns a new list containing only items where `done` is `false`.
+    * **Filter `"done"`:** Returns a new list containing only items where `done` is `true`.
+  * **Validation & Errors:**
+    * Throws an error (`"invalid filter: <filter>"`) if any value other than `undefined`, `"open"`, or `"done"` is passed.
+
+  ---
+
+
+  ### Invariants and System Guarantees
+
+  * **ID Monotonicity and Non-Reuse:** IDs are strictly incremental positive integers. Deleting an
+  item does not decrement the counter or reuse deleted IDs.
+
+  * **Initial Completion State:** Newly created To-Do items are always uncompleted (`done: false`).
+
+  * **Order of Items:** Items retain their insertion order unless deleted.
+
+  * **Isolated Instances:** Each invocation of `createStore()` creates a completely independent
+  store with its own isolated data and ID sequence.
+
+  * **Reference Mutability:** `list()` returns a new array (preventing direct external array
+  mutation), but the individual `Todo` objects within the array are direct references to internal
+  store objects.
