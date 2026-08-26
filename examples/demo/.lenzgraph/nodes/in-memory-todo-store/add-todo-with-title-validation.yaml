@@ -6,7 +6,7 @@ spec: 'Extend `add(title: string): Todo` on the store. Input: a title string. If
   where `id` is the next sequential integer (starting at 1), append it to the store, and return the
   new todo. The title is stored exactly as given (not trimmed).'
 parent: n_9f47be
-status: drifted
+status: built
 examples:
   - id: ex_684af7
     name: adds a todo
@@ -46,7 +46,7 @@ anchors:
     container: ""
     file: src/store.ts
     sig: a9d0d8e95e12
-    body: 7e322ed6b089
+    body: 6a86fdb5609d
   - kind: method
     name: add
     container: createStore
@@ -178,8 +178,3 @@ reconstruction: >-
   There is no way to update a todo through the API (no toggle/edit method), no way to look up a
   single item by id, and no way to clear the store other than removing items one by one. The store
   is not thread-safe or concurrency-aware in any special sense; it is plain synchronous JavaScript.
-prev_status: built
-drift:
-  reasons:
-    - createStore in src/store.ts changed
-  at: 2026-08-26T02:15:49.283Z

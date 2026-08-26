@@ -1,0 +1,14 @@
+kind: intent
+title: Application entry point and outbound email delivery
+spec: "The src folder is the top level of the application. It provides the program entry point
+  (main) that starts the application, and a Mailer class that is the single outbound-email
+  primitive: given a recipient address and a message body it delivers the message (currently by
+  writing the recipient and body to standard output rather than a real mail transport). The src/auth
+  subfolder builds on this: it hashes passwords into a stored representation and implements a
+  token-based password reset flow requested by email, which is the natural consumer of Mailer for
+  sending reset messages."
+status: proposed
+derived: true
+id: n_b60601
+parent: null
+deps: []

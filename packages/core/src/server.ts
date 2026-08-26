@@ -45,7 +45,7 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/staging/immediate", async (req) => { const b = await body(req); core.setImmediate(!!b.on); return json(core.staging()); });
   on("POST", "/api/propose", async (req) => { const b = await body(req); try { return json(await core.propose(b.text ?? "", b.parent ?? null)); } catch (e) { return err(e); } });
   on("POST", "/api/derive", async () => { try { return json(await core.derive((m) => core.log(m))); } catch (e) { return err(e); } });
-  on("POST", "/api/index", async () => json(await core.idx.indexAll()));
+  on("POST", "/api/index", async () => { const ev = await core.idx.indexAll(); core.idx.applyScip(); return json(ev); });
   on("GET", "/api/events/history", () => json(core.bus.history.slice(-300)));
 
   const sockets = new Set<any>();

@@ -1,0 +1,25 @@
+kind: behavior
+title: Application starts via main entry point
+spec: Calling the exported main function runs the application's top-level startup logic. It is the
+  single entry point invoked by the process to bring the program up.
+parent: n_b60601
+status: proposed
+examples:
+  - id: ex_0d4a18
+    name: Program launch
+    given: the application module is loaded
+    when: main() is invoked
+    then: the application's startup logic executes
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: main
+    container: ""
+    file: src/index.ts
+    sig: a9d0d8e95e12
+    body: ea38f6203363
+id: n_892f86
+deps: []

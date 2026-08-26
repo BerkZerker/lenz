@@ -1,0 +1,32 @@
+kind: behavior
+title: Structured reset failure reporting
+spec: 'ResetError is the error type raised by the reset flow. It extends Error and carries a `code`
+  distinguishing the failure kind; describe() renders a single string of the form "<code>:
+  <message>" for logging or user-facing messages.'
+parent: n_7fb961
+status: proposed
+examples:
+  - id: ex_562dd4
+    name: describe formats code and message
+    given: a ResetError with code "expired" and message "token expired"
+    when: describe() is called
+    then: 'it returns "expired: token expired"'
+    expect:
+      mode: exit0
+    derived: true
+derived: true
+anchors:
+  - kind: class
+    name: ResetError
+    container: ""
+    file: src/auth/reset.ts
+    sig: e171bea1d487
+    body: 13e046916b20
+  - kind: method
+    name: describe
+    container: ResetError
+    file: src/auth/reset.ts
+    sig: d7b0a4d6f984
+    body: 9bf3aba5d602
+id: n_02cf17
+deps: []

@@ -1,0 +1,37 @@
+languages:
+  - typescript
+  - tsx
+source_globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.py"
+  - "**/*.go"
+ignore_globs:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.git/**"
+  - "**/.lenzgraph/**"
+  - "**/*.d.ts"
+entry_globs:
+  - src/index.ts
+  - src/main.ts
+  - src/server.ts
+  - src/cli.ts
+  - src/app.ts
+orphan_exclude:
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/__tests__/**"
+  - "**/*.config.*"
+  - "**/*.generated.*"
+test_command: bun test
+max_concurrent_runs: 2
+lock_cooldown: 45
+run_timeout: 1200
+example_timeout: 60
+port: 7331

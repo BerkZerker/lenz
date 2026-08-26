@@ -34,6 +34,8 @@ export class Core {
 
   async start(opts: { watch?: boolean } = { watch: true }) {
     await this.idx.indexAll();
+    const scip = this.idx.applyScip();
+    if (scip !== null) this.log(`applied ${scip} precise references from index.scip`);
     this.store.load();
     this.refreshAllAnchors();
     if (opts.watch) this.idx.watch();

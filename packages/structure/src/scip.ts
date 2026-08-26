@@ -1,7 +1,7 @@
 /**
  * Minimal SCIP (index.scip) reader. Hand-rolled protobuf decoding of the subset we need:
  *   Index { documents: repeated Document = 2 }
- *   Document { relative_path = 1, occurrences = 3, symbols = 4 }
+ *   Document { relative_path = 1, occurrences = 2, symbols = 3 }
  *   Occurrence { range = 1 (packed int32), symbol = 2, symbol_roles = 3 }
  *   SymbolInformation { symbol = 1 }
  * Definition role = 1.
@@ -41,7 +41,7 @@ export function parseScip(buf: Uint8Array): ScipDocument[] {
     const doc: ScipDocument = { path: "", occurrences: [] };
     for (const df of fields(f.value as Uint8Array)) {
       if (df.field === 1 && df.wire === 2) doc.path = td.decode(df.value as Uint8Array);
-      else if (df.field === 3 && df.wire === 2) {
+      else if (df.field === 2 && df.wire === 2) {
         const occ: ScipOccurrence = { symbol: "", roles: 0, startLine: 0, startCol: 0, endLine: 0, endCol: 0 };
         for (const of of fields(df.value as Uint8Array)) {
           if (of.field === 1 && of.wire === 2) {

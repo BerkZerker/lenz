@@ -24,7 +24,13 @@ const LENSES: { id: Lens; key: string; title: string; q: string }[] = [
 
 export function App() {
   const { lens, setLens, connect } = useStore();
-  useEffect(() => { connect(); }, []);
+  useEffect(() => {
+    connect();
+    const fromHash = () => { const h = location.hash.replace("#", "") as Lens; if (LENSES.some((l) => l.id === h)) setLens(h); };
+    fromHash(); window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, []);
+  useEffect(() => { if (location.hash !== "#" + lens) history.replaceState(null, "", "#" + lens); }, [lens]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
