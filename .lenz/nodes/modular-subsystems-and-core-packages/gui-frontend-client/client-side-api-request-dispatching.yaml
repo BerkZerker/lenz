@@ -1,0 +1,59 @@
+kind: behavior
+title: Client-side API request dispatching
+spec: "Dispatches HTTP requests to `/api${path}` with a `content-type: application/json` header and
+  optional JSON-stringified body. Defaults the HTTP method to `POST` when `body` is provided or
+  `GET` when omitted, unless an explicit method is supplied (such as `DELETE` via `del`). Parses the
+  response body as JSON (defaulting to `{}` on parse failure). If the response is not OK (`!r.ok`),
+  throws an Error with `j.error` or `r.statusText`. Otherwise returns the parsed JSON object."
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_7b7c78
+    name: Successful GET request
+    given: 'The API server endpoint `/api/items` responds with status 200 and JSON `[{"id": 1}]`'
+    when: Calling `api("/items")`
+    then: 'It sends a GET request to `/api/items` with JSON headers and resolves to `[{"id": 1}]`'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_ad9c25
+    name: Failed request throwing an error
+    given: 'The API server endpoint `/api/items` responds with status 400 and JSON `{"error": "Bad
+      Request"}`'
+    when: 'Calling `api("/items", { name: "invalid" })`'
+    then: It sends a POST request with the serialized JSON payload and rejects with an Error message
+      'Bad Request'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_8e27aa
+    name: DELETE request via helper
+    given: 'The API server endpoint `/api/items/1` responds with status 200 and JSON `{"deleted": true}`'
+    when: Calling `del("/items/1")`
+    then: "It executes an `api` call targeting `/api/items/1` with method 'DELETE' and resolves with
+      `{\"deleted\": true}`"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: api
+    container: ""
+    file: packages/gui/src/api.ts
+    sig: 5a6e0d2f8c98
+    body: 9f7e60e8f64a
+  - kind: const
+    name: del
+    container: ""
+    file: packages/gui/src/api.ts
+    sig: f6519b1d6077
+    body: 8b8909df25dc
+id: n_b8f010
+deps: []
+summary: This behavior provides a centralized client-side utility for dispatching HTTP requests to
+  backend API endpoints, managing JSON payload formatting, method selection, and response parsing
+  with error handling. It serves as a shared communication layer across the frontend, called
+  directly by state management in [[n_a1505f]], derivation workflows in [[n_62ea90]], visual
+  components in [[n_eef5f8]], and application shell actions in [[n_58c921]].
+summary_at: 2026-08-27T03:48:57.169Z

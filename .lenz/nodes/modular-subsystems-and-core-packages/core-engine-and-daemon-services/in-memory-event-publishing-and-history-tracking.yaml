@@ -1,0 +1,64 @@
+kind: behavior
+title: In-memory event publishing and history tracking
+spec: EventBus extends EventEmitter to manage application events defined by LenzEvent and EventName.
+  When `publish(type, data)` is called, it constructs a LenzEvent record with the specified event
+  `type`, the current UTC ISO timestamp string `at`, and the payload `data`. The event is appended
+  to `history`. If `history` length exceeds 2000 entries, the oldest 500 entries are removed.
+  Finally, EventBus emits both the generic 'event' event and the specific event named by `type`,
+  passing the constructed LenzEvent object to registered listeners.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_84f6bc
+    name: Publishing an event adds to history and notifies listeners
+    given: An instance of EventBus with listeners registered for 'event' and 'node.updated'
+    when: "publish('node.updated', { id: 'abc' }) is called"
+    then: "A LenzEvent containing the type, an ISO timestamp, and { id: 'abc' } is appended to history,
+      and both listeners receive the event object"
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_2eaac2
+    name: History trimming at capacity limit
+    given: An EventBus with 2000 events already in history
+    when: publish is called with a new event
+    then: The new event is added, the length temporarily exceeds 2000, the oldest 500 items are spliced
+      out, leaving 1501 items in history
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: type
+    name: EventName
+    container: ""
+    file: packages/core/src/events.ts
+    sig: 19c6dfd50bd1
+    body: 09f0eab33555
+  - kind: interface
+    name: LenzEvent
+    container: ""
+    file: packages/core/src/events.ts
+    sig: ab7a9da81398
+    body: 2933dd08dd24
+  - kind: class
+    name: EventBus
+    container: ""
+    file: packages/core/src/events.ts
+    sig: 3e72e0311fa1
+    body: 3a37145d87bc
+  - kind: method
+    name: publish
+    container: EventBus
+    file: packages/core/src/events.ts
+    sig: 1b1208aba8ff
+    body: 46c7b44a66dd
+id: n_c4686d
+deps: []
+summary: This node provides an in-memory event bus for broadcasting domain notifications and
+  maintaining a bounded rolling log of past events. When invoked, it stamps event payloads with UTC
+  timestamps, retains them in a pruned history buffer, and emits both generic and type-specific
+  events to registered listeners. It operates as a shared utility called across the system by
+  [[n_77901c]], [[n_348046]], [[n_c8c898]], [[n_20e5ea]], [[n_b3b72e]], [[n_6a10f1]], [[n_c26d86]],
+  and [[n_80e676]].
+summary_at: 2026-08-27T03:48:50.591Z

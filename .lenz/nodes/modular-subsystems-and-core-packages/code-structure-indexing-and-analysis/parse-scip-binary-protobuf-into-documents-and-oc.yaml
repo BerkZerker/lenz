@@ -1,0 +1,76 @@
+kind: behavior
+title: Parse SCIP binary protobuf into documents and occurrences
+spec: Decodes a binary SCIP (Source Code Intelligence Protocol) protobuf buffer (`Uint8Array`) into
+  an array of `ScipDocument` objects. Uses a minimal varint and protobuf wire format parser to
+  extract document entries (field 2) containing file paths (document field 1) and occurrences
+  (document field 2). For each occurrence, parses symbol string identifiers (field 2), role bitmasks
+  (field 3), and integer range sequences (field 1) supporting both 3-element single-line ranges
+  `[line, startCol, endCol]` and 4-element multi-line ranges `[startLine, startCol, endLine,
+  endCol]`.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_11ff2a
+    name: Parse document with symbol occurrence
+    given: A SCIP protobuf buffer representing a document at 'src/index.ts' with an occurrence having a
+      3-element range [10, 2, 8], symbol 'scip-ts npm pkg 1.0.0 src/foo().', and role 1 (definition)
+    when: parseScip(buf) is called with the binary buffer
+    then: Returns an array containing a ScipDocument with path 'src/index.ts' and an occurrence where
+      startLine=10, startCol=2, endLine=10, endCol=8, symbol='scip-ts npm pkg 1.0.0 src/foo().', and
+      roles=1
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_eaf6c3
+    name: Parse multi-line range occurrence
+    given: A SCIP protobuf buffer containing an occurrence with a 4-element range [5, 0, 8, 12]
+    when: parseScip(buf) is called
+    then: The decoded occurrence has startLine=5, startCol=0, endLine=8, and endCol=12
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: ScipOccurrence
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: ab7a9da81398
+    body: 30cdb14a555f
+  - kind: interface
+    name: ScipDocument
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: ab7a9da81398
+    body: 4f5c88ded9cf
+  - kind: function
+    name: readVarint
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: 907889d89555
+    body: 559240737c9a
+  - kind: function
+    name: fields
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: 385097b1b62d
+    body: 2d702d1eea65
+  - kind: const
+    name: td
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: 53a0acfad593
+    body: 646418c15a9a
+  - kind: function
+    name: parseScip
+    container: ""
+    file: packages/structure/src/scip.ts
+    sig: 29e2a48260e2
+    body: d760fb3c54b6
+id: n_7cd39e
+deps: []
+summary: This behavior decodes raw SCIP protobuf binary buffers into structured document objects
+  containing file paths, symbol occurrences, and source range mappings. It serves as a lightweight
+  wire-format parser that is invoked by [[n_298de6]] to enrich code references with indexed symbol
+  metadata.
+summary_at: 2026-08-27T03:49:04.596Z

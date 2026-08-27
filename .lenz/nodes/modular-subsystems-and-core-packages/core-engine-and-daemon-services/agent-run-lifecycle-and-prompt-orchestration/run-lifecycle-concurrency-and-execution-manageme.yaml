@@ -1,0 +1,203 @@
+kind: behavior
+title: Run Lifecycle, Concurrency, and Execution Management
+spec: RunManager coordinates the queueing, concurrency limits, execution, timeouts, cancellation,
+  transcript recording, and changed-symbol attribution for both external CLI agent runs and light
+  in-process LLM calls. Heavy agent runs and light LLM calls have independent concurrency limits.
+  Agent runs write prompt and settings files, spawn CLI subprocesses, parse streaming JSON lines
+  into summarized bus events and disk logs (`events.jsonl`), capture stderr, and release acquired
+  locks on exit. Light runs invoke Gemini or OpenAI-compatible APIs directly with structured schema
+  support. Active build runs track symbol changes across project files from structure index events.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_446d7d
+    name: Submit and execute an agent run
+    given: A RunManager instance initialized with an agent adapter, a runs directory, and max concurrent
+      runs greater than active runs.
+    when: submit() is called with a build RunSpec containing a prompt and node ID.
+    then: "A run ID is generated, the run record is queued, pumped, and started: a run directory with
+      prompt.md, settings.json, and meta.json is created, a subprocess is spawned with timeout
+      monitoring, stdout events are appended to events.jsonl and published on the event bus, and
+      upon exit, locks are released, result.json is written, and the returned promise resolves with
+      the run outcome."
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_70f6f6
+    name: Execute a light structured LLM run
+    given: A RunManager configured with a non-Claude LLM provider (Gemini or OpenAI-compatible) and
+      available LLM concurrency slots.
+    when: "submit() is called with a RunSpec having light: true and a JSON schema."
+    then: The run is started in-process via callLlm, abort controller and timeouts are configured,
+      tokens and structured output are captured into the run record and result.json, and the outcome
+      promise resolves.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_d0618f
+    name: Kill a running or queued run
+    given: A RunManager with an active spawned run process or a queued run waiting for a concurrency slot.
+    when: kill(runId, reason) is called.
+    then: If active, the process is killed, abort signal triggered, timer cleared, and status set to
+      killed or timeout; if queued, it is removed from the queue and resolved immediately with
+      status killed.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: RunSpec
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 3e3bec44148e
+  - kind: interface
+    name: RunOutcome
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 02953599972b
+  - kind: interface
+    name: Active
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: "03147009e077"
+  - kind: type
+    name: SpawnedRun
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 6cb55fbc6cd9
+    body: 13a7d66adbdd
+  - kind: interface
+    name: RunManagerOpts
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: ab7a9da81398
+    body: 41a94bf90d99
+  - kind: class
+    name: RunManager
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 53f82707abe6
+    body: dc8f184b7239
+  - kind: method
+    name: constructor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: dbe1d8f212c5
+    body: cde26be0da4c
+  - kind: method
+    name: list
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d7b0a4d6f984
+    body: 1e6e7d3f3553
+  - kind: method
+    name: get
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b9efcf67d26e
+    body: 83c5b859bc49
+  - kind: method
+    name: runningFor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 74a198af36a8
+    body: 71356a41be22
+  - kind: method
+    name: buildingNodes
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: d7b0a4d6f984
+    body: 7599d79b2056
+  - kind: method
+    name: submit
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b97bb2960fef
+    body: 3e3a21fca937
+  - kind: method
+    name: pump
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 75dacf142e68
+    body: d41b3413b824
+  - kind: method
+    name: start
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: c6e11de7eb3e
+    body: a642cc7dd8e6
+  - kind: method
+    name: consume
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 43088ca304ad
+    body: 1ba8c1054752
+  - kind: method
+    name: finish
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 43088ca304ad
+    body: cfdedce569c7
+  - kind: method
+    name: startLlm
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 2cd0cd7e07af
+    body: 2690eb84edcd
+  - kind: method
+    name: callLlm
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: 5fbc37c6f752
+    body: ce93aa017373
+  - kind: method
+    name: kill
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b7dcc3325c40
+    body: 89506c97076f
+  - kind: method
+    name: onSymbolsChanged
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: ad5809d4e15d
+    body: 03c9af966098
+  - kind: method
+    name: changesFor
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: fc93756c1c7a
+    body: f9f758698d55
+  - kind: method
+    name: changedSymbolsInFile
+    container: RunManager
+    file: packages/core/src/runs/manager.ts
+    sig: b2c4f395446b
+    body: 160b64800b88
+  - kind: function
+    name: summarize
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 4854381e6a73
+    body: dcc5a716d1b0
+  - kind: function
+    name: shortInput
+    container: ""
+    file: packages/core/src/runs/manager.ts
+    sig: 444cb33484d4
+    body: dd871f085452
+id: n_ba9088
+deps:
+  - n_33a1ff
+  - n_b83556
+  - n_c97bb7
+summary: This behavior oversees the queueing, concurrency limits, execution lifecycles, and
+  transcript capture for external CLI agents as well as lightweight direct LLM calls. When
+  orchestrating agent subprocesses, it delegates command preparation to [[n_c97bb7]], generates hook
+  configurations with [[n_b83556]], and parses streaming output via [[n_33a1ff]]. For direct model
+  invocations, it hands off generation requests to [[n_057f84]] or [[n_d27820]].
+summary_at: 2026-08-27T03:49:15.095Z

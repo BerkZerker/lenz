@@ -1,0 +1,20 @@
+kind: intent
+title: Reference Implementations and Examples
+spec: Provides runnable demonstration projects and practical reference implementations designed to
+  guide developers in adopting and integrating the codebase. This area illustrates standard
+  architectural patterns, secure communication workflows, and real-world usage scenarios across both
+  standalone applications and pre-existing systems, serving as an orientation and starting point for
+  building end-to-end solutions.
+status: proposed
+derived: true
+folder: examples
+parent: null
+id: n_c64b09
+deps: []
+summary: This area provides runnable reference implementations and demonstration projects designed
+  to guide developers through adopting and integrating the codebase. It showcases standard
+  architectural patterns, secure communication workflows, and real-world usage scenarios across both
+  standalone apps and existing systems. As a collection of practical examples, it functions as a
+  standalone orientation entry point without direct dependencies or downstream handoffs in the
+  project graph.
+summary_at: 2026-08-27T03:48:46.906Z

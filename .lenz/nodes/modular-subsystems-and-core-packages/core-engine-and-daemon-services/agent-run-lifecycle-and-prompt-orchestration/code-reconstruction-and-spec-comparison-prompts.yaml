@@ -1,0 +1,49 @@
+kind: behavior
+title: Code reconstruction and spec comparison prompts
+spec: "Constructs prompts for independent code review: reconstructPrompt formats source code blocks
+  and callee signatures into an instruction to describe code behavior without external context, and
+  comparePrompt formats a spec, examples, and reconstruction into an instruction to output a JSON
+  verdict ('match' or 'mismatch') with reasons."
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_141065
+    name: Builds reconstruction prompt
+    given: A list of source files with headers and texts, plus callee signatures
+    when: reconstructPrompt is called
+    then: Returns a prompt asking for a precise description of edge cases, error handling, and
+      invariants without using tools
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_6a697d
+    name: Builds comparison prompt
+    given: A spec string, examples list, and reconstructed behavior text
+    when: comparePrompt is called
+    then: Returns a prompt requesting a JSON verdict object with 'match' or 'mismatch' and reasons array
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: reconstructPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: ab2b95c69777
+    body: 45364c0871ab
+  - kind: function
+    name: comparePrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: a248fbb542cb
+    body: 5253c44be682
+id: n_424f08
+deps: []
+summary: This behavior generates structured prompts to facilitate independent, two-stage code
+  verification against formal requirements. It prepares instructions for models to infer and
+  describe code behavior in isolation, as well as comparison prompts that evaluate those
+  reconstructions against target specifications to produce a structured JSON verdict. It currently
+  serves as a self-contained prompt-construction module with no explicit upstream callers or
+  downstream handoffs mapped in the project.
+summary_at: 2026-08-27T03:49:13.861Z

@@ -1,0 +1,258 @@
+kind: behavior
+title: Structure database persistence and querying
+spec: Initializes and manages an SQLite database (using WAL mode and NORMAL synchronous settings)
+  for storing and querying code structure artifacts across files, symbols, imports, symbol
+  references, unresolved references, entry points, and node anchor mappings. Supports transactional
+  execution, batch replacements of symbols and imports per file, cascading deletions when files are
+  removed, and querying symbol relations, owners, orphans, and neighbor nodes.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_c26e1d
+    name: Track and delete indexed file metadata and associated symbols
+    given: An empty StructureDb instance
+    when: upsertFile is called for 'src/index.ts' with a hash and language, followed by replaceSymbols
+      for the file, and then deleteFile('src/index.ts') is called
+    then: fileHash('src/index.ts') returns null, symbolsInFile('src/index.ts') returns an empty array,
+      and any associated refs, unresolved entries, and auto entry points are deleted
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_38a50d
+    name: Query orphan symbols not mapped to anchors
+    given: A StructureDb with a symbol stored under key 'sym1' and no anchor mapping referencing 'sym1'
+    when: orphans() is called
+    then: The returned list includes the symbol row for 'sym1'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: SCHEMA
+    container: ""
+    file: packages/structure/src/db.ts
+    sig: 53a0acfad593
+    body: 46239f0bc5f7
+  - kind: class
+    name: StructureDb
+    container: ""
+    file: packages/structure/src/db.ts
+    sig: 53f82707abe6
+    body: 6e467118092b
+  - kind: method
+    name: constructor
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 0e6e844d114f
+    body: 7e92abaa84d2
+  - kind: method
+    name: close
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: d7b0a4d6f984
+    body: 53f55d8c9227
+  - kind: method
+    name: transaction
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 0318d798a17d
+    body: b3136fe515fc
+  - kind: method
+    name: fileHash
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 118a443c108a
+    body: 73e694761b17
+  - kind: method
+    name: allFiles
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 45f0c5cdf74f
+    body: 3c83363fccb1
+  - kind: method
+    name: upsertFile
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: ed3cf231bf00
+    body: 567585b9785b
+  - kind: method
+    name: deleteFile
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 0e6e844d114f
+    body: cb516469ef37
+  - kind: method
+    name: symbolsInFile
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: bc7d774ca2d9
+    body: ab9f56ad9f71
+  - kind: method
+    name: symbol
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: e82e5d634235
+    body: 136fe8eb2230
+  - kind: method
+    name: symbolsByName
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 56bbf831800b
+    body: a89ba11a24d4
+  - kind: method
+    name: symbolsByBody
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: f05b53043d3c
+    body: 8c2302d6ae11
+  - kind: method
+    name: allSymbols
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: e8a6076eff3f
+    body: ca037da11c04
+  - kind: method
+    name: replaceSymbols
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 03f559c160c9
+    body: 886ba6eacec8
+  - kind: method
+    name: replaceImports
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 192f1c8afd81
+    body: 55a440755adf
+  - kind: method
+    name: importsOf
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 84497052a9fc
+    body: 9b789ede9b0d
+  - kind: method
+    name: filesImporting
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: b2c4f395446b
+    body: 14f3f259603b
+  - kind: method
+    name: clearRefsFrom
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: ac3330459d64
+    body: ea72f5e7067b
+  - kind: method
+    name: insertRef
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: c1705bec9895
+    body: 58aff2ef1e9e
+  - kind: method
+    name: insertUnresolved
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 33ad1e5380dd
+    body: b7d5c504b760
+  - kind: method
+    name: refsFrom
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 48ee20fa6308
+    body: edcd0db82ac7
+  - kind: method
+    name: refsTo
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 48ee20fa6308
+    body: a1031886a493
+  - kind: method
+    name: allRefs
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 43974036325f
+    body: cdeacace05ba
+  - kind: method
+    name: unresolvedAll
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 18ad8e81f4da
+    body: a7286d86be17
+  - kind: method
+    name: deleteRefsByProvenance
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: c052661b3d5c
+    body: ac6b615b41c4
+  - kind: method
+    name: setAutoEntryPoints
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 71b161f637b5
+    body: 80606b377c75
+  - kind: method
+    name: pinEntryPoint
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 7f4d3729f03a
+    body: c9166b8155c1
+  - kind: method
+    name: entryPoints
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 292803849ff0
+    body: 7692b0ba56ca
+  - kind: method
+    name: clearAnchors
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: d7b0a4d6f984
+    body: 46ac024ae2e7
+  - kind: method
+    name: setAnchors
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: e7fc63fa5cf1
+    body: 8b071d03f26f
+  - kind: method
+    name: deleteAnchors
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 74a198af36a8
+    body: 64c2e11b1c35
+  - kind: method
+    name: ownersOf
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 1a088b495885
+    body: c59224c98f5a
+  - kind: method
+    name: orphans
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: e8a6076eff3f
+    body: c206e542e5af
+  - kind: method
+    name: ownedSymbols
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 32b5d200c393
+    body: 9dfce5541a1c
+  - kind: method
+    name: neighborOwners
+    container: StructureDb
+    file: packages/structure/src/db.ts
+    sig: 5cd35953dfdc
+    body: 9dd953024450
+id: n_58299f
+deps: []
+summary: This node provides persistent SQLite storage and transactional querying for indexed
+  codebase structural data, including files, symbols, references, and anchor mappings. It formats
+  and converts database records using the schema models and symbol key utilities provided by
+  [[n_5608cc]]. It serves as a central data foundation across the system, supplying storage and
+  query capabilities to indexing and reference resolution in [[n_d12a81]], [[n_ef236d]], and
+  [[n_298de6]], anchor and relation tracking in [[n_08fed0]], [[n_c8c898]], [[n_c26d86]], and
+  [[n_ab4a86]], architecture analysis in [[n_b3b72e]], [[n_5ffc74]], [[n_1cef8b]], and [[n_7671f2]],
+  and broader lifecycle orchestration across [[n_836db2]], [[n_77901c]], [[n_c04098]], [[n_20e5ea]],
+  and [[n_484bc9]].
+summary_at: 2026-08-27T03:49:07.678Z

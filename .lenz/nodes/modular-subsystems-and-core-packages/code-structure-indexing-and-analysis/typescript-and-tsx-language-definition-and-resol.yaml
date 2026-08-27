@@ -1,0 +1,87 @@
+kind: behavior
+title: TypeScript and TSX language definition and resolution
+spec: Configures LanguageDef for TypeScript and TSX (typescript, tsx) covering extensions .ts, .mts,
+  .cts, .tsx, .jsx, .js, .mjs, and .cjs. Identifies exported AST nodes by traversing parent nodes
+  for export_statement or exported class declarations (tsIsExported). Parses import and export
+  statements into local, imported, and source bindings (tsParseImport). Resolves module specifiers
+  (tsResolve) for relative, absolute, or bare workspace package specifiers discovered via
+  package.json workspace globs (workspacePackages), testing file extensions and index files.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_d5a292
+    name: Resolve relative TypeScript module
+    given: A TypeScript file at '/project/src/index.ts' importing './utils' where
+      '/project/src/utils.ts' exists
+    when: calling typescript.resolveModule('/project/src/index.ts', './utils', '/project')
+    then: returns '/project/src/utils.ts'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_37ce1f
+    name: Determine if TypeScript AST node is exported
+    given: A syntax node contained within an export_statement
+    when: evaluating tsIsExported(node, 'myFunc')
+    then: returns true
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: workspaceCache
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 53a0acfad593
+    body: 8b9e80c7e94f
+  - kind: function
+    name: workspacePackages
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 904658c8353a
+    body: 78a4c0104432
+  - kind: function
+    name: tsResolve
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 9da3d2299eed
+    body: e738d2739f0b
+  - kind: function
+    name: isDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: f772155e444d
+    body: 41c76bc47481
+  - kind: function
+    name: tsIsExported
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 7bf1a89c48cb
+    body: 9d9f0efd68a0
+  - kind: function
+    name: tsParseImport
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ebd47ec31ac1
+    body: d67e5852126c
+  - kind: const
+    name: typescript
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 1cb73a856f5c
+  - kind: const
+    name: tsx
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: f3985f628fb6
+id: n_a250d9
+deps: []
+summary: This behavior provides language definition and module resolution support for TypeScript,
+  TSX, and JavaScript source files across standard script extensions. It inspects AST structures to
+  detect exported declarations, parses import and export statements into local and source bindings,
+  and resolves module specifiers against file paths, index fallbacks, and workspace packages. It
+  operates as a self-contained language configuration component without explicit external node
+  links.
+summary_at: 2026-08-27T03:49:08.046Z

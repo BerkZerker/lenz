@@ -1,0 +1,19 @@
+kind: intent
+title: Brownfield Example Implementation
+spec: Provides a reference implementation showcasing credential management and basic messaging
+  within a brownfield application context. This area coordinates end-to-end password recovery flows,
+  token-based verification, and simulated email delivery to demonstrate practical integration
+  patterns for authentication lifecycles.
+status: proposed
+derived: true
+folder: examples/brownfield/src
+parent: n_c64b09
+id: n_35a297
+deps: []
+summary: This module serves as a practical reference implementation demonstrating how to integrate
+  credential security, token-based verification, and simulated email delivery within an existing
+  brownfield architecture. It orchestrates complete password recovery workflows—from initiating
+  reset requests and validating tokens to console-logged messaging—to illustrate standard
+  authentication lifecycle patterns. As a self-contained demonstration area, it provides an
+  end-to-end operational guide without external module handoffs or dependencies.
+summary_at: 2026-08-27T03:48:46.923Z

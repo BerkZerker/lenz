@@ -1,0 +1,59 @@
+kind: behavior
+title: Modal Dialog Rendering and Interaction
+spec: Renders an interactive modal dialog overlay based on store state for modal kinds 'help',
+  'confirm', 'choice', 'text', and 'yaml'. When kind is 'help', renders a table displaying
+  keybinding shortcuts defined in HELP. For 'confirm' and 'choice', renders confirmation actions and
+  radio option selectors. For 'text' and 'yaml', renders an autofocusing textarea with dynamic
+  height (minHeight 360px for yaml, 140px for text). Supports closing via overlay click or Escape
+  key, and submitting via button click or Ctrl/Meta+Enter to call onSubmit with the current value.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_d2440b
+    name: render help modal
+    given: The store modal state is set to kind 'help' with title 'Keyboard Shortcuts'
+    when: The Modal component is rendered
+    then: It displays an overlay with title 'Keyboard Shortcuts' and a table listing all keybindings
+      from HELP
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_7106d3
+    name: submit text input with shortcut
+    given: The store modal state is set to kind 'text' with initial value '' and an onSubmit callback
+    when: The user enters text into the textarea and presses Ctrl+Enter or Meta+Enter
+    then: The onSubmit callback is invoked with the entered text and the modal is closed
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1cc738
+    name: dismiss modal on overlay click or escape
+    given: An open modal dialog overlay
+    when: The user clicks on the overlay background or presses the Escape key
+    then: The modal closes without invoking onSubmit
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: HELP
+    container: ""
+    file: packages/gui/src/components/Modal.tsx
+    sig: 2bf72538f51d
+    body: 95565179fb1f
+  - kind: function
+    name: Modal
+    container: ""
+    file: packages/gui/src/components/Modal.tsx
+    sig: a9d0d8e95e12
+    body: 00cfacf82c0d
+id: n_55a9eb
+deps: []
+summary: This behavior is responsible for rendering interactive modal dialog overlays across the
+  application, supporting specialized dialog types such as shortcut help tables, confirmations,
+  option pickers, and dynamic text or YAML editors. It coordinates user interaction by handling
+  dismissals via overlay clicks or the Escape key and capturing submissions through action buttons
+  or keyboard shortcuts. Operating directly against modal store state, it provides a centralized
+  presentation and input layer for transient user workflows without direct downstream node handoffs.
+summary_at: 2026-08-27T03:49:16.411Z

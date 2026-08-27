@@ -1,0 +1,32 @@
+kind: behavior
+title: Anchor key formatting
+spec: Generates a canonical anchor key string by joining the file, container, kind, and name
+  properties of an Anchor object using '#' as the delimiter (${file}#${container}#${kind}#${name}).
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_21fced
+    name: Format anchor key for a top-level function
+    given: "An anchor object { file: 'src/app.ts', container: '', kind: 'function', name: 'main' }"
+    when: anchorKey is called with the object
+    then: It returns 'src/app.ts##function#main'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: anchorKey
+    container: ""
+    file: packages/structure/src/db.ts
+    sig: e0fa00bfc85f
+    body: 58aa05b072f9
+id: n_fb7815
+deps: []
+summary: This behavior generates a canonical string identifier for code anchors by joining an
+  anchor's file, container, kind, and name attributes with hash delimiters. The resulting formatted
+  key feeds into [[n_5608cc]] for data modeling and symbol key processing. It is widely invoked
+  across structural and verification workflows to uniquely reference symbols, serving callers such
+  as [[n_08fed0]], [[n_c8c898]], [[n_20e5ea]], [[n_484bc9]], [[n_b3b72e]], [[n_c26d86]],
+  [[n_ab4a86]], and [[n_80e676]].
+summary_at: 2026-08-27T03:49:06.368Z

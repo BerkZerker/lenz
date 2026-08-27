@@ -1,0 +1,59 @@
+kind: behavior
+title: Area-based subtree color assignment
+spec: Assigns deterministic palette colors to nodes based on their top-level root ancestor.
+  Traverses node parent references via areaOf to locate the root area ID, sorts all root nodes
+  alphabetically by title to find a stable index via areaIndex, and selects the corresponding color
+  from PALETTE modulo its length in areaColor. If no area node is resolved, returns '#d4d4d4'.
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_958051
+    name: Resolve color for nested child node
+    given: A node dictionary containing root node 'root1' with title 'Alpha' and child node 'child1'
+      with parent 'root1'
+    when: areaColor is called with node ID 'child1'
+    then: It resolves 'root1', calculates index 0 among sorted root nodes, and returns '#60a5fa'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_55030b
+    name: Fallback color for missing node
+    given: An empty nodes dictionary and a null ID
+    when: areaColor is called with null
+    then: It returns '#d4d4d4'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: PALETTE
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: 53a0acfad593
+    body: 40a1b3fb5719
+  - kind: function
+    name: areaOf
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: e73f40728714
+    body: f5339d58a937
+  - kind: function
+    name: areaIndex
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: 123e525e42ff
+    body: 572e3ea165ff
+  - kind: function
+    name: areaColor
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: 93ad7b216445
+    body: 1cb626174586
+id: n_edf3ea
+deps: []
+summary: This behavior assigns deterministic palette colors to nodes across a hierarchy based on
+  their top-level root ancestor. It processes the node structures defined in [[n_b0a73c]] to resolve
+  root areas and calculate palette indices, ultimately providing color values consumed by visual
+  rendering components in [[n_eef5f8]].
+summary_at: 2026-08-27T03:49:00.013Z

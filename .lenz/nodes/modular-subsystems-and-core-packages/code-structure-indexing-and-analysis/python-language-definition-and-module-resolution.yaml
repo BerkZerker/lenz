@@ -1,0 +1,55 @@
+kind: behavior
+title: Python language definition and module resolution
+spec: Configures LanguageDef for Python (python) matching .py files. Considers identifiers not
+  starting with '_' to be exported. Parses standard and aliased import statements and from ...
+  import clauses into ImportBinding records (parseImport). Resolves module specifiers
+  (resolveModule) by mapping dotted notation relative to the importing file or project root and
+  checking for matching .py files or __init__.py package directories.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_59e94c
+    name: Determine Python export status by name
+    given: Symbol names '_helper' and 'run_server'
+    when: calling python.isExported on both names
+    then: returns false for '_helper' and true for 'run_server'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_c3013b
+    name: Resolve relative Python package
+    given: A file at '/root/pkg/app.py' importing relative module '.sub' where
+      '/root/pkg/sub/__init__.py' exists
+    when: calling python.resolveModule('/root/pkg/app.py', '.sub', '/root')
+    then: returns '/root/pkg/sub/__init__.py'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: python
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 236af8f58659
+  - kind: method
+    name: parseImport
+    container: python.python
+    file: packages/structure/src/languages.ts
+    sig: 1249705f1b89
+    body: 8c000f8200c7
+  - kind: method
+    name: resolveModule
+    container: python.python
+    file: packages/structure/src/languages.ts
+    sig: d4c231dc2ec0
+    body: ed1849e6e23a
+id: n_1c6d8c
+deps: []
+summary: This node establishes Python language configuration by handling export visibility rules,
+  parsing varied import statements into bindings, and resolving dotted module paths to matching
+  files or package directories. It provides import parsing logic used during AST extraction in
+  [[n_329a75]] and supplies the module path resolution relied upon during codebase indexing and
+  synchronization in [[n_d12a81]].
+summary_at: 2026-08-27T03:49:07.634Z

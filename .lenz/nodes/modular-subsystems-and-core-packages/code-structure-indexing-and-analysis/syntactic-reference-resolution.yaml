@@ -1,0 +1,67 @@
+kind: behavior
+title: Syntactic reference resolution
+spec: Resolves raw syntactic references in a source file by clearing previously stored references
+  for the file and resolving identifiers against local symbol declarations (preferring matching
+  container scopes), direct imports, and nested re-export chains up to depth 6. Records successfully
+  resolved references into the database with 'syntactic' provenance, ignores builtin receivers, and
+  records missing import references in the database unresolved table.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_6a8d2a
+    name: Resolve imported reference across re-exports
+    given: A file importing a symbol that is re-exported through intermediate files up to depth 6
+    when: resolveFileRefs is invoked with the file's raw import references
+    then: lookupExport traverses the re-export chain, finds the target SymbolRow, and inserts a
+      syntactic reference into the database
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_88992d
+    name: Prefer matching container for local reference
+    given: A reference inside a container where multiple local symbols share the same name in different
+      containers
+    when: pickLocal is called with the caller's srcKey and candidate name
+    then: The symbol matching the caller's container is selected before falling back to top-level or
+      first matching candidates
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_d79d7e
+    name: Record unresolved reference for missing export
+    given: A raw import reference whose target file does not export the requested identifier
+    when: resolveFileRefs attempts to look up the export
+    then: lookupExport returns null and insertUnresolved is called with the source key, identifier name,
+      reference kind, and line number
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: resolveFileRefs
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: c3a298093e6e
+    body: 81c671bf5104
+  - kind: function
+    name: pickLocal
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: a68215c2ed68
+    body: 355b55124b1a
+  - kind: function
+    name: lookupExport
+    container: ""
+    file: packages/structure/src/resolve.ts
+    sig: 17a7b54a4c40
+    body: de4149b040d3
+id: n_ef236d
+deps:
+  - n_58299f
+summary: This behavior maps raw syntactic references within a source file to their corresponding
+  local symbol declarations, direct imports, or nested re-export chains. Triggered during codebase
+  indexing workflows in [[n_d12a81]], it processes raw reference extractions from [[n_329a75]] using
+  symbol and import models from [[n_5608cc]]. It then inspects existing file scopes and persists
+  resolved connections and unresolved references via [[n_58299f]].
+summary_at: 2026-08-27T03:49:06.658Z

@@ -1,0 +1,66 @@
+kind: behavior
+title: Code Anchor Resolution and Drift Detection
+spec: Resolves node anchors against the structure database. Silently updates anchor metadata when
+  symbols move or get renamed. Flags behavior nodes as drifted when anchored symbols are changed or
+  deleted outside an active build, and provides resolution to either accept new code as verified
+  anchors or redispatch the node for rebuilding.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_6e2f68
+    name: detectDrift flags node when symbol changes
+    given: A verified behavior node anchored to a symbol in a source file.
+    when: A symbols_changed event occurs indicating modifications in that source file.
+    then: The node status is updated to 'drifted' with drift reasons recorded, and drift.detected is
+      published.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_8d9d62
+    name: resolveDrift with holds accepts new code
+    given: A drifted node whose source code was modified.
+    when: resolveDrift(id, 'holds') is invoked.
+    then: The node anchors are updated to current symbol definitions and its status is restored to its
+      previous status.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: refreshAllAnchors
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: 59c32aa84df7
+  - kind: method
+    name: refreshAnchors
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 37b21fc90dd8
+    body: 25d5a6346ff0
+  - kind: method
+    name: detectDrift
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 4d66a8451307
+    body: b226c9c89402
+  - kind: method
+    name: resolveDrift
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 1c6169ad8296
+    body: efee915b7f63
+id: n_c8c898
+deps:
+  - n_484bc9
+  - n_c26d86
+  - n_c4686d
+summary: This node keeps project graph nodes synchronized with source code symbols by resolving
+  anchor locations, silently updating shifted metadata, and flagging out-of-build code changes as
+  drift. Triggered during system lifecycle flows in [[n_77901c]] and exposed to API clients via
+  [[n_c04098]], it coordinates anchor lookups using [[n_08fed0]], [[n_58299f]], and [[n_fb7815]]
+  while checking active execution states in [[n_80e676]]. It leverages data models from [[n_19fac0]]
+  and [[n_5608cc]] to emit status changes through [[n_c4686d]], persist updated nodes via
+  [[n_c26d86]], or dispatch rebuilds through [[n_484bc9]].
+summary_at: 2026-08-27T03:48:57.535Z

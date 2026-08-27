@@ -1,0 +1,68 @@
+kind: behavior
+title: Configuration loading and defaults
+spec: Defines configuration schemas (LenzConfig, LlmConfig) and default settings (DEFAULT_CONFIG).
+  Resolves the .lenz directory path for a project root and loads configuration from
+  .lenz/config.yaml using loadConfig, falling back to default values and deeply merging the nested
+  llm configuration with defaults when overrides are present.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_ae0548
+    name: Load default configuration when config file does not exist
+    given: A project root directory without a .lenz/config.yaml file
+    when: loadConfig is invoked for the root directory
+    then: It returns a copy of DEFAULT_CONFIG with default concurrency limits, timeouts, port, and LLM
+      configuration
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_379a88
+    name: Load configuration with partial user overrides
+    given: A project root directory containing .lenz/config.yaml with custom port and llm settings
+    when: loadConfig is invoked for the root directory
+    then: It returns DEFAULT_CONFIG merged with the YAML properties, preserving unmentioned default
+      values and merging the nested llm configuration
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: LenzConfig
+    container: ""
+    file: packages/core/src/config.ts
+    sig: ab7a9da81398
+    body: 894a0fee6c3b
+  - kind: interface
+    name: LlmConfig
+    container: ""
+    file: packages/core/src/config.ts
+    sig: ab7a9da81398
+    body: 45a71c8c8a0a
+  - kind: const
+    name: DEFAULT_CONFIG
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 19f504461277
+    body: 251a2c8299a2
+  - kind: function
+    name: lenzDir
+    container: ""
+    file: packages/core/src/config.ts
+    sig: cd06a1e9d7eb
+    body: 55737b29507b
+  - kind: function
+    name: loadConfig
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 412ed57e1c97
+    body: 8da019c35751
+id: n_81d7fd
+deps: []
+summary: This node establishes project configuration schemas and default settings, resolving the
+  `.lenz` workspace directory and loading `.lenz/config.yaml` while deeply merging user overrides
+  with standard defaults. It supplies baseline structure settings to [[n_d12a81]]. In turn, its
+  configuration loaders and directory resolvers are called during workspace initialization in
+  [[n_19d7fc]], CLI command dispatch in [[n_836db2]], core system lifecycle management in
+  [[n_77901c]], and agent run orchestration in [[n_80e676]].
+summary_at: 2026-08-27T03:48:50.629Z

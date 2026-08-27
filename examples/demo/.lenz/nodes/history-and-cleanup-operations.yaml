@@ -1,8 +1,0 @@
-kind: intent
-title: History and cleanup operations
-spec: Extend the in-memory todo store with state mutation history tracking to support undo
-  operations and bulk removal of completed items.
-parent: null
-status: proposed
-id: n_8b0e65
-deps: []

@@ -1,0 +1,21 @@
+kind: intent
+title: Application UI Components
+spec: Provides the core interactive visual components that make up the graphical user interface.
+  This directory contains the primary layout panels and widgets, including the navigation explorer
+  tree for files and nodes, the detail pane for inspecting node specifications, source code, call
+  flows, and verification drift, interactive modal dialog overlays, the global status bar, and
+  shared UI presentation helpers.
+status: proposed
+derived: true
+folder: packages/gui/src/components
+parent: n_e265c6
+id: n_eef5f8
+deps: []
+summary: This module provides the core interactive visual components of the frontend, including the
+  navigation explorer tree, node and source code detail inspectors, modal dialogs, and the status
+  bar. Rendered directly by the top-level application shell in [[n_58c921]], it translates user
+  actions into visual inspections and workflow triggers across the graph. It relies on [[n_a1505f]]
+  for reactive state and [[n_b0a73c]] for data models, while dispatching queries through
+  [[n_b8f010]], executing derivation actions via [[n_62ea90]], and applying visual styling cues
+  using [[n_edf3ea]] and [[n_4a8975]].
+summary_at: 2026-08-27T03:48:50.705Z

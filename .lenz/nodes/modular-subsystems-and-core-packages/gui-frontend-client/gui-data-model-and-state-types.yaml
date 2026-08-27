@@ -1,0 +1,116 @@
+kind: behavior
+title: GUI Data Model and State Types
+spec: Defines core TypeScript data interfaces and types for the GUI client, encompassing intent and
+  behavior nodes (LenzNode, TreeItem), code anchors and symbol indexing (Anchor, SymbolRow), example
+  execution and verification results (Example, ExampleResult), run execution logs and file locking
+  records (RunRecord, Lock, LockEvent), derivation tracking and options (DeriveProgress,
+  DeriveReset), system overview metrics (Status), and navigation lens identifiers (Lens).
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_496e59
+    name: Node and verification representation
+    given: A LenzNode instance containing code anchors and example assertions
+    when: The node data structure is populated with status, verification metrics, and example results
+    then: The structure complies with LenzNode, Anchor, Example, and ExampleResult type contracts.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_0b7efa
+    name: GUI status and active lens view definition
+    given: GUI state tracking current system metrics and active navigation view
+    when: A Lens view ('graph', 'queue', 'verify', 'orphans', 'runs', 'flow', 'propose', 'stage') and a
+      Status record are declared
+    then: The Status type models run counts, locks, drifted nodes, staged items, and DeriveProgress
+      state, while Lens restricts the view selection to allowed identifiers.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: Anchor
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 70a09107be1d
+  - kind: interface
+    name: Example
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 24b6ca0dbb1c
+  - kind: interface
+    name: ExampleResult
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 0e4f11dbbf33
+  - kind: interface
+    name: LenzNode
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: aad75d1cf8b1
+  - kind: interface
+    name: TreeItem
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: d3c8c643b314
+  - kind: interface
+    name: RunRecord
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: bb4886532718
+  - kind: interface
+    name: Lock
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 373bcd076eca
+  - kind: interface
+    name: LockEvent
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 91064816bb46
+  - kind: interface
+    name: SymbolRow
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 23cda9f996ca
+  - kind: interface
+    name: Status
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 8dfba0916700
+  - kind: interface
+    name: DeriveProgress
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: ab7a9da81398
+    body: 845605cb4ef1
+  - kind: type
+    name: DeriveReset
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: 55f8ed03f169
+    body: 488e8cb09a33
+  - kind: type
+    name: Lens
+    container: ""
+    file: packages/gui/src/types.ts
+    sig: e9c2c6793a61
+    body: 612b2899385d
+id: n_b0a73c
+deps: []
+summary: This node establishes the core TypeScript interfaces and type definitions used to represent
+  GUI domain entities, including navigation nodes, derivation progress, execution records, and
+  status metrics. It supplies the foundational data structures utilized by the client state store in
+  [[n_a1505f]] and interface elements in [[n_eef5f8]]. Furthermore, its models back graph derivation
+  workflows in [[n_62ea90]] and subtree color mapping logic in [[n_edf3ea]].
+summary_at: 2026-08-27T03:49:02.650Z

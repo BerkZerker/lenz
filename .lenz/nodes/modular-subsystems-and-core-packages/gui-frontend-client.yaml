@@ -1,0 +1,20 @@
+kind: intent
+title: GUI Frontend Client
+spec: Serves as the root frontend client for the graphical user interface, integrating the core web
+  application entry point, global state management, and backend communication. It orchestrates UI
+  navigation and visual styling, manages reactive application state across selection, derivation
+  workflows, and inspection panels, and defines the core types and HTTP client required to interface
+  with backend services.
+status: proposed
+derived: true
+folder: packages/gui/src
+parent: n_dd5e0e
+id: n_e265c6
+deps: []
+summary: This module serves as the root graphical user interface client, providing the primary
+  application shell, interactive components, and visual styling for navigating and inspecting
+  project graphs. It orchestrates reactive client state across tree hierarchies, selection changes,
+  and derivation workflows while managing the core data models and HTTP transport layer for backend
+  communication. Within this subsystem, presentation controls, deep-linking navigation, and theme
+  utilities are unified to drive the complete frontend user experience.
+summary_at: 2026-08-27T03:48:47.428Z

@@ -1,0 +1,58 @@
+kind: behavior
+title: Main application shell with deep linking and keyboard navigation
+spec: "Renders the main two-pane application layout, establishes the backend connection, and syncs
+  URL hash changes (starting with #n_) with node focus and selection. Provides global keyboard
+  shortcuts (j/k or ArrowDown/ArrowUp to traverse visible expanded tree items, Enter to focus
+  intents, Escape/h to deselect or navigate up the hierarchy, t to toggle tree modes, / to focus
+  search, ? for help modal, and a/r for node approve/reject actions) and dispatches API actions with
+  error notifications."
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_efd18a
+    name: deep link navigation on hash change
+    given: The App is mounted and connected to the store containing node 'n_123'
+    when: The window location hash changes to '#n_123'
+    then: The store focus and selection are updated to match node 'n_123' or its parent
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_dd4da3
+    name: keyboard traversal across expanded tree nodes
+    given: The tree has expanded nodes rendered in order ['n_1', 'n_2', 'n_3'] and 'n_1' is selected
+    when: The user presses 'j' or 'ArrowDown'
+    then: The store updates selection to 'n_2'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: App
+    container: ""
+    file: packages/gui/src/App.tsx
+    sig: a9d0d8e95e12
+    body: 7e6b9a886e10
+  - kind: function
+    name: act
+    container: ""
+    file: packages/gui/src/App.tsx
+    sig: 6a24f35167e6
+    body: 41008fd8ded4
+  - kind: function
+    name: visibleIds
+    container: ""
+    file: packages/gui/src/App.tsx
+    sig: 5d1e8dc08d88
+    body: b3c44f65ae5f
+id: n_58c921
+deps:
+  - n_62ea90
+  - n_a1505f
+  - n_b8f010
+summary: This node serves as the primary application shell, orchestrating the two-pane layout while
+  managing global keyboard navigation, URL hash-based deep linking, and backend connectivity. It
+  mounts the core interface elements provided by [[n_eef5f8]] and coordinates application state via
+  [[n_a1505f]]. To execute user actions and updates, it dispatches requests through [[n_b8f010]] and
+  initiates graph processing routines using [[n_62ea90]].
+summary_at: 2026-08-27T03:48:55.175Z

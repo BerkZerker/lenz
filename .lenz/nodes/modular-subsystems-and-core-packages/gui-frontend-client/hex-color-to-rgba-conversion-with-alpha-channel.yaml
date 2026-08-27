@@ -1,0 +1,31 @@
+kind: behavior
+title: Hex color to RGBA conversion with alpha channel
+spec: Converts a 6-character hex color string into an 'rgba(r,g,b,a)' formatted string with the
+  specified numeric alpha value by parsing the hex integer and extracting RGB components.
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_e7b04b
+    name: Convert hex to rgba with alpha
+    given: A hex color string '#60a5fa' and an alpha value of 0.5
+    when: withAlpha('#60a5fa', 0.5) is called
+    then: It returns 'rgba(96,165,250,0.5)'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: withAlpha
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: 7ffc3cbcb213
+    body: f9f99913f757
+id: n_d34d4c
+deps: []
+summary: This behavior formats six-character hex color codes into standard CSS RGBA strings with a
+  designated alpha transparency level. It operates by parsing the hexadecimal input into separate
+  red, green, and blue components before assembling them alongside the specified opacity value.
+  Serving as a self-contained color utility, it currently functions without any recorded
+  dependencies or downstream handoffs.
+summary_at: 2026-08-27T03:49:00.606Z

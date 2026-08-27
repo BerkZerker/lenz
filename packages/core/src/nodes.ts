@@ -5,14 +5,10 @@ import { anchorKey, type StructureDb } from "@lenz/structure";
 import type { LenzNode, NodeStatus } from "./types.ts";
 import type { EventBus } from "./events.ts";
 
-export const FAN_OUT_CAP = 9;
-
 export function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "node";
 }
 export function newId(prefix = "n") { return `${prefix}_${Math.random().toString(16).slice(2, 8)}`; }
-
-export class FanOutError extends Error { constructor(parent: string | null, n: number) { super(`fan-out cap: ${parent ?? "root"} would have ${n} children (max ${FAN_OUT_CAP}); add a grouping node`); } }
 
 /**
  * YAML-backed store for L0/L1 nodes. Path = slug path under the parent; id is stable.
@@ -43,6 +39,9 @@ export class NodeStore {
       }
     };
     walk(this.nodesDir);
+    // rebuild the anchors mirror rather than adding to it: rows for nodes deleted while the daemon was down would
+    // otherwise linger forever, and a symbol that looks owned is invisible to derive
+    this.db.clearAnchors();
     for (const n of this.nodes.values()) this.mirror(n);
   }
 
@@ -77,14 +76,8 @@ export class NodeStore {
     return [...segs, base + ".yaml"].join("/");
   }
 
-  assertFanOut(parent: string | null, excludeId?: string) {
-    const n = this.children(parent).filter((c) => c.id !== excludeId).length + 1;
-    if (n > FAN_OUT_CAP) throw new FanOutError(parent, n);
-  }
-
   create(partial: Partial<LenzNode> & { title: string; kind: LenzNode["kind"] }): LenzNode {
     if (partial.parent && !this.get(partial.parent)) throw new Error(`unknown parent ${partial.parent}`);
-    this.assertFanOut(partial.parent ?? null);
     const n: LenzNode = { ...partial, id: partial.id ?? newId(), kind: partial.kind, title: partial.title, parent: partial.parent ?? null, deps: partial.deps ?? [], status: partial.status ?? "proposed", spec: partial.spec ?? "" } as LenzNode;
     if (n.kind === "behavior") n.examples ??= [];
     this.nodes.set(n.id, n);
@@ -122,7 +115,6 @@ export class NodeStore {
     const n = this.get(id); if (!n) throw new Error(`unknown node ${id}`);
     if (patch.parent !== undefined && patch.parent !== n.parent) {
       if (patch.parent && (patch.parent === id || this.descendants(id).some((d) => d.id === patch.parent))) throw new Error("cannot reparent under own descendant");
-      this.assertFanOut(patch.parent, id);
     }
     Object.assign(n, patch);
     this.save(n);

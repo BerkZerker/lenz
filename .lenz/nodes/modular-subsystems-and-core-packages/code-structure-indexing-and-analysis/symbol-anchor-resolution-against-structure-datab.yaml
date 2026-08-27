@@ -1,0 +1,78 @@
+kind: behavior
+title: Symbol anchor resolution against structure database
+spec: "Converts symbol rows to anchor representations and resolves an existing anchor against a
+  StructureDb by matching symbol key, body, file, container, and signature. Returns an
+  AnchorResolution indicating status ('ok', 'changed', 'moved', 'renamed', or 'deleted'), the
+  resolved anchor, key, and whether drift occurred: returns 'ok' (drift: false) if exact key matches
+  and body is identical; 'changed' (drift: true) if exact key matches but body differs; 'moved'
+  (drift: false) if matching body and name exist elsewhere or if a single matching body and kind
+  exist; 'renamed' (drift: false) if a single symbol in the same file matches container/kind/sig
+  (with or without matching body); or 'deleted' (drift: true) if no matching symbol is found."
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_3c64c3
+    name: resolves exact symbol match without changes as ok
+    given: A StructureDb containing a symbol matching an anchor's key and identical body hash
+    when: resolveAnchor(db, anchor) is called
+    then: It returns status 'ok', drift false, the anchor key, and the anchor constructed from the
+      database row
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1ee525
+    name: detects body changes on an existing symbol as changed drift
+    given: A StructureDb containing a symbol matching the anchor's key but with a different body hash
+    when: resolveAnchor(db, anchor) is called
+    then: It returns status 'changed', drift true, the anchor key, and the updated anchor from the
+      database
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_e80eb0
+    name: marks missing symbols without match as deleted
+    given: A StructureDb with no exact match, no relocated body match, and no renamed file/signature
+      match for the anchor
+    when: resolveAnchor(db, anchor) is called
+    then: It returns status 'deleted', drift true, the original anchor key, and the original anchor
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: type
+    name: AnchorStatus
+    container: ""
+    file: packages/structure/src/anchors.ts
+    sig: 4534b3441831
+    body: "663938908595"
+  - kind: interface
+    name: AnchorResolution
+    container: ""
+    file: packages/structure/src/anchors.ts
+    sig: ab7a9da81398
+    body: 01f2f4c9c2dc
+  - kind: function
+    name: toAnchor
+    container: ""
+    file: packages/structure/src/anchors.ts
+    sig: b7f35f24df64
+    body: f0f4d00ea967
+  - kind: function
+    name: resolveAnchor
+    container: ""
+    file: packages/structure/src/anchors.ts
+    sig: 3a79d0c8f528
+    body: a11f9fcb9cc7
+id: n_08fed0
+deps:
+  - n_58299f
+  - n_fb7815
+summary: This behavior converts symbol records into anchor representations and resolves existing
+  anchors against a structure database to determine whether code elements are unchanged, modified,
+  moved, renamed, or deleted. To evaluate matches and construct resolution results, it queries
+  symbol indexes via [[n_58299f]], formats keys using [[n_fb7815]], and produces anchor models
+  defined in [[n_5608cc]]. These resolution outcomes are then consumed by drift management workflows
+  in [[n_c8c898]], build verification in [[n_484bc9]], and brownfield architecture derivation in
+  [[n_b3b72e]].
+summary_at: 2026-08-27T03:49:03.161Z

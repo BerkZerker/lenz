@@ -15,6 +15,7 @@ ignore_globs:
   - "**/.git/**"
   - "**/.lenz/**"
   - "**/*.d.ts"
+  - "packages/core/static/**"
 entry_globs:
   - "**/src/{index,main,server,cli,app}.{ts,tsx,js}"
   - "{index,main,server,cli,app}.{ts,tsx,js}"

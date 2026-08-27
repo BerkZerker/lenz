@@ -1,0 +1,86 @@
+kind: behavior
+title: Language registry and asset location
+spec: "Defines language metadata interfaces (ImportBinding, LanguageDef) and maintains the
+  registered list of supported languages (LANGUAGES: TypeScript, TSX, Python, Go). Provides
+  languageForFile to match file extensions against registered languages, and helpers wasmPath and
+  queryPath to resolve filesystem paths to compiled Tree-sitter WASM grammars (under
+  tree-sitter-wasms/out) and Tree-sitter query files (under ../queries)."
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_bddcc0
+    name: Lookup language by extension
+    given: A file path 'src/app.ts' and the registered LANGUAGES list
+    when: calling languageForFile('src/app.ts')
+    then: returns the TypeScript LanguageDef with id 'typescript'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_a759a8
+    name: Lookup unsupported language extension
+    given: A file path 'README.md' with an unregistered extension
+    when: calling languageForFile('README.md')
+    then: returns null
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: ImportBinding
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ab7a9da81398
+    body: a65e71b0da46
+  - kind: interface
+    name: LanguageDef
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: ab7a9da81398
+    body: abeace007b36
+  - kind: const
+    name: wasmDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 2f17139d8744
+    body: 8753fcfe11eb
+  - kind: const
+    name: queryDir
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 2f17139d8744
+    body: 945651ad9f74
+  - kind: const
+    name: LANGUAGES
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 8887d2199a4b
+    body: e410afde69e2
+  - kind: function
+    name: languageForFile
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 8dce0b83eac4
+    body: 8a18c7cfce5e
+  - kind: function
+    name: wasmPath
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 5d51dcd81ed6
+    body: cecace143b58
+  - kind: function
+    name: queryPath
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 5d51dcd81ed6
+    body: 7cf2b366a148
+id: n_d27685
+deps: []
+summary: This node serves as the central registry for supported programming languages, defining
+  language metadata interfaces, matching file extensions to configurations, and resolving filesystem
+  paths for Tree-sitter WASM grammars and query files. Its asset path resolution helpers are
+  leveraged by [[n_790227]] to load parser artifacts, while [[n_d12a81]] relies on its file-matching
+  helpers during codebase synchronization and indexing. Furthermore, its language definitions and
+  binding schemas provide the foundational contracts utilized by [[n_329a75]] for AST symbol and
+  import extraction.
+summary_at: 2026-08-27T03:49:07.614Z

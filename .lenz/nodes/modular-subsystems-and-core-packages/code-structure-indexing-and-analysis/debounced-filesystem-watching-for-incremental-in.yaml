@@ -1,0 +1,41 @@
+kind: behavior
+title: Debounced filesystem watching for incremental index synchronization
+spec: Monitors project source files for additions, modifications, and deletions using chokidar,
+  debouncing change events by 300ms before executing an incremental sync on changed and removed file
+  paths.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_e9f8e1
+    name: watch-and-flush-changes
+    given: A StructureIndex instance where watch() is running
+    when: Source files are modified on disk
+    then: The file events are queued and flushed after a 300ms debounce timer to trigger sync() with the
+      changed and removed files
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: watch
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: d7b0a4d6f984
+    body: d88a2d2de6c9
+  - kind: method
+    name: flush
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 1464fbdaa860
+    body: 3e278e753967
+id: n_759ab4
+deps:
+  - n_d12a81
+  - n_ee0acb
+summary: This behavior monitors project source files for filesystem changes, debouncing event bursts
+  to efficiently trigger incremental index updates. Initiated and managed as part of system
+  lifecycle operations by [[n_77901c]], it filters detected file paths against ignore patterns using
+  [[n_ee0acb]]. Once changes settle, it hands off the collected additions, modifications, and
+  deletions to [[n_d12a81]] to synchronize the codebase index.
+summary_at: 2026-08-27T03:49:10.091Z

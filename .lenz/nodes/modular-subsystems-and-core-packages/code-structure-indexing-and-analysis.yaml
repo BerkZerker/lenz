@@ -1,0 +1,21 @@
+kind: intent
+title: Code Structure Indexing and Analysis
+spec: This area implements the core code intelligence engine that extracts, resolves, and tracks
+  structural elements across a codebase. It parses source files in supported languages using
+  Tree-sitter queries and optional SCIP data, extracting symbol declarations, signatures, imports,
+  and cross-file references into an SQLite database. It provides filesystem watching and ignore-rule
+  filtering for incremental re-indexing, resolves syntactic relationships, tracks symbol stability
+  across edits using anchors, and generates static call trees from entry points.
+status: proposed
+derived: true
+folder: packages/structure/src
+parent: n_dd5e0e
+id: n_73cee3
+deps: []
+summary: This module serves as the core code intelligence and structural analysis engine,
+  responsible for extracting and tracking symbols, references, and dependency relationships across
+  multi-language codebases. It utilizes Tree-sitter queries and SCIP data to populate and update an
+  SQLite-backed index, maintaining synchronization through debounced filesystem watching while
+  generating static call trees and anchor-based symbol stability tracking. Its indexing routines and
+  symbol query capabilities are primarily invoked by [[n_0e8e26]].
+summary_at: 2026-08-27T03:48:47.517Z

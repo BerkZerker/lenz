@@ -1,0 +1,45 @@
+kind: behavior
+title: Text truncation and timestamp formatting utilities
+spec: "`fmtTime` formats an ISO timestamp string into a localized time string using
+  `Date.prototype.toLocaleTimeString`, returning an empty string if undefined. `short` truncates
+  strings longer than `n` characters (default 80) to length `n - 1` appended with an ellipsis ('…'),
+  returning shorter or equal length strings unchanged."
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_53593c
+    name: truncate long text
+    given: A string 'Hello world and welcome to the system' and max length 10
+    when: short is called with the string and 10
+    then: It returns 'Hello wor…'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_83792c
+    name: format undefined timestamp
+    given: No timestamp (undefined)
+    when: fmtTime is called with undefined
+    then: It returns an empty string ''
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: fmtTime
+    container: ""
+    file: packages/gui/src/components/common.tsx
+    sig: c343126eb6de
+    body: f239be00cd7f
+  - kind: const
+    name: short
+    container: ""
+    file: packages/gui/src/components/common.tsx
+    sig: 14df03ff59f6
+    body: d7d6886ea3d0
+id: n_3f5f11
+deps: []
+summary: This node provides lightweight text presentation utilities to format ISO timestamp strings
+  into localized times and truncate lengthy strings with an ellipsis. It operates as a
+  self-contained set of formatting helpers with no registered dependencies or downstream handoffs.
+summary_at: 2026-08-27T03:49:17.547Z

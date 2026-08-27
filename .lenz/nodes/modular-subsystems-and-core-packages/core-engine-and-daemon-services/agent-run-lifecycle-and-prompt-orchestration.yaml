@@ -1,0 +1,21 @@
+kind: intent
+title: Agent Run Lifecycle and Prompt Orchestration
+spec: Manages the execution lifecycle, queueing, and concurrency of external agent runs and
+  in-process LLM tasks across the codebase. This area handles process execution, event parsing,
+  transcript tracking, and agent adapter integrations, while also providing the prompt templates and
+  JSON schemas required for codebase derivation, spec reviews, tree proposals, and node
+  implementations.
+status: proposed
+derived: true
+folder: packages/core/src/runs
+parent: n_0e8e26
+id: n_80e676
+deps: []
+summary: This module orchestrates external agent runs and in-process LLM tasks, managing their
+  execution lifecycles, queueing, and stream parsing while assembling structured prompt templates
+  and schemas. It is invoked by upstream system workflows and servers including [[n_77901c]],
+  [[n_484bc9]], [[n_5ffc74]], [[n_b3b72e]], [[n_dbc58c]], [[n_c8c898]], and [[n_c04098]]. In turn,
+  it coordinates model execution via [[n_ed9767]], broadcasts runtime updates through [[n_c4686d]],
+  manages concurrency via [[n_6a10f1]], and builds contextual prompts using [[n_c26d86]],
+  [[n_d12a81]], [[n_5608cc]], [[n_fb7815]], [[n_81d7fd]], [[n_19fac0]], and [[n_19d7fc]].
+summary_at: 2026-08-27T03:48:51.101Z

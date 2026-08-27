@@ -1,0 +1,77 @@
+kind: behavior
+title: Node Authoring and Approval Workflow
+spec: Provides CRUD operations, deep property mutation via nodeSet, and status transition workflows
+  for nodes in the store. Automatically marks modified behavior nodes as staged. Allows approving
+  proposed nodes to specified (along with descendants) or approving built/drifted nodes to verified,
+  and supports rejecting nodes with notes while optionally redispatching a build.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_d2da13
+    name: approve proposed intent promotes subtree
+    given: A proposed intent node with proposed child behavior nodes.
+    when: approve(id) is called on the intent node.
+    then: The intent node and all its proposed descendants are updated to status 'specified'.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1153ca
+    name: putNode marks modified behavior as staged
+    given: A verified behavior node in the store.
+    when: putNode(id, patch) is called with a modified spec.
+    then: The node is updated in the store with staged set to true and staging.changed is published.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: putNode
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 380560eb75e5
+    body: e6af86806796
+  - kind: method
+    name: createNode
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 1be6db2f1fe9
+    body: b89332b27b3a
+  - kind: method
+    name: deleteNode
+    container: Core
+    file: packages/core/src/core.ts
+    sig: b9efcf67d26e
+    body: 122d861492bc
+  - kind: method
+    name: nodeSet
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 5b114ebc1f06
+    body: d170b8103552
+  - kind: method
+    name: approve
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 618e26c79062
+    body: 5206e780140d
+  - kind: method
+    name: reject
+    container: Core
+    file: packages/core/src/core.ts
+    sig: a8f0da109e80
+    body: 4c394311ad7a
+id: n_348046
+deps:
+  - n_20e5ea
+  - n_484bc9
+  - n_c26d86
+  - n_c4686d
+summary: This node manages node authoring lifecycles and approval workflows, handling CRUD
+  operations, deep property mutations, and status transitions across proposed, specified, and
+  verified states. It is triggered by interface requests through [[n_c04098]] and supports
+  architecture derivation tasks from [[n_b3b72e]]. When modifying or reviewing nodes, it leverages
+  domain models in [[n_19fac0]], persists updates via [[n_c26d86]], coordinates staging tracking in
+  [[n_20e5ea]], broadcasts notifications through [[n_c4686d]], and can redispatch build pipelines
+  using [[n_484bc9]].
+summary_at: 2026-08-27T03:48:56.466Z

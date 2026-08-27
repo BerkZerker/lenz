@@ -1,0 +1,45 @@
+kind: behavior
+title: SCIP index reference enrichment
+spec: Parses an index.scip file if present at the project root, maps definition occurrences to
+  database symbol keys by matching file lines and names, deletes prior SCIP-provenance references,
+  and inserts updated reference edges into the structure database.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_cb3b69
+    name: apply-scip-when-file-missing
+    given: A project root directory without an index.scip file
+    when: applyScip() is called
+    then: It immediately returns null without modifying the database
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_3fa6c1
+    name: apply-scip-when-file-present
+    given: An index.scip file located at the project root containing reference occurrences for indexed
+      symbols
+    when: applyScip() is called
+    then: It resolves reference destinations, deletes existing SCIP references, inserts the new
+      references, and returns the total count of inserted edges
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: applyScip
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: df0345ebb4a7
+    body: 2541373d9f2f
+id: n_298de6
+deps:
+  - n_58299f
+  - n_7cd39e
+summary: This behavior enriches project code intelligence by ingesting an index.scip file to map
+  symbol occurrences to existing database records and replace stale reference edges. It relies on
+  [[n_7cd39e]] to decode the raw protobuf documents, uses [[n_5608cc]] for symbol models and key
+  manipulation, and commits the resolved references into storage using [[n_58299f]]. The enrichment
+  workflow is invoked across system startup, command execution, and service lifecycles coordinated
+  by [[n_836db2]], [[n_77901c]], and [[n_c04098]].
+summary_at: 2026-08-27T03:49:10.641Z

@@ -1,0 +1,50 @@
+kind: behavior
+title: Node Relationship Mapping and Orientation Summaries
+spec: Computes inbound and outbound relationships between nodes across the symbol call graph, and
+  generates orientation summaries with validated [[node_id]] wiki-links using background LLM runs
+  with concurrency limits.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_b21507
+    name: summarizeAll generates summaries concurrently
+    given: Nodes in the store lacking summary text.
+    when: summarizeAll(false) is called.
+    then: Summaries are generated top-down in batches up to max_concurrent_llm and saved to node records.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: relations
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 98909075fa07
+    body: 550ddd1b5b63
+  - kind: method
+    name: summarize
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 81679e8c99d6
+    body: 0c62b5673760
+  - kind: method
+    name: summarizeAll
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 998a547f2887
+    body: e1d1800d0e6c
+id: n_dbc58c
+deps:
+  - n_77901c
+  - n_ab4a86
+  - n_b3b72e
+  - n_c26d86
+summary: This behavior computes inbound and outbound inter-node dependencies and orchestrates
+  LLM-generated orientation summaries containing validated cross-node links. It is triggered by
+  post-build hooks in [[n_484bc9]], architecture derivation and proposal flows in [[n_b3b72e]] and
+  [[n_5ffc74]], or direct server requests via [[n_c04098]]. To complete these tasks, it delegates
+  structural calculations to [[n_ab4a86]], accesses graph state through [[n_c26d86]] and
+  [[n_19fac0]], and manages prompt runs and logging using [[n_80e676]], [[n_77901c]], and
+  [[n_b3b72e]].
+summary_at: 2026-08-27T03:49:00.752Z

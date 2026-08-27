@@ -1,0 +1,61 @@
+kind: behavior
+title: Static call tree generation from an entry point symbol
+spec: Traverses outbound 'calls' and 'extends' references from a given root symbol key in a
+  StructureDb up to a configurable maxDepth (default 8) and maxNodes (default 400). Builds a
+  recursive FlowNode tree with child nodes ordered by source call line position. Sets cycle=true if
+  a symbol key is encountered in the active traversal path, sets truncated=true if maxDepth or
+  maxNodes thresholds are exceeded, and returns null if the root symbol key does not exist in the
+  database.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_65c164
+    name: Missing entry symbol
+    given: A StructureDb instance that does not contain a symbol with key 'entry#func'
+    when: flowFrom(db, 'entry#func') is called
+    then: It returns null
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_14bbec
+    name: Recursive call detection
+    given: A StructureDb where symbol 'funcA' calls 'funcB' and 'funcB' calls 'funcA'
+    when: flowFrom(db, 'funcA') is called
+    then: The FlowNode for the recursive second invocation of 'funcA' has cycle set to true and an empty
+      children array
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1b1c5e
+    name: Line-sorted children and truncation limits
+    given: A StructureDb where a symbol calls multiple other symbols across different lines and maxDepth
+      is set to 1
+    when: flowFrom(db, 'rootKey', 1) is called
+    then: Root node has children ordered by ascending call line, and child nodes at depth 1 have
+      truncated set to true with no further children traversed
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: FlowNode
+    container: ""
+    file: packages/structure/src/flow.ts
+    sig: ab7a9da81398
+    body: 2845c05e6492
+  - kind: function
+    name: flowFrom
+    container: ""
+    file: packages/structure/src/flow.ts
+    sig: bd663259f52f
+    body: 2133ebaa2425
+id: n_7671f2
+deps:
+  - n_58299f
+summary: This behavior constructs a bounded, recursive call tree from an entry point symbol by
+  traversing outbound reference paths while handling cycle detection and truncation limits. It
+  queries symbol entries and reference relationships using [[n_58299f]] and structures the resulting
+  nodes using the data models defined in [[n_5608cc]]. It is invoked by [[n_1cef8b]] to support
+  downstream codebase flow analysis and tracing workflows.
+summary_at: 2026-08-27T03:49:03.305Z

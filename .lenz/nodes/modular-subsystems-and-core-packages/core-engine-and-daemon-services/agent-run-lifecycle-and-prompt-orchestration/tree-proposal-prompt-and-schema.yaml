@@ -1,0 +1,41 @@
+kind: behavior
+title: Tree proposal prompt and schema
+spec: Defines the JSON schema for hierarchical node proposals (intent and behavior nodes with
+  titles, specs, deps, examples, and children) and constructs proposePrompt to guide an LLM in
+  converting a human brain-dump and optional repository overview or existing tree into structured
+  node JSON.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_544cbd
+    name: Constructs proposal prompt
+    given: A brain dump string, an existing tree string, parent title 'Auth', and repository summary text
+    when: proposePrompt is called
+    then: Returns a prompt instructing the LLM to return JSON adhering to PROPOSAL_SCHEMA under the
+      parent intent node
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: PROPOSAL_SCHEMA
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 53a0acfad593
+    body: 93de57d268a7
+  - kind: function
+    name: proposePrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: ea7c7008befe
+    body: b56fbc0ef7fc
+id: n_b3b3eb
+deps: []
+summary: This node standardizes how unstructured project ideas are transformed into structured node
+  hierarchies by defining the JSON schema and prompt templates for tree proposals. It guides an LLM
+  to parse human brain-dumps and optional repository context into well-defined intent and behavior
+  nodes complete with specifications, dependencies, and nested children. Within the project graph,
+  it functions as a self-contained schema and prompt definition without direct upstream or
+  downstream links.
+summary_at: 2026-08-27T03:49:18.487Z

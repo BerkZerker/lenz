@@ -1,0 +1,19 @@
+kind: intent
+title: LLM Provider Clients and Integrations
+spec: Provides lightweight, direct REST-based client integrations for communicating with external
+  language model providers, including Google Gemini and OpenAI-compatible endpoints, alongside
+  environment configuration loading. Explore this module to understand or extend how the core system
+  constructs, formats, and dispatches structured prompts and schema-constrained completion requests
+  across different model APIs without external SDK dependencies.
+status: proposed
+derived: true
+folder: packages/core/src/llm
+parent: n_0e8e26
+id: n_ed9767
+deps: []
+summary: This module provides lightweight, direct REST-based client integrations and environment
+  configuration loading to communicate with model APIs such as Google Gemini and OpenAI-compatible
+  endpoints without external SDK dependencies. It is called by [[n_80e676]] to dispatch structured
+  prompts and schema-constrained completions during agent runs. Additionally, [[n_77901c]] relies on
+  its configuration loader during initial system setup and lifecycle bootstrapping.
+summary_at: 2026-08-27T03:48:49.273Z

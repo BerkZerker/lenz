@@ -13,6 +13,18 @@ export function resolveFileRefs(db: StructureDb, file: string, refs: RawRef[]) {
   const importByLocal = new Map<string, ImportRow>();
   for (const i of imports) if (!i.reexport) importByLocal.set(i.local, i);
   const importedFiles = [...new Set(imports.map((i) => i.resolved_file).filter((f): f is string => !!f))];
+  // every file this one can actually see. A method name that is unique in the whole repo is still the wrong
+  // target when the receiver is a builtin (`new Set().add`, `stmt.all()`, `map.delete()`), so reachability gates it.
+  const reachable = (() => {
+    const seen = new Set<string>([file]);
+    const stack = [file];
+    while (stack.length) {
+      for (const i of db.importsOf(stack.pop()!)) {
+        if (i.resolved_file && !seen.has(i.resolved_file)) { seen.add(i.resolved_file); stack.push(i.resolved_file); }
+      }
+    }
+    return seen;
+  })();
 
   for (const r of refs) {
     const srcKey = r.srcKey ?? "@" + file; // "@file" = module-level reference
@@ -28,6 +40,7 @@ export function resolveFileRefs(db: StructureDb, file: string, refs: RawRef[]) {
       continue;
     }
     // calls / extends / implements
+    if (r.member && r.builtinRecv) continue; // a call on a Map/Set/Promise/console is not a reference to project code
     if (!r.member) {
       const imp = importByLocal.get(r.name);
       if (imp?.resolved_file) dst = lookupExport(db, imp.resolved_file, imp.imported === "default" ? null : imp.imported, r.name);
@@ -36,7 +49,7 @@ export function resolveFileRefs(db: StructureDb, file: string, refs: RawRef[]) {
       // obj.method(): prefer same-file methods, then methods in imported files, then any-file unique match
       dst = local.find((s) => s.name === r.name && s.kind === "method") ?? null;
       if (!dst) for (const f of importedFiles) { const c = db.symbolsInFile(f).find((s) => s.name === r.name && (s.kind === "method" || s.kind === "function")); if (c) { dst = c; break; } }
-      if (!dst) { const all = db.symbolsByName(r.name).filter((s) => s.kind === "method"); if (all.length === 1) dst = all[0]; }
+      if (!dst) { const all = db.symbolsByName(r.name).filter((s) => s.kind === "method" && reachable.has(s.file)); if (all.length === 1) dst = all[0]; }
     }
     if (dst) {
       if (dst.key !== srcKey && r.srcKey) db.insertRef({ src_key: srcKey, dst_key: dst.key, kind: r.kind, provenance: "syntactic", line: r.line });

@@ -12,7 +12,7 @@ interface Folder { name: string; path: string; folders: Folder[]; files: FileEnt
 
 /** left pane: a VS Code style explorer with two views — the node tree (intents/behaviors) and the file tree (files → symbols → owning node) */
 export function Tree() {
-  const { tree, focus, selected, search, setFocus, setSelected, setSearch, nodes, treeMode, setTreeMode, expanded, toggleExpanded, setExpanded } = useStore();
+  const { tree, focus, selected, search, setFocus, setSelected, setSearch, nodes, treeMode, setTreeMode, expanded, toggleExpanded, setExpanded, picked, setPicked } = useStore();
   const [files, setFiles] = useState<FileEntry[]>([]);
   const status = useStore((s) => s.status);
   useEffect(() => { if (treeMode === "files") api<FileEntry[]>("/files").then(setFiles).catch(() => {}); }, [treeMode, status?.orphans, status?.nodes]);
@@ -39,7 +39,7 @@ export function Tree() {
         {treeMode === "nodes" ? <>
           <Row depth={0} chevron={null} cls={focus === null ? "focused" : ""} onClick={() => { setFocus(null); setSelected(null); }}><span className="ttl">app</span><span className="ln">{Object.keys(nodes).length}</span></Row>
           {renderNodes(tree, 1)}
-          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. press <span className="kbd">7</span> to propose from a brain-dump, or <span className="link" onClick={deriveGraph}>generate the graph</span> from existing code (<span className="kbd">g</span>).</div>}
+          {!tree.length && <div className="hint" style={{ padding: "0 6px" }}>no nodes yet. <span className="link" onClick={deriveGraph}>generate them from the code</span> (<span className="kbd">g</span>).</div>}
         </> : <>
           {root.folders.map((f) => renderFolder(f, 0))}{root.files.map((f) => renderFile(f, 0))}
           {!files.length && <div className="hint" style={{ padding: "0 6px" }}>no indexed files yet.</div>}
@@ -84,7 +84,7 @@ export function Tree() {
     const owners = [...new Set(f.symbols.map((s) => s.owner).filter(Boolean))] as string[];
     return (
       <div key={id}>
-        <Row depth={depth} chevron={f.symbols.length ? open : null} onChevron={() => toggleExpanded(id)} cls="file" onClick={() => toggleExpanded(id)} title={`${f.path} · ${owned}/${f.symbols.length} symbols owned`}>
+        <Row depth={depth} chevron={f.symbols.length ? open : null} onChevron={() => toggleExpanded(id)} cls={`file ${picked?.file === f.path && !picked?.key ? "selected" : ""}`} onClick={() => { setPicked({ file: f.path }); toggleExpanded(id); }} title={`${f.path} · ${owned}/${f.symbols.length} symbols owned`}>
           <span className="ttl">{name}</span>
           <span className="ln" style={{ display: "inline-flex", gap: 2 }}>{owners.slice(0, 5).map((o) => <span key={o} className="dot" style={{ background: areaColor(nodes, o), margin: 0, width: 6, height: 6 }} />)}{owners.length > 5 && <span>+{owners.length - 5}</span>}</span>
         </Row>
@@ -92,8 +92,8 @@ export function Tree() {
           if (q && !symMatches(s, q)) return null;
           const owner = s.owner ? nodes[s.owner] : null;
           return (
-            <Row key={s.key} depth={depth + 1} chevron={null} cls={`sym ${owner ? "owned" : ""} ${owner && selected === owner.id ? "selected" : ""}`} title={owner ? `${s.key}\nowned by ${owner.title}` : `${s.key}\n(orphan — no owning node)`}
-              onClick={() => { if (owner) { setSelected(owner.id); setFocus(owner.kind === "intent" ? owner.id : owner.parent); } }}>
+            <Row key={s.key} depth={depth + 1} chevron={null} cls={`sym ${owner ? "owned" : ""} ${picked?.key === s.key ? "selected" : ""}`} title={owner ? `${s.key}\nowned by ${owner.title}` : `${s.key}\n(orphan — no owning node)`}
+              onClick={() => setPicked({ file: f.path, key: s.key })}>
               <span className="dot" style={{ background: owner ? areaColor(nodes, owner.id) : "transparent", border: owner ? "none" : "1px dashed #525252" }} />
               <span className="ttl">{s.container ? <span className="dim">{s.container}.</span> : ""}{s.name}</span><span className="ln">{s.kind} L{s.start_line}</span>
             </Row>

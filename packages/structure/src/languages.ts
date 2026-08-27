@@ -1,5 +1,5 @@
 import { dirname, join, resolve, extname } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import type { SyntaxNode } from "web-tree-sitter";
 
 export interface ImportBinding {
@@ -33,9 +33,42 @@ export interface LanguageDef {
 const wasmDir = () => dirname(require.resolve("tree-sitter-wasms/package.json")) + "/out";
 const queryDir = () => resolve(import.meta.dir, "../queries");
 
-function tsResolve(fromFile: string, spec: string, _root: string): string | null {
-  if (!spec.startsWith(".") && !spec.startsWith("/")) return null;
-  const base = resolve(dirname(fromFile), spec);
+/** name → { dir, main } for every package named by the root package.json `workspaces` globs. */
+const workspaceCache = new Map<string, Map<string, { dir: string; main: string }>>();
+function workspacePackages(root: string): Map<string, { dir: string; main: string }> {
+  const hit = workspaceCache.get(root);
+  if (hit) return hit;
+  const out = new Map<string, { dir: string; main: string }>();
+  try {
+    const rootPkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+    const globs: string[] = Array.isArray(rootPkg.workspaces) ? rootPkg.workspaces : rootPkg.workspaces?.packages ?? [];
+    for (const g of globs) {
+      const star = g.endsWith("/*");
+      const baseDir = join(root, star ? g.slice(0, -2) : g);
+      let dirs: string[] = [baseDir];
+      if (star) { try { dirs = readdirSync(baseDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => join(baseDir, d.name)); } catch { dirs = []; } }
+      for (const d of dirs) {
+        try { const p = JSON.parse(readFileSync(join(d, "package.json"), "utf8")); if (p.name) out.set(p.name, { dir: d, main: p.main ?? "index.ts" }); } catch {}
+      }
+    }
+  } catch {}
+  workspaceCache.set(root, out);
+  return out;
+}
+
+function tsResolve(fromFile: string, spec: string, root: string): string | null {
+  let base: string;
+  if (spec.startsWith(".") || spec.startsWith("/")) base = resolve(dirname(fromFile), spec);
+  else {
+    // a bare specifier only resolves when it names a workspace package ("@lenz/structure", "@lenz/structure/db")
+    let found: { dir: string; main: string } | null = null, sub = "";
+    for (const [name, info] of workspacePackages(root)) {
+      if (spec === name) { found = info; break; }
+      if (spec.startsWith(name + "/")) { found = info; sub = spec.slice(name.length + 1); break; }
+    }
+    if (!found) return null;
+    base = sub ? resolve(found.dir, sub) : resolve(found.dir, found.main);
+  }
   const cands: string[] = [];
   const stripped = base.replace(/\.(js|jsx|mjs|cjs)$/, "");
   for (const b of [base, stripped]) {

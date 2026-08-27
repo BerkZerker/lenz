@@ -1,11 +1,14 @@
 /** Minimal Gemini generateContent client (REST, no SDK). Used for the non-agentic LLM calls. */
 export interface GeminiResult { text: string; structured?: any; usage?: { prompt: number; output: number; thoughts?: number }; error?: string }
 
-export async function geminiGenerate(opts: { apiKey: string; model: string; prompt: string; schema?: any; system?: string; timeoutMs?: number }): Promise<GeminiResult> {
+export async function geminiGenerate(opts: { apiKey: string; model: string; prompt: string; schema?: any; system?: string; timeoutMs?: number; signal?: AbortSignal }): Promise<GeminiResult> {
   const body: any = { contents: [{ role: "user", parts: [{ text: opts.prompt }] }], generationConfig: {} };
   if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
   if (opts.schema) { body.generationConfig.responseMimeType = "application/json"; body.generationConfig.responseJsonSchema = opts.schema; }
-  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 180_000);
+  const ctrl = new AbortController();
+  const onAbort = () => ctrl.abort();
+  opts.signal?.addEventListener("abort", onAbort);
+  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 180_000);
   try {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${opts.model}:generateContent`, {
       method: "POST", headers: { "x-goog-api-key": opts.apiKey, "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal,
@@ -19,8 +22,8 @@ export async function geminiGenerate(opts: { apiKey: string; model: string; prom
     if (opts.schema) { try { out.structured = JSON.parse(text); } catch { out.error = "gemini returned non-JSON despite schema"; } }
     if (!text && cand?.finishReason && cand.finishReason !== "STOP") out.error = `gemini finish: ${cand.finishReason}`;
     return out;
-  } catch (e: any) { return { text: "", error: `gemini: ${e?.message ?? e}` }; }
-  finally { clearTimeout(t); }
+  } catch (e: any) { return { text: "", error: ctrl.signal.aborted ? "gemini: aborted" : `gemini: ${e?.message ?? e}` }; }
+  finally { clearTimeout(t); opts.signal?.removeEventListener("abort", onAbort); }
 }
 
 /** Load KEY=VALUE files into process.env without overriding existing values. */

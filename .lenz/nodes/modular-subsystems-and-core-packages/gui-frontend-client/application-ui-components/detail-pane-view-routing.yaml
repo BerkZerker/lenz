@@ -1,0 +1,40 @@
+kind: behavior
+title: Detail Pane View Routing
+spec: Renders the detail pane container by checking the store's picked state; when a file or symbol
+  is selected in picked, displays CodeView with the target file and symbol key, otherwise falls back
+  to displaying NodeView.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_690b00
+    name: render code view on picked file
+    given: "the store's picked state is { file: 'src/main.ts', key: 'main' }"
+    when: Detail component is rendered
+    then: CodeView is rendered with file 'src/main.ts' and symKey 'main'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_a952f2
+    name: render node view when nothing is picked
+    given: the store's picked state is null
+    when: Detail component is rendered
+    then: NodeView is rendered inside the detail pane
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: Detail
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: a9d0d8e95e12
+    body: 745f8a1e4694
+id: n_a7ad5a
+deps: []
+summary: This behavior controls the conditional display of content within the detail pane based on
+  the active selection state. It inspects the store's picked item to render a dedicated code viewer
+  when a specific file or symbol is selected, falling back to a general node viewer otherwise. It
+  functions as the view-switching mechanism for the detail container with no direct node
+  dependencies recorded.
+summary_at: 2026-08-27T03:49:17.840Z

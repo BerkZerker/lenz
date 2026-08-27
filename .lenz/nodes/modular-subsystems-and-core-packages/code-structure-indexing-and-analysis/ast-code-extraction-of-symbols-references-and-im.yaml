@@ -1,0 +1,85 @@
+kind: behavior
+title: AST code extraction of symbols, references, and imports
+spec: Parses source files using Tree-sitter queries for the file's language. Identifies symbol
+  declarations, inspects container hierarchies (`containerOf`), strips implementation bodies for
+  signatures (`signatureOf`), filters function-local nodes (`isFunctionLocal`), tracks builtin
+  constructor/receiver bindings, and extracts symbols, raw references (`RawRef`), and import
+  bindings into an `Extraction` bundle. Returns `null` if the language is unsupported.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_cf8a71
+    name: Extracting symbols and references from source
+    given: A relative path and source code text in a recognized language.
+    when: extractFile is called with the path and source text.
+    then: The AST is queried and parsed, returning an Extraction object with symbols, raw references,
+      import bindings, language ID, and content hash.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_3225f5
+    name: Handling unsupported file extensions
+    given: A file path with an unconfigured or unknown file extension.
+    when: extractFile is called.
+    then: It returns null without attempting to parse.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: RawRef
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: ab7a9da81398
+    body: ffd9a1b49bc0
+  - kind: interface
+    name: Extraction
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: ab7a9da81398
+    body: c5a455d3cb4f
+  - kind: const
+    name: FN_TYPES
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 53a0acfad593
+    body: 18502df4d0c5
+  - kind: function
+    name: isFunctionLocal
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 0c269cf63017
+    body: a255cd876610
+  - kind: function
+    name: containerOf
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 3c8ed2be4db9
+    body: 8797d843c284
+  - kind: function
+    name: signatureOf
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 11548d5cd91f
+    body: 7637ff261ffc
+  - kind: function
+    name: extractFile
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: fa027ca82cf7
+    body: 852de79338d6
+id: n_329a75
+deps:
+  - n_1442b1
+  - n_1c6d8c
+  - n_5608cc
+  - n_790227
+  - n_d27685
+summary: This node parses source files using Tree-sitter queries to extract symbols, signatures,
+  container hierarchies, raw references, and import bindings into structured extraction bundles. It
+  relies on parser loading and language configurations from [[n_790227]], [[n_d27685]], and
+  [[n_1c6d8c]], while using [[n_1442b1]] for text hashing and packaging output into the schema
+  defined by [[n_5608cc]]. Upstream, these extraction bundles are consumed to drive codebase
+  indexing and synchronization in [[n_d12a81]] and syntactic reference resolution in [[n_ef236d]].
+summary_at: 2026-08-27T03:49:04.933Z

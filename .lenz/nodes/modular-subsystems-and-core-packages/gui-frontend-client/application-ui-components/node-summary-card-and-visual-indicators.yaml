@@ -1,0 +1,49 @@
+kind: behavior
+title: Node summary card and visual indicators
+spec: Renders visual indicators and card components for Lenz nodes. `StatusTag` displays a status
+  badge with CSS class matching the status. `Dot` displays a styled colored dot reflecting the
+  node's area color, kind (intent uses transparent background), proposed status (dashed border), and
+  status ring box shadow. `NodeCard` renders an interactive card for a node displaying its title,
+  `Dot`, `StatusTag`, spec text (or fallback '(no spec)'), kind, counts for examples/anchors when
+  kind is 'behavior', and badges for staged, needs-reverify, derived, plus any extra child content.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_7e12b9
+    name: render behavior node card
+    given: A behavior LenzNode with title 'User Login', spec 'Handles auth', status 'proposed', 2
+      examples, and 1 anchor
+    when: NodeCard is rendered with the node and selected=false
+    then: It renders a card element with 'card proposed' classes, a dashed colored Dot, a
+      'status-proposed' StatusTag, the spec 'Handles auth', and metadata displaying 'behavior' and
+      '2 ex · 1 sym'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: StatusTag
+    container: ""
+    file: packages/gui/src/components/common.tsx
+    sig: dd38fff6ec36
+    body: 398043811bc6
+  - kind: const
+    name: Dot
+    container: ""
+    file: packages/gui/src/components/common.tsx
+    sig: 6a4256b91c93
+    body: 48aa13041364
+  - kind: function
+    name: NodeCard
+    container: ""
+    file: packages/gui/src/components/common.tsx
+    sig: b8934a3fd1a6
+    body: 91a2ad94bc04
+id: n_7d8829
+deps: []
+summary: This component provides reusable visual presentation elements, such as interactive node
+  cards, status tags, and styled indicator dots, to represent node metadata, kinds, and lifecycle
+  states throughout the interface. It serves as a visual building block relied on by [[n_729ebd]]
+  for rendering tree indicators and by [[n_5d13e8]] for displaying node details and status badges.
+summary_at: 2026-08-27T03:49:16.146Z

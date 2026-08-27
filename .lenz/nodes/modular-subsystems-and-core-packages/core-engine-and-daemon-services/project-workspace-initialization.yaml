@@ -1,0 +1,42 @@
+kind: behavior
+title: Project workspace initialization
+spec: Scaffolds a Lenz workspace under .lenz for a specified root directory using initProject.
+  Creates subdirectories for nodes, agents, and runs. If not already present, writes default
+  config.yaml (from DEFAULT_CONFIG), agents/claude.yaml (from DEFAULT_AGENT_YAML), .lenzignore at
+  the project root, and .gitignore within the .lenz directory.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_d8c141
+    name: Initialize a new project directory
+    given: An empty project root directory
+    when: initProject is invoked for the root directory
+    then: It creates .lenz/nodes, .lenz/agents, and .lenz/runs, writes default config.yaml,
+      agents/claude.yaml, .lenzignore, and .lenz/.gitignore, and returns the .lenz directory path
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: DEFAULT_AGENT_YAML
+    container: ""
+    file: packages/core/src/config.ts
+    sig: 53a0acfad593
+    body: 2048821b035c
+  - kind: function
+    name: initProject
+    container: ""
+    file: packages/core/src/config.ts
+    sig: cd06a1e9d7eb
+    body: adaf9ab17a90
+id: n_19d7fc
+deps:
+  - n_81d7fd
+summary: This node is responsible for scaffolding the local workspace structure, generating the
+  required directories and default configuration, agent, and ignore files under `.lenz`. It
+  coordinates with [[n_81d7fd]] for directory resolution and baseline configuration schemas, while
+  integrating exclusion templates from [[n_ee0acb]]. Workspace setup is triggered through command
+  dispatch in [[n_836db2]] or system initialization in [[n_77901c]], establishing the initial
+  environment required by [[n_80e676]].
+summary_at: 2026-08-27T03:48:52.437Z

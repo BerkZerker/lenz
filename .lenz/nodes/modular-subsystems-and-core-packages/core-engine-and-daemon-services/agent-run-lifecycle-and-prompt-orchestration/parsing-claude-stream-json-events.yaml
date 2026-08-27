@@ -1,0 +1,52 @@
+kind: behavior
+title: Parsing Claude stream JSON events
+spec: Parses single newline-delimited stream JSON output lines into ParsedEvent objects. Discards
+  non-JSON or invalid lines by returning null. Extracts session_id, concatenates text fragments from
+  assistant messages, captures tool_use names and inputs, and structures final result messages with
+  text, structured_output, cost, and error flags.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_676b7a
+    name: Parsing assistant text and tool call
+    given: A JSON line
+      '{"type":"assistant","session_id":"s1","message":{"content":[{"type":"text","text":"Hello
+      "},{"type":"text","text":"world"},{"type":"tool_use","name":"Read","input":{"path":"foo.ts"}}]}}'
+    when: parseStreamJsonLine is called with the line
+    then: "It returns a ParsedEvent with session_id 's1', text 'Hello world', and tool { name: 'Read',
+      input: { path: 'foo.ts' } }"
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_2b6f7e
+    name: Parsing execution result event
+    given: A JSON line
+      '{"type":"result","result":"Done","total_cost_usd":0.05,"is_error":false,"subtype":"success"}'
+    when: parseStreamJsonLine is called with the line
+    then: "It returns a ParsedEvent with result { text: 'Done', structured: undefined, cost: 0.05,
+      is_error: false, subtype: 'success' }"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: ParsedEvent
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ab7a9da81398
+    body: 925acd5dbdfe
+  - kind: function
+    name: parseStreamJsonLine
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 523fb4a87820
+    body: 355a7c6502f3
+id: n_33a1ff
+deps: []
+summary: This behavior processes newline-delimited stream JSON output from Claude, transforming
+  valid raw lines into structured event objects that capture text deltas, tool calls, session
+  identifiers, and final run metadata while discarding invalid entries. It is called directly by
+  [[n_ba9088]] to ingest and interpret incoming streaming chunks during active execution and
+  summarization cycles.
+summary_at: 2026-08-27T03:49:13.181Z

@@ -1,0 +1,77 @@
+kind: behavior
+title: Codebase Structure, Orphan Detection, and Flow Tracing
+spec: Queries file trees, symbol ownership, unowned orphan symbols, and entry points from the
+  structure index. Generates static call-graph flows across nodes and entry points up to
+  configurable depth and node limits.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_19a997
+    name: orphans returns unowned symbols by file
+    given: A project with indexed symbols not attached to any behavior node.
+    when: orphans() is called.
+    then: It returns the total symbol count, orphan count, and groups orphan symbols by file.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: FlowStep
+    container: ""
+    file: packages/core/src/core.ts
+    sig: ab7a9da81398
+    body: 2c94fbae165b
+  - kind: method
+    name: orphans
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: 8e2d2c7a2610
+  - kind: method
+    name: files
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: d9b518a25dd5
+  - kind: method
+    name: fileSource
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 73c225fc899d
+    body: ecf6af29944b
+  - kind: method
+    name: flowEntryFor
+    container: Core
+    file: packages/core/src/core.ts
+    sig: c5b5909d02ec
+    body: e5ad4e2c8d87
+  - kind: method
+    name: flow
+    container: Core
+    file: packages/core/src/core.ts
+    sig: dabe9e24db86
+    body: 27a547d479f0
+  - kind: method
+    name: nodeFlow
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 6a02c734dea4
+    body: ac7c7cd61a12
+  - kind: method
+    name: entryNodes
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: cc956f3eafa8
+id: n_1cef8b
+deps:
+  - n_c26d86
+summary: This node provides structure inspection, orphan symbol detection, and call-graph flow
+  tracing across the codebase's architectural hierarchy. To locate unowned symbols, inspect file
+  trees, and generate execution traces, it queries structural data and index synchronization through
+  [[n_58299f]] and [[n_d12a81]], encodes symbol rows via [[n_5608cc]], navigates node hierarchies
+  using [[n_c26d86]], and produces call trees with [[n_7671f2]]. Its flows and ownership queries are
+  consumed by architecture derivation workflows in [[n_b3b72e]], lifecycle status routines in
+  [[n_77901c]], and client-facing endpoints in [[n_c04098]].
+summary_at: 2026-08-27T03:48:58.532Z

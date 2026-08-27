@@ -31,8 +31,11 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/summarize", async (req) => { const b = await body(req); void core.summarizeAll(!!b.force, (m) => core.log(m)).catch((e) => core.log(String(e), "warn")); return json({ started: true }); });
   on("GET", "/api/files", () => json(core.files()));
   on("GET", "/api/orphans", () => json(core.orphans()));
+  on("GET", "/api/source", (_r, _p, url) => { const f = url.searchParams.get("file"); if (!f) return err("file required"); const r = core.fileSource(f); return r ? json(r) : err("not found", 404); });
   on("GET", "/api/nodes/:id/flow-entry", (_r, p) => json({ key: core.flowEntryFor(p.id) }));
   on("GET", "/api/flow", (_r, _p, url) => json(core.flow(url.searchParams.get("from") ?? undefined)));
+  on("GET", "/api/nodes/:id/flow", (_r, p, url) => { const d = url.searchParams.get("dir") === "in" ? "in" : "out"; const f = core.nodeFlow(p.id, d); return f ? json(f) : err("not found", 404); });
+  on("GET", "/api/flow/entries", () => json(core.entryNodes()));
   on("POST", "/api/flow/pin", async (req) => { const b = await body(req); core.idx.db.pinEntryPoint(b.key, b.pinned !== false); return json(core.flow()); });
   on("GET", "/api/symbols/:key/source", (_r, p) => json({ key: p.key, source: core.idx.symbolSource(decodeURIComponent(p.key)) }));
   on("GET", "/api/runs", () => json(core.runs.list()));
@@ -51,7 +54,7 @@ export function startServer(core: Core, staticDir: string) {
   on("POST", "/api/propose", async (req) => { const b = await body(req); try { return json(await core.propose(b.text ?? "", b.parent ?? null)); } catch (e) { return err(e); } });
   on("POST", "/api/derive", async (req) => { const b = await body(req); try { const { started, scope } = core.deriveAll(b.reset ?? "none"); return json({ started, scope }); } catch (e) { return err(e, 409); } });
   on("POST", "/api/nodes/:id/derive", async (req, p) => { const b = await body(req); try { const r = await core.deriveNode(p.id, b.reset ?? "none"); return json("started" in r ? { started: r.started, scope: r.scope } : r); } catch (e) { return err(e); } });
-  on("POST", "/api/index", async () => { const ev = await core.idx.indexAll(); core.idx.applyScip(); return json(ev); });
+  on("POST", "/api/index", async (req) => { const ev = await core.idx.indexAll((await body(req).catch(() => ({})))?.rebuild === true); core.idx.applyScip(); return json(ev); });
   on("GET", "/api/events/history", () => json(core.bus.history.slice(-300)));
 
   const sockets = new Set<any>();
@@ -74,7 +77,8 @@ export function startServer(core: Core, staticDir: string) {
       let p = join(staticDir, url.pathname === "/" ? "index.html" : url.pathname);
       if (!existsSync(p)) p = join(staticDir, "index.html");
       if (!existsSync(p)) return new Response("GUI not built. Run `bun run build:gui` in the lenz repo.", { status: 503 });
-      return new Response(Bun.file(p));
+      // index.html names hashed asset files; a cached copy pins the browser to a stale bundle after a rebuild
+      return new Response(Bun.file(p), { headers: { "cache-control": p.endsWith(".html") ? "no-store" : "max-age=31536000, immutable" } });
     },
     websocket: {
       open(ws) { sockets.add(ws); ws.send(JSON.stringify({ type: "hello", at: new Date().toISOString(), data: core.status() })); },

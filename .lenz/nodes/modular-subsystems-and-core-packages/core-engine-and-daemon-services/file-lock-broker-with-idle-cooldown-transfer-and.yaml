@@ -1,0 +1,132 @@
+kind: behavior
+title: File lock broker with idle cooldown transfer and notices
+spec: "LockBroker manages file-level locks across different execution runs. When a run acquires a
+  lock, it is granted if the file is unheld or already held by the same run. If held by another run,
+  LockBroker checks the holder's idle time against the cooldown duration: if within the cooldown
+  period, acquisition is denied; if idle exceeds cooldown, the lock is transferred to the new run
+  and an informative notice (optionally listing changed symbols) is queued for the former holder.
+  Runs retrieve queued notices upon acquiring or taking notices. Active holders can refresh lock
+  timestamps via `touch`, release specific files, or release all held locks at once. Lock state
+  transitions (grant, deny, transfer, release, expire) are logged up to a 1,000-event buffer and
+  broadcasted via the event bus as `lock.changed` events."
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_fbeeb6
+    name: Acquire unheld lock
+    given: A LockBroker with no existing locks on 'src/main.ts'
+    when: Run 'run-1' calls `acquire('src/main.ts', 'run-1')`
+    then: "Returns `{ granted: true, notices: [] }`, sets 'run-1' as the holder, and records a 'grant'
+      event."
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_ec48ed
+    name: Deny lock acquisition within cooldown
+    given: A LockBroker where 'src/main.ts' is held by 'run-1' with a recent write and a 30-second
+      cooldown
+    when: Run 'run-2' attempts to acquire 'src/main.ts' 5 seconds after 'run-1' touched it
+    then: "Returns `{ granted: false, reason: 'src/main.ts is held by run run-1, active 5s ago; retry
+      later or work elsewhere', notices: [] }` and logs a 'deny' event."
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_3ddc8d
+    name: Transfer idle lock and notify previous holder
+    given: A LockBroker where 'src/main.ts' is held by 'run-1' but idle for longer than the cooldown
+      duration
+    when: Run 'run-2' acquires 'src/main.ts'
+    then: "Returns `{ granted: true, transferred_from: 'run-1', notices: [] }`, updates the lock holder
+      to 'run-2', logs a 'transfer' event, and queues a takeover notice for 'run-1'."
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: AcquireResult
+    container: ""
+    file: packages/core/src/locks.ts
+    sig: ab7a9da81398
+    body: 4a02104bb307
+  - kind: class
+    name: LockBroker
+    container: ""
+    file: packages/core/src/locks.ts
+    sig: 53f82707abe6
+    body: 113bb8c8fed5
+  - kind: method
+    name: constructor
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: 019b31479b46
+    body: bffe0cb37818
+  - kind: method
+    name: record
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: 614fd0b3edd2
+    body: ce65169f2919
+  - kind: method
+    name: list
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: e40aaa6490a3
+    body: 2a4f734ac90c
+  - kind: method
+    name: heldBy
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: dc60548c5cfe
+    body: 9584502d407e
+  - kind: method
+    name: holder
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: ac3330459d64
+    body: 1e2299b49ad9
+  - kind: method
+    name: acquire
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: d72ad1b66252
+    body: 1afe197a6b1c
+  - kind: method
+    name: touch
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: bc88bffbbdcd
+    body: 24146068b098
+  - kind: method
+    name: release
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: bc88bffbbdcd
+    body: 8da8a46c2569
+  - kind: method
+    name: releaseAll
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: 3b82636b506f
+    body: 13aa7915554a
+  - kind: method
+    name: pushNotice
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: 95d8cb00dc6a
+    body: 14a18e1030bb
+  - kind: method
+    name: takeNotices
+    container: LockBroker
+    file: packages/core/src/locks.ts
+    sig: dc60548c5cfe
+    body: 6ce0dc43a2fe
+id: n_6a10f1
+deps:
+  - n_c4686d
+summary: This node manages file-level concurrency across runs by handling lock acquisitions, idle
+  cooldown transfers, and notice delivery for preempted holders. It is utilized by [[n_77901c]],
+  [[n_80e676]], and [[n_c04098]] to manage resource ownership and cleanup throughout agent
+  lifecycles and external requests. In doing so, it structures its records with domain schemas from
+  [[n_19fac0]] and broadcasts lock transition events via [[n_c4686d]].
+summary_at: 2026-08-27T03:48:53.364Z

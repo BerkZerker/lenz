@@ -1,3 +1,0 @@
-- Runtime: bun. Tests: `bun test`, files in `tests/*.test.ts`, use `bun:test`.
-- One example per `test()`; name each test with the example id so `bun test -t <id>` selects it.
-- Source in `src/`. No external dependencies.

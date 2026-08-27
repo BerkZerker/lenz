@@ -1,0 +1,66 @@
+kind: behavior
+title: OpenAI-compatible chat completion generation
+spec: Makes REST requests to an OpenAI-compatible /chat/completions endpoint (defaulting to
+  OPENROUTER_BASE) without SDK dependencies. Formats system and user prompt messages, attaches
+  optional JSON schema response formats, and manages timeouts and abort signals. Returns the
+  resulting completion text, parsed structured output (when schema is provided and JSON parsing
+  succeeds), token usage details (prompt, output, thoughts), or error messages if the request fails,
+  aborts, or returns no content.
+parent: n_ed9767
+status: proposed
+examples:
+  - id: ex_9435b8
+    name: Successful text completion
+    given: A base URL, API key, model name, and prompt string
+    when: openaiGenerate is called with these options
+    then: It sends a POST request to /chat/completions and returns an OpenAIResult containing the
+      generated text and token usage counts
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_74be31
+    name: Structured JSON schema output
+    given: A prompt, system instructions, and a target JSON schema object
+    when: openaiGenerate is invoked with the schema option
+    then: It requests a response_format of type json_schema and attempts to parse the returned text into
+      the structured property on the OpenAIResult
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_fac734
+    name: Aborted or timed out request
+    given: An AbortSignal that gets triggered or an operation exceeding timeoutMs
+    when: openaiGenerate handles the abort event
+    then: "It aborts the fetch request and returns an OpenAIResult with an empty text string and error
+      set to 'llm: aborted'"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: OpenAIResult
+    container: ""
+    file: packages/core/src/llm/openai.ts
+    sig: ab7a9da81398
+    body: f0b01e3f57b3
+  - kind: const
+    name: OPENROUTER_BASE
+    container: ""
+    file: packages/core/src/llm/openai.ts
+    sig: 53a0acfad593
+    body: b958b8fad6c7
+  - kind: function
+    name: openaiGenerate
+    container: ""
+    file: packages/core/src/llm/openai.ts
+    sig: a0a3b59c699d
+    body: 4a1dd8c073b1
+id: n_d27820
+deps: []
+summary: This node manages direct REST communication with OpenAI-compatible `/chat/completions`
+  endpoints to generate text or structured JSON outputs without external SDK dependencies. It
+  formats prompt messages, applies optional response schemas, handles timeouts and abort signals,
+  and returns completion results along with token usage metrics and error states. This completion
+  behavior is invoked by [[n_ba9088]] whenever language model queries need to be executed.
+summary_at: 2026-08-27T03:49:11.039Z

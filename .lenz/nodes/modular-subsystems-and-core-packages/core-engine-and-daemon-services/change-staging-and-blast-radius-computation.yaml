@@ -1,0 +1,47 @@
+kind: behavior
+title: Change Staging and Blast Radius Computation
+spec: Identifies all staged nodes and computes the blast radius consisting of direct dependents and
+  neighboring symbol owners in the structure index. Supports immediate or manual confirmation, which
+  marks blast radius nodes as needing reverification and dispatches builds in topological order.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_ea4036
+    name: staging calculates impacted dependents
+    given: Node B depends on Node A, and Node A is staged.
+    when: staging() is called.
+    then: Node A is listed in staged and Node B is included in the blast radius list.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: staging
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: 7ae40e99b069
+  - kind: method
+    name: confirmStaging
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 2b99dbd07328
+    body: d7908de15a94
+  - kind: method
+    name: setImmediate
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 05c3bc971b52
+    body: 57d61824d288
+id: n_20e5ea
+deps:
+  - n_484bc9
+  - n_c26d86
+  - n_c4686d
+summary: This behavior tracks uncommitted node edits and computes their downstream blast radius
+  across structural neighbors and direct dependencies. Invoked via [[n_348046]], [[n_77901c]], and
+  [[n_c04098]], it queries hierarchy and structural index data using [[n_c26d86]], [[n_fb7815]], and
+  [[n_58299f]]. Upon staging confirmation, it updates node states in [[n_c26d86]], dispatches
+  topological rebuilds through [[n_484bc9]], and publishes event updates to [[n_c4686d]].
+summary_at: 2026-08-27T03:48:57.917Z

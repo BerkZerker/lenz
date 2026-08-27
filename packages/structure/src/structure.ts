@@ -8,6 +8,7 @@ import { extractFile, preloadLanguages, contentHash } from "./extract.ts";
 import { languageForFile } from "./languages.ts";
 import { resolveFileRefs } from "./resolve.ts";
 import { parseScip } from "./scip.ts";
+import { IGNORE_FILES, isIgnored, loadIgnoreRules, type IgnoreRule } from "./ignore.ts";
 import type { SymbolRow, SymbolsChanged } from "./types.ts";
 
 export interface StructureConfig {
@@ -17,14 +18,25 @@ export interface StructureConfig {
   ignore_globs: string[];
   entry_globs: string[];
   orphan_exclude: string[];
+  /** gitignore-syntax files read from the project root; later files override earlier ones */
+  ignore_files?: string[];
 }
 
 export const DEFAULT_STRUCTURE_CONFIG: Omit<StructureConfig, "root" | "dbPath"> = {
   source_globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py", "**/*.go"],
-  ignore_globs: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.git/**", "**/.lenz/**", "**/*.d.ts"],
+  ignore_globs: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/out/**", "**/.next/**", "**/coverage/**", "**/static/assets/**", "**/.git/**", "**/.lenz/**", "**/*.d.ts", "**/*.min.js", "**/*.bundle.js"],
   entry_globs: ["**/src/{index,main,server,cli,app}.{ts,tsx,js}", "{index,main,server,cli,app}.{ts,tsx,js}", "**/main.py", "**/__main__.py", "**/main.go", "**/cmd/*/main.go"],
   orphan_exclude: ["**/*.test.*", "**/*.spec.*", "**/tests/**", "**/test/**", "**/__tests__/**", "**/*.config.*", "**/*.generated.*"],
+  ignore_files: IGNORE_FILES,
 };
+
+/** Bundled/minified output: big, and almost no line breaks relative to its size. Never worth indexing as source. */
+export function isGenerated(text: string): boolean {
+  if (text.length < 50_000) return false;
+  let lines = 1;
+  for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) lines++;
+  return text.length / lines > 400;
+}
 
 /**
  * The L2/L3 index: a sqlite mirror of the code that is kept in sync with disk.
@@ -37,6 +49,7 @@ export class StructureIndex extends EventEmitter {
   private isIgnored: (p: string) => boolean;
   private isEntry: (p: string) => boolean;
   isOrphanExcluded: (p: string) => boolean;
+  private ignoreRules: IgnoreRule[] = [];
   private watcher: FSWatcher | null = null;
   private pending = new Map<string, "change" | "unlink">();
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -50,11 +63,18 @@ export class StructureIndex extends EventEmitter {
     this.isIgnored = picomatch(cfg.ignore_globs, { dot: true });
     this.isEntry = picomatch(cfg.entry_globs);
     this.isOrphanExcluded = picomatch(cfg.orphan_exclude);
+    this.reloadIgnores();
+  }
+
+  /** Re-read .gitignore / .lenzignore. Called on construction and before every full index. */
+  reloadIgnores() {
+    this.ignoreRules = loadIgnoreRules(this.cfg.root, this.cfg.ignore_files ?? IGNORE_FILES);
+    return this.ignoreRules.length;
   }
 
   rel(abs: string) { return relative(this.cfg.root, abs).split("\\").join("/"); }
   abs(rel: string) { return resolve(this.cfg.root, rel); }
-  accepts(rel: string) { return !!languageForFile(rel) && this.isSource(rel) && !this.isIgnored(rel); }
+  accepts(rel: string) { return !!languageForFile(rel) && this.isSource(rel) && !this.isIgnored(rel) && !isIgnored(this.ignoreRules, rel); }
 
   async listSourceFiles(): Promise<string[]> {
     const out: string[] = [];
@@ -67,11 +87,17 @@ export class StructureIndex extends EventEmitter {
   }
 
   /** Full (incremental, hash-keyed) index of the project. */
-  async indexAll(): Promise<SymbolsChanged> {
+  /**
+   * `rebuild` forgets every recorded file hash first. sync() skips files whose content is unchanged, so after a
+   * change to extraction or reference resolution the old edges would otherwise survive untouched in the db.
+   */
+  async indexAll(rebuild = false): Promise<SymbolsChanged> {
+    this.reloadIgnores();
     await preloadLanguages();
     const files = await this.listSourceFiles();
     const known = new Set(this.db.allFiles().map((f) => f.path));
     const gone = [...known].filter((f) => !files.includes(f));
+    if (rebuild) this.db.transaction(() => { for (const f of known) this.db.deleteFile(f); });
     return this.sync(files, gone);
   }
 
@@ -96,6 +122,8 @@ export class StructureIndex extends EventEmitter {
       try { text = readFileSync(abs, "utf8"); } catch { continue; }
       const h = contentHash(text);
       if (this.db.fileHash(rel) === h) continue;
+      // a build output that slipped past the ignore globs would otherwise flood the graph with minified symbols
+      if (isGenerated(text)) { if (this.db.fileHash(rel) !== null) removedRel.push(rel); continue; }
       const ex = await extractFile(abs, rel, text);
       if (!ex) continue;
       extracted.push({ rel, ex });
@@ -207,7 +235,7 @@ export class StructureIndex extends EventEmitter {
       ignored: (p: string, stats?: any) => {
         const rel = this.rel(p);
         if (!rel || rel === ".") return false;
-        if (this.isIgnored(rel) || rel.startsWith(".git") || rel === ".codegraph" || rel.startsWith(".codegraph/")) return true;
+        if (this.isIgnored(rel) || isIgnored(this.ignoreRules, rel) || rel.startsWith(".git") || rel === ".codegraph" || rel.startsWith(".codegraph/")) return true;
         if (stats && !stats.isDirectory?.() && !stats.isFile?.()) return true; // sockets, fifos: fs.watch refuses them (EOPNOTSUPP)
         if (stats?.isFile?.() && !this.accepts(rel)) return true;
         return false;

@@ -1,0 +1,47 @@
+kind: behavior
+title: Build prompt generation
+spec: Constructs the implementation prompt for an agent build run. Reads repository conventions from
+  CONVENTIONS.md if present, includes the target node's title, spec, parent intent, rejection notes,
+  required examples with optional run commands, related sibling/dependency nodes with one-line
+  summaries, currently anchored source code, and instructions regarding file locks.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_34c0d8
+    name: Generates build prompt with conventions and spec
+    given: A target LenzNode, a NodeStore, a StructureIndex, and a PromptContext whose lenzDir contains
+      a CONVENTIONS.md file
+    when: buildPrompt is called for the node
+    then: Returns a markdown string containing the conventions, task description, spec, examples,
+      related nodes, anchored code, and file lock guidance
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: PromptContext
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: ab7a9da81398
+    body: 749c08411613
+  - kind: function
+    name: conventions
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: e29ae9629e47
+    body: 47d1e08d23e2
+  - kind: function
+    name: buildPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: e3953bb8c722
+    body: "54450e377338"
+id: n_bcdd4d
+deps:
+  - n_2f337f
+summary: This node creates comprehensive implementation prompts to guide agent build runs. It
+  aggregates repository conventions, target specifications, anchored source code, and contextual
+  dependency data into a complete execution instruction set. During this assembly, it hands off to
+  [[n_2f337f]] to incorporate concise orientation summaries for related nodes.
+summary_at: 2026-08-27T03:49:13.310Z

@@ -1,0 +1,88 @@
+kind: behavior
+title: Core Orchestration and System Lifecycle
+spec: Initializes and manages Lenz Core subsystems including the StructureIndex, NodeStore,
+  LockBroker, and RunManager. Handles environment variable loading, LLM provider fallback logic,
+  indexing startup with SCIP precise references, watch mode toggling, event logging, and status
+  reporting covering active runs, locks, drift count, staging status, orphans, and derivation
+  progress.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_745ed0
+    name: start indexes project and reports status
+    given: A Lenz Core instance configured for a project root.
+    when: start() is invoked and status() is queried.
+    then: Structure index indexes all files, anchors are refreshed, and status reports counts of nodes,
+      orphans, drifted nodes, and active runs.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: CoreOpts
+    container: ""
+    file: packages/core/src/core.ts
+    sig: ab7a9da81398
+    body: ce3fc875a5af
+  - kind: class
+    name: Core
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 53f82707abe6
+    body: "593169802052"
+  - kind: method
+    name: constructor
+    container: Core
+    file: packages/core/src/core.ts
+    sig: b816e8db7296
+    body: 0b520d970f80
+  - kind: method
+    name: start
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 274ddea948e3
+    body: 9a1063de2561
+  - kind: method
+    name: close
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 2b99dbd07328
+    body: 4deeb2122040
+  - kind: method
+    name: log
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 799b90db90dc
+    body: 1d44a77af660
+  - kind: method
+    name: cliCommand
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: dffbe9dddbe9
+  - kind: method
+    name: status
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d7b0a4d6f984
+    body: ac7da2815761
+id: n_77901c
+deps:
+  - n_19d7fc
+  - n_1cef8b
+  - n_20e5ea
+  - n_6a10f1
+  - n_81d7fd
+  - n_c26d86
+  - n_c4686d
+  - n_c8c898
+summary: This node serves as the central orchestration hub for Lenz Core, managing system lifecycle,
+  environment setup, and aggregated status reporting across the entire workspace. It is invoked by
+  command dispatch in [[n_836db2]] and the API server in [[n_c04098]], as well as by high-level
+  workflows like [[n_484bc9]], [[n_5ffc74]], [[n_b3b72e]], and [[n_dbc58c]]. To initialize and
+  monitor the project, it coordinates with [[n_81d7fd]], [[n_19d7fc]], [[n_ed9767]], and
+  [[n_c4686d]], while delegating core indexing, persistence, lock brokerages, and analysis tasks to
+  [[n_c26d86]], [[n_d12a81]], [[n_6a10f1]], [[n_80e676]], [[n_ab4a86]], [[n_5608cc]], [[n_c8c898]],
+  [[n_298de6]], [[n_759ab4]], [[n_58299f]], [[n_20e5ea]], and [[n_1cef8b]].
+summary_at: 2026-08-27T03:48:58.215Z

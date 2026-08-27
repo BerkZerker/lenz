@@ -1,0 +1,43 @@
+kind: behavior
+title: Generating Claude settings hook configuration
+spec: Writes a Claude settings JSON file to the target path configuring `PreToolUse` and
+  `PostToolUse` hooks that invoke the runner's CLI hook subcommands with shell-escaped arguments for
+  run ID and broker port. Configures PreToolUse hooks for write tools
+  ('Write|Edit|MultiEdit|NotebookEdit|Bash') with hook 'pre' and read tools ('Read|Glob|Grep') with
+  hook 'notices', PostToolUse hooks for write tools with hook 'post', and includes the optional
+  model name when provided.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_c6326f
+    name: Writing Claude settings JSON with hooks
+    given: "Target path '/tmp/claude_settings.json' and options { cli: ['lenz'], runId: 'run-1', port:
+      4000, model: 'claude-3-7-sonnet' }"
+    when: writeClaudeSettings is executed
+    then: A JSON file is written containing the model specification and PreToolUse / PostToolUse hook
+      command strings with 20s timeouts invoking 'lenz hook pre/post/notices --run run-1 --port
+      4000'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: writeClaudeSettings
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ca925e88ec0a
+    body: ed3e55390915
+  - kind: function
+    name: shq
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: c3487862de8e
+    body: "120e72897862"
+id: n_b83556
+deps: []
+summary: This node generates Claude settings JSON configuration files to wire up tool-interception
+  hooks for the execution environment. It configures pre- and post-tool use hooks for both read and
+  write operations with formatted runner CLI arguments, including run identifiers and broker ports.
+  This configuration step is invoked during the run initialization workflow managed by [[n_ba9088]].
+summary_at: 2026-08-27T03:49:12.365Z

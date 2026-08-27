@@ -1,0 +1,75 @@
+kind: behavior
+title: Node rewriting, YAML conversion, and orientation summary prompts
+spec: Provides helper utilities (oneLine, nodeToYamlForPrompt) and prompts for rewriting behavior
+  nodes and generating orientation summaries. Defines BEHAVIOR_SCHEMA for rewriting behavior nodes
+  from current code sources via behaviorPrompt, and constructs summaryPrompt to generate concise
+  prose orientation summaries linking related nodes via bracketed IDs.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_0eec89
+    name: Truncates long strings with ellipsis
+    given: A multi-line text string with excessive whitespace exceeding 140 characters
+    when: oneLine is called with the string
+    then: Collapses whitespace and returns a string at most 140 characters long ending in '…'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_0b067d
+    name: Builds behavior rewrite prompt
+    given: A target LenzNode, anchored symbol sources, and a parent node
+    when: behaviorPrompt is called
+    then: Returns a prompt showing the previous YAML description and anchored code, instructing the LLM
+      to output JSON conforming to BEHAVIOR_SCHEMA
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_730c75
+    name: Builds node orientation summary prompt
+    given: A LenzNode, incoming/outgoing dependency links, and child nodes
+    when: summaryPrompt is called
+    then: Returns a prompt asking for 2-4 sentences of plain prose referencing other nodes using
+      bracketed IDs like [[n_id]]
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: oneLine
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: ad206bf0020e
+    body: 4bf1c103f4d3
+  - kind: const
+    name: BEHAVIOR_SCHEMA
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 53a0acfad593
+    body: b4afff801cb7
+  - kind: function
+    name: behaviorPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 591a98c50a78
+    body: 658caaf7453a
+  - kind: function
+    name: nodeToYamlForPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: eee24a41e4e3
+    body: 92a06bb208e8
+  - kind: function
+    name: summaryPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: b1db2b054acd
+    body: 5c45f2661ed4
+id: n_2f337f
+deps: []
+summary: This node provides prompt templates and formatting utilities for serializing node metadata
+  into YAML, updating behavior specifications against current code sources, and generating concise
+  graph orientation summaries. It does not call downstream nodes directly, but its text-formatting
+  helpers are relied on by [[n_bcdd4d]] and [[n_136d52]] to support their respective prompt
+  construction workflows.
+summary_at: 2026-08-27T03:49:15.015Z

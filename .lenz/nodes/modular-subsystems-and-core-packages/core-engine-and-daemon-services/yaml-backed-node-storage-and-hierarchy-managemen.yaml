@@ -1,0 +1,209 @@
+kind: behavior
+title: YAML-backed node storage and hierarchy management
+spec: >-
+  Provides NodeStore along with helper functions slugify and newId to manage Lenz nodes stored as
+  YAML files under a directory hierarchy:
+
+  - slugify(s) converts strings into lowercase alphanumeric slugs (replacing other characters with
+  hyphens, trimming leading/trailing hyphens, capped at 48 characters, defaulting to 'node').
+
+  - newId(prefix) generates random hex IDs prefixed with the given prefix (defaulting to 'n').
+
+  - NodeStore maintains an in-memory mapping of node IDs and relative YAML paths, synchronizing with
+  the file system, StructureDb, and EventBus.
+
+  - load() recursively scans nodesDir for .yaml and .yml files, parses LenzNode definitions, clears
+  existing anchors in StructureDb, and rebuilds the anchor mirror for all loaded nodes, logging
+  parse errors as warnings on the event bus.
+
+  - get(id), all(), children(parent), descendants(id), ancestors(id), and anchorsOf(id) provide
+  lookup, parent-child navigation, ancestor/descendant traversal, and symbol anchor aggregation.
+
+  - create(partial) generates a new node ID if omitted, defaults status to 'proposed' and spec to
+  empty string, saves the node to disk, and mirrors anchors.
+
+  - save(n, opts) computes the node's relative path from ancestor title slugs (disambiguating
+  sibling collisions with ID suffixes), renames old files/directories if slugs changed, writes
+  cleaned YAML to disk, updates StructureDb anchors, and publishes 'node.updated' unless silent.
+
+  - update(id, patch) applies updates, verifies that reparenting does not place a node under its own
+  descendant, and saves changes.
+
+  - setStatus(id, status, extra) updates node status and extra properties.
+
+  - delete(id, recursive) either deletes descendants recursively or reparents direct children,
+  removes corresponding YAML files and directories, deletes anchors from StructureDb, cleans up
+  references to the deleted ID across remaining node deps, and publishes 'node.deleted'.
+
+  - topo(ids) topologically sorts nodes by dependency order breaking ties alphabetically by title.
+
+  - tree() constructs a nested TreeItem representation of the entire node hierarchy.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_5f87e9
+    name: Create a behavior node
+    given: A NodeStore instance configured with a target directory, a StructureDb, and an EventBus.
+    when: "create({ kind: 'behavior', title: 'User Login', anchors: [{ file: 'auth.ts', symbol: 'login'
+      }] }) is called."
+    then: A node with a new ID is created, saved to 'user-login.yaml' under nodesDir, its anchors are
+      mirrored to StructureDb, and a 'node.updated' event is published.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_01b451
+    name: Navigate hierarchy and compute anchors
+    given: A NodeStore containing an intent node with parent null and a child behavior node with anchors.
+    when: anchorsOf is called with the intent node's ID.
+    then: It returns the union of anchors from all descendant behavior nodes.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_d2278c
+    name: Delete a node and clean up dependencies
+    given: A NodeStore where node A lists node B in its deps array.
+    when: delete('B') is executed.
+    then: Node B's YAML file and anchors are removed, node A's deps array is updated to remove 'B', and
+      a 'node.deleted' event is published.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: slugify
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: c3487862de8e
+    body: 0c8bbe182e61
+  - kind: function
+    name: newId
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: 5838afafbcf4
+    body: 0845d5c4b4d2
+  - kind: class
+    name: NodeStore
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: 53f82707abe6
+    body: 97676cc34864
+  - kind: method
+    name: constructor
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 127a0cba813c
+    body: 196661c171cd
+  - kind: method
+    name: load
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: d7b0a4d6f984
+    body: cd666bddb8ba
+  - kind: method
+    name: get
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: b9efcf67d26e
+    body: 186c11abdec0
+  - kind: method
+    name: all
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: d7b0a4d6f984
+    body: 2d0d4b0c2749
+  - kind: method
+    name: children
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: bd10fc389865
+    body: f35b701ca5cd
+  - kind: method
+    name: descendants
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 3340ebe95a82
+    body: 2c5b1d322b90
+  - kind: method
+    name: ancestors
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 3340ebe95a82
+    body: aabc838875eb
+  - kind: method
+    name: anchorsOf
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: b9efcf67d26e
+    body: 7486683c6596
+  - kind: method
+    name: pathFor
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 96021aae2c9c
+    body: bfb5befa0790
+  - kind: method
+    name: create
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 757e0ea25a3a
+    body: 525f7a8f0081
+  - kind: method
+    name: save
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9255f042ff38
+    body: ae28fd7d0d9f
+  - kind: method
+    name: mirror
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9b08fc93a690
+    body: 9d89b9bc864c
+  - kind: method
+    name: update
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 64a17980d2dd
+    body: 053c1dacebbb
+  - kind: method
+    name: setStatus
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 9eac97a4350e
+    body: 94e6147bb99c
+  - kind: method
+    name: delete
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 546be732ed2f
+    body: e14cd59e0322
+  - kind: method
+    name: topo
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 631cadd99e7e
+    body: b1182437764d
+  - kind: method
+    name: tree
+    container: NodeStore
+    file: packages/core/src/nodes.ts
+    sig: 62f569d02428
+    body: 91157d5ebd03
+  - kind: interface
+    name: TreeItem
+    container: ""
+    file: packages/core/src/nodes.ts
+    sig: ab7a9da81398
+    body: 6c8e19df3976
+id: n_c26d86
+deps:
+  - n_c4686d
+summary: This component manages file-based node storage and tree hierarchies by synchronizing
+  on-disk YAML specifications with in-memory lookup indexes and ID-generation utilities. It parses
+  definitions into domain models via [[n_19fac0]], synchronizes code anchors using [[n_58299f]] and
+  [[n_fb7815]], and broadcasts storage lifecycle events over [[n_c4686d]]. Serving as a core data
+  store initialized by [[n_77901c]], it powers node lookups and structural traversals across
+  consumers such as [[n_348046]], [[n_c8c898]], [[n_20e5ea]], [[n_484bc9]], [[n_1cef8b]],
+  [[n_5ffc74]], [[n_b3b72e]], [[n_dbc58c]], [[n_ab4a86]], [[n_80e676]], and [[n_c04098]].
+summary_at: 2026-08-27T03:48:56.959Z

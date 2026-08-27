@@ -2,7 +2,7 @@ import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { cpSync, mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { StructureIndex, DEFAULT_STRUCTURE_CONFIG, resolveAnchor, toAnchor, flowFrom, normalize } from "../src/index.ts";
+import { StructureIndex, DEFAULT_STRUCTURE_CONFIG, resolveAnchor, toAnchor, flowFrom, normalize, isGenerated } from "../src/index.ts";
 
 let root: string; let idx: StructureIndex;
 beforeAll(async () => {
@@ -98,4 +98,11 @@ describe("sync + anchors", () => {
     expect(idx.db.ownersOf("src/index.ts##function#main")).toEqual(["n_1"]);
     expect(idx.db.neighborOwners(["src/auth/reset.ts##function#requestReset"])).toEqual(["n_1"]);
   });
+});
+
+test("minified build output is never indexed as source", () => {
+  const bundle = "var a=1;".repeat(20000); // ~160KB on one line, like a vite bundle
+  expect(isGenerated(bundle)).toBe(true);
+  expect(isGenerated("const x = 1;\n".repeat(20000))).toBe(false); // big but real source
+  expect(isGenerated("const x = 1;\n")).toBe(false);
 });

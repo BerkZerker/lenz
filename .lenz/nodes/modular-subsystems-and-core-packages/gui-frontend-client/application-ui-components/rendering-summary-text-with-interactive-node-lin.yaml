@@ -1,0 +1,54 @@
+kind: behavior
+title: Rendering summary text with interactive node links
+spec: Renders text containing embedded node IDs (`[[n_<id>]]`) into spans and interactive links.
+  Plain text parts are rendered inside standard `span` elements. Unresolved node IDs are displayed
+  as dimmed spans showing the ID. Resolved node IDs are rendered as anchor tags (`.nodelink`) titled
+  with the first 200 characters of the target node's spec, colored and underlined using
+  `areaColor(nodes, node.id)`, displaying the target node's title. Clicking a link prevents default
+  navigation and event propagation, setting selection to the target node ID, and setting focus to
+  the node ID itself (if its kind is 'intent') or to its parent ID.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_022de8
+    name: render plain text and linked node
+    given: A store containing an intent node with ID 'n_abc123', title 'Auth Flow', and spec 'Handles
+      user authentication'
+    when: Rendering <Summary text="Depends on [[n_abc123]] for login" />
+    then: Renders 'Depends on ' in a span, followed by an anchor tag with text 'Auth Flow', title
+      'Handles user authentication', and href '#n_abc123', followed by ' for login' in a span
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_70b332
+    name: render unknown node reference
+    given: A store that does not contain node ID 'n_unknown'
+    when: Rendering <Summary text="See [[n_unknown]]" />
+    then: Renders 'See ' in a span followed by a span with className 'dim' containing text 'n_unknown'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_4c4135
+    name: navigate on link click for non-intent node
+    given: A store containing a non-intent node 'n_step1' with parent 'n_intent1'
+    when: Clicking the link rendered for [[n_step1]]
+    then: The click event is stopped and prevented, setSelected is called with 'n_step1', and setFocus
+      is called with 'n_intent1'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: Summary
+    container: ""
+    file: packages/gui/src/components/Summary.tsx
+    sig: ae93ff5621df
+    body: 57f6a02eb002
+id: n_a105ed
+deps: []
+summary: This behavior parses summary text to convert embedded node identifiers into interactive,
+  styled links alongside standard text spans. Clicking a resolved reference navigates directly to
+  that target by updating the application's active selection and focus states. It is utilized by
+  [[n_5d13e8]] to present linked overview descriptions and detail views.
+summary_at: 2026-08-27T03:49:15.819Z

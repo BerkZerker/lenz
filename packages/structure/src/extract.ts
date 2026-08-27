@@ -5,7 +5,7 @@ import { LANGUAGES, languageForFile, queryPath, wasmPath, type LanguageDef, type
 import { symbolKey, type RefKind, type SymbolKind, type SymbolRow } from "./types.ts";
 import { createHash } from "node:crypto";
 
-export interface RawRef { srcKey: string | null; name: string; kind: RefKind; line: number; member: boolean }
+export interface RawRef { srcKey: string | null; name: string; kind: RefKind; line: number; member: boolean; builtinRecv?: boolean }
 export interface Extraction {
   symbols: SymbolRow[];
   refs: RawRef[];
@@ -98,8 +98,62 @@ export async function extractFile(absPath: string, relPath: string, source?: str
   const symbols: SymbolRow[] = [];
   const defNodes: { node: SyntaxNode; row: SymbolRow }[] = [];
   const seen = new Set<string>();
-  const refsRaw: { node: SyntaxNode; name: string; kind: RefKind; member: boolean }[] = [];
+  const refsRaw: { node: SyntaxNode; name: string; kind: RefKind; member: boolean; builtinRecv: boolean }[] = [];
   const imports: ImportBinding[] = [];
+
+  // `map.get(k)` and `store.get(k)` are the same shape to a syntactic resolver, and a project method that happens
+  // to share a name with a container method (get/set/add/delete/all) would otherwise swallow every builtin call.
+  // So note which names in this file are bound to a builtin container, and refuse to resolve calls on them.
+  const builtinBound = new Set<string>();
+  {
+    const CTORS = new Set(["Map", "Set", "WeakMap", "WeakSet", "Promise", "Array", "Date", "RegExp"]);
+    const containerValue = new Map<string, string>(); // `pending` of `new Map<string, Set<string>>()` → "Set"
+    const headType = (t?: SyntaxNode | null): string | null =>
+      !t ? null : t.type === "generic_type" ? t.namedChildren[0]?.text ?? null : t.type === "type_identifier" ? t.text : null;
+    const unwrap = (n?: SyntaxNode | null): SyntaxNode | null => {
+      while (n && (n.type === "non_null_expression" || n.type === "await_expression" || n.type === "parenthesized_expression")) n = n.namedChildren[0];
+      return n ?? null;
+    };
+    const bound = (n: SyntaxNode) => {
+      const nameN = n.childForFieldName("name") ?? n.childForFieldName("left");
+      if (!nameN) return null;
+      const name = nameN.type === "member_expression" ? nameN.childForFieldName("property")?.text ?? null : nameN.text;
+      return name ? { name, val: unwrap(n.childForFieldName("value") ?? n.childForFieldName("right")) } : null;
+    };
+    const direct = (n: SyntaxNode) => {
+      const b = bound(n);
+      if (b?.val?.type === "new_expression") {
+        const ctor = b.val.childForFieldName("constructor")?.text ?? "";
+        if (CTORS.has(ctor)) {
+          builtinBound.add(b.name);
+          const args = b.val.namedChildren.find((c) => c.type === "type_arguments");
+          const h = headType(args ? (ctor === "Map" || ctor === "WeakMap" ? args.namedChildren[1] : args.namedChildren[0]) : null);
+          if (h) containerValue.set(b.name, h);
+        }
+      }
+      for (const c of n.namedChildren) direct(c);
+    };
+    // one level of unwrapping: `const p = pending.get(b)` is itself a Set when `pending` is a Map<_, Set<_>>
+    const viaLookup = (n: SyntaxNode) => {
+      const b = bound(n);
+      const fn = b?.val?.type === "call_expression" ? b.val.childForFieldName("function") : null;
+      if (b && fn?.type === "member_expression") {
+        const recv = fn.childForFieldName("object"), prop = fn.childForFieldName("property")?.text ?? "";
+        if (recv?.type === "identifier" && ["get", "pop", "shift", "at"].includes(prop) && CTORS.has(containerValue.get(recv.text) ?? "")) builtinBound.add(b.name);
+      }
+      for (const c of n.namedChildren) viaLookup(c);
+    };
+    direct(root); viaLookup(root);
+  }
+  const BUILTIN_GLOBALS = new Set(["Promise", "Object", "JSON", "Math", "console", "Array", "String", "Number", "Date", "RegExp", "Reflect", "Symbol", "process", "Boolean", "Map", "Set", "WeakMap", "WeakSet"]);
+  /** the receiver of `a.b()` / `this.a.b()`, as a bare name — null when it is any more complex expression */
+  const recvName = (nameNode: SyntaxNode): string | null => {
+    const obj = nameNode.parent?.childForFieldName("object");
+    if (!obj) return null;
+    if (obj.type === "identifier") return obj.text;
+    if (obj.type === "member_expression" && obj.childForFieldName("object")?.type === "this") return obj.childForFieldName("property")?.text ?? null;
+    return null;
+  };
 
   for (const m of query.matches(root)) {
     const defCap = m.captures.find((c) => c.name.startsWith("definition."));
@@ -135,13 +189,15 @@ export async function extractFile(absPath: string, relPath: string, source?: str
         if (n.parent && (n.parent.type.endsWith("declaration") || n.parent.type === "variable_declarator" || n.parent.type === "import_specifier" || n.parent.type === "pair")) {
           if (n.parent.childForFieldName("name")?.id === n.id || n.parent.childForFieldName("key")?.id === n.id) continue;
         }
-        refsRaw.push({ node: n, name: n.text, kind: "imports", member: false });
+        refsRaw.push({ node: n, name: n.text, kind: "imports", member: false, builtinRecv: false });
         continue;
       }
       const kind: RefKind = kindRaw === "call" ? "calls" : (kindRaw as RefKind);
       const nameNode = nameCap?.node;
       if (!nameNode) continue;
-      refsRaw.push({ node: refCap.node, name: nameNode.text, kind, member: nameNode.parent?.type === "member_expression" || nameNode.parent?.type === "attribute" || nameNode.parent?.type === "selector_expression" });
+      const member = nameNode.parent?.type === "member_expression" || nameNode.parent?.type === "attribute" || nameNode.parent?.type === "selector_expression";
+      const recv = member ? recvName(nameNode) : null;
+      refsRaw.push({ node: refCap.node, name: nameNode.text, kind, member, builtinRecv: !!recv && (BUILTIN_GLOBALS.has(recv) || builtinBound.has(recv)) });
     }
   }
 
@@ -167,7 +223,7 @@ export async function extractFile(absPath: string, relPath: string, source?: str
     const k = `${srcKey}|${r.name}|${r.kind}`;
     if (refSeen.has(k)) continue;
     refSeen.add(k);
-    refs.push({ srcKey, name: r.name, kind: r.kind, line: r.node.startPosition.row + 1, member: r.member });
+    refs.push({ srcKey, name: r.name, kind: r.kind, line: r.node.startPosition.row + 1, member: r.member, builtinRecv: r.builtinRecv });
   }
   tree.delete();
   return { symbols: [...byKey.values()], refs, imports, hash: contentHash(text), language: def.id };

@@ -1,0 +1,29 @@
+kind: behavior
+title: Status ring color mapping
+spec: Provides a constant mapping from status keys (building, built, verified, rejected, drifted) to
+  corresponding hex color codes for status ring rendering.
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_772bcc
+    name: Look up verified status color
+    given: The STATUS_RING color map
+    when: Accessing the key 'verified'
+    then: It returns '#22c55e'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: STATUS_RING
+    container: ""
+    file: packages/gui/src/colors.ts
+    sig: 68c0503a6dd6
+    body: 6ca48dc21d9d
+id: n_4a8975
+deps: []
+summary: This node provides the visual configuration that translates discrete lifecycle status
+  states into hex color codes for rendering status rings. It serves as a shared color reference
+  consumed directly by presentation elements in [[n_eef5f8]].
+summary_at: 2026-08-27T03:49:00.788Z

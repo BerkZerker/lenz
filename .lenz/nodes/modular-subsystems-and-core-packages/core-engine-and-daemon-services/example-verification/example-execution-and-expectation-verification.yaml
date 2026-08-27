@@ -1,0 +1,72 @@
+kind: behavior
+title: Example execution and expectation verification
+spec: Executes shell commands for verification examples in a specified working directory with
+  configurable timeouts. Evaluates process output (exit code, stdout, stderr, or timeout state)
+  against configured expectation modes (`exit0`, `stdout_equals`, `stdout_contains`, `json_subset`,
+  or `manual`), performs recursive JSON subset matching, truncates actual output exceeding 6000
+  characters, and produces structured `ExampleResult` records.
+parent: n_9828f9
+status: proposed
+examples:
+  - id: ex_000353
+    name: Successful exit0 check
+    given: An example with run command 'echo hello' and default 'exit0' expect mode
+    when: runExamples is executed against the example
+    then: "The command runs via bash -lc, returns exit code 0, and produces an ExampleResult with pass:
+      true and captured stdout"
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1a1b8b
+    name: JSON subset expectation verification
+    given: "An example expecting json_subset with `{ status: 'ok' }` and a command outputting `{ status:
+      'ok', count: 5 }`"
+    when: judge evaluates the command output
+    then: "isSubset verifies the nested structure and returns pass: true"
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_053ee5
+    name: Timed out command or missing run command
+    given: An example with no run command or one that exceeds timeoutSec
+    when: runExamples executes the example
+    then: "The result records pass: false (or null if manual mode) with a corresponding note ('no run
+      command' or 'timed out')"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: runCommand
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: 7135d1738c2f
+    body: a37ff278a03e
+  - kind: function
+    name: judge
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: b98c1d8830d8
+    body: 1648315068cb
+  - kind: function
+    name: isSubset
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: 82ede3c5f0af
+    body: 95f482067311
+  - kind: function
+    name: runExamples
+    container: ""
+    file: packages/core/src/verify/examples.ts
+    sig: 95c9e3675db5
+    body: e9cbbea39604
+id: n_6dde63
+deps: []
+summary: This behavior executes shell commands for verification examples within a specified working
+  directory and validates process outcomes against configured expectation modes such as exit codes,
+  stdout matching, and recursive JSON subsets. It manages execution timeouts, truncates oversized
+  command outputs, and compiles the final evaluation into structured result records. Currently, this
+  component operates as a self-contained verification routine with no direct dependencies or
+  downstream handoffs linked.
+summary_at: 2026-08-27T03:49:13.228Z

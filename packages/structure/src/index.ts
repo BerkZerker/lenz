@@ -1,4 +1,5 @@
 export * from "./types.ts";
+export * from "./ignore.ts";
 export * from "./db.ts";
 export * from "./extract.ts";
 export * from "./languages.ts";

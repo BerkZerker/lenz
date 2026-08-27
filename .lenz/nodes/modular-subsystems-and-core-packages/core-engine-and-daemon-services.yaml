@@ -1,0 +1,20 @@
+kind: intent
+title: Core Engine and Daemon Services
+spec: Houses the central engine and daemon runtime for Lenz, orchestrating architectural node
+  hierarchies, codebase structure analysis, and agent execution workflows. This area manages
+  YAML-backed node storage, resolves code anchors and drift against the structure index, runs
+  automated architecture derivation and multi-phase build verifications, and coordinates concurrency
+  and file locks. It also exposes the core system through CLI commands, event streaming, and an HTTP
+  and WebSocket server.
+status: proposed
+derived: true
+folder: packages/core/src
+parent: n_dd5e0e
+id: n_0e8e26
+deps: []
+summary: This module serves as the core daemon runtime for Lenz, coordinating architectural node
+  hierarchies, automated architecture derivation, agent workflows, and concurrency locks. It
+  maintains YAML-backed node specifications, verifies staged builds, tracks anchor drift, and serves
+  control interfaces over CLI, HTTP, and WebSocket connections. For low-level repository analysis,
+  file indexing, and symbol tracking, it delegates directly to [[n_73cee3]].
+summary_at: 2026-08-27T03:48:47.551Z

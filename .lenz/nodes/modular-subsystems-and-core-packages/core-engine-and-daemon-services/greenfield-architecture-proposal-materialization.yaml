@@ -1,0 +1,62 @@
+kind: behavior
+title: Greenfield Architecture Proposal Materialization
+spec: Generates a proposed node hierarchy from a high-level requirements prompt using LLM calls.
+  Parses JSON proposal responses, renders tree contexts, and materializes intent and behavior nodes
+  into the store under the specified parent.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_76dedf
+    name: propose creates proposed node hierarchy
+    given: A requirements prompt describing a new feature.
+    when: propose(text) is called and succeeds.
+    then: Proposed intent and behavior nodes are created in the store and their IDs are returned.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: propose
+    container: Core
+    file: packages/core/src/core.ts
+    sig: f2527450a43d
+    body: 01895710c938
+  - kind: method
+    name: materialize
+    container: Core
+    file: packages/core/src/core.ts
+    sig: dbb63709acbc
+    body: f1afe4de8d33
+  - kind: method
+    name: repoSummary
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 3b636bb4d910
+    body: 96b6ac418a38
+  - kind: function
+    name: extractJson
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 0d0c83250ab4
+    body: 9742a9c71b48
+  - kind: function
+    name: renderTree
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 02559af70ed5
+    body: f07bf39923e6
+id: n_5ffc74
+deps:
+  - n_77901c
+  - n_b3b72e
+  - n_c26d86
+  - n_dbc58c
+summary: This node generates proposed architectural node hierarchies from high-level requirement
+  prompts using LLM calls and materializes the parsed intent and behavior nodes into the project
+  tree. It is triggered by API server requests in [[n_c04098]], build verification workflows in
+  [[n_484bc9]], and brownfield derivation processes in [[n_b3b72e]]. To execute proposals, it
+  orchestrates prompts through [[n_80e676]], inspects structure with [[n_58299f]], builds node
+  domain models using [[n_19fac0]] and [[n_b3b72e]], writes records into [[n_c26d86]], updates
+  summaries via [[n_dbc58c]], and logs operations via [[n_77901c]].
+summary_at: 2026-08-27T03:48:59.821Z

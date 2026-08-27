@@ -6,6 +6,8 @@ import type { LockBroker } from "../locks.ts";
 import type { RunKind, RunRecord } from "../types.ts";
 import { buildCommand, loadAdapter, parseStreamJsonLine, writeClaudeSettings, type AgentAdapter } from "./adapter.ts";
 import { geminiGenerate } from "../llm/gemini.ts";
+import { openaiGenerate, OPENROUTER_BASE } from "../llm/openai.ts";
+import type { LlmConfig } from "../config.ts";
 
 export interface RunSpec {
   kind: RunKind;
@@ -16,19 +18,24 @@ export interface RunSpec {
   extra?: string[];
   /** JSON schema for structured output (both providers) */
   schema?: any;
-  /** don't count against max_concurrent_runs (short LLM calls) */
+  /** short structured LLM call: runs against max_concurrent_llm instead of max_concurrent_runs */
   light?: boolean;
   session_id?: string;
 }
 export interface RunOutcome { run: RunRecord; text: string; structured?: any }
 
-interface Active { rec: RunRecord; proc: ReturnType<typeof Bun.spawn>; timer: ReturnType<typeof setTimeout>; changed: Map<string, "added" | "changed" | "removed">; resolve: (o: RunOutcome) => void; text: string; structured?: any; killed?: string }
+interface Active {
+  rec: RunRecord; changed: Map<string, "added" | "changed" | "removed">; resolve: (o: RunOutcome) => void; text: string;
+  light: boolean; structured?: any; killed?: string;
+  proc?: ReturnType<typeof Bun.spawn>; timer?: ReturnType<typeof setTimeout>; abort?: AbortController;
+}
+type SpawnedRun = Active & { proc: NonNullable<Active["proc"]>; timer: NonNullable<Active["timer"]> };
 
 export interface RunManagerOpts {
   root: string; lenzDir: string; runsDir: string; port: number;
   cli: string[]; // argv prefix to invoke the lenz CLI
-  maxConcurrent: () => number; timeoutSec: () => number; model?: () => string | undefined;
-  llm: () => { provider: "gemini" | "claude"; model: string };
+  maxConcurrent: () => number; maxConcurrentLlm: () => number; timeoutSec: () => number; model?: () => string | undefined;
+  llm: () => LlmConfig;
 }
 
 /** Owns agent processes: queueing, concurrency, timeouts, run records, changed-symbol capture. */
@@ -58,14 +65,15 @@ export class RunManager {
     return { id, done };
   }
 
+  /** Heavy (agent) runs and light (structured LLM) runs have independent concurrency caps. */
   private pump(): void {
-    const heavy = [...this.active.values()].filter((a) => !(a as any).light).length;
     for (let i = 0; i < this.queue.length; i++) {
       const q = this.queue[i];
-      if (!q.spec.light && heavy >= this.opts.maxConcurrent()) continue;
+      let heavy = 0, light = 0;
+      for (const a of this.active.values()) a.light ? light++ : heavy++;
+      if (q.spec.light ? light >= this.opts.maxConcurrentLlm() : heavy >= this.opts.maxConcurrent()) continue;
       this.queue.splice(i, 1); i--;
-      this.start(q.spec, q.rec, q.resolve);
-      if (!q.spec.light) return this.pump();
+      this.start(q.spec, q.rec, q.resolve); // registers in `active` synchronously, so the next iteration sees it
     }
   }
 
@@ -76,7 +84,7 @@ export class RunManager {
     const settingsFile = join(dir, "settings.json");
     writeFileSync(promptFile, spec.prompt);
     const llm = this.opts.llm();
-    if (spec.light && llm.provider === "gemini") { void this.startGemini(spec, rec, resolve, dir, llm.model); return; }
+    if (spec.light && llm.provider !== "claude") { void this.startLlm(spec, rec, resolve, dir, llm); return; }
     if (spec.schema) spec.extra = [...(spec.extra ?? []), "--json-schema", JSON.stringify(spec.schema)];
     writeClaudeSettings(settingsFile, { cli: this.opts.cli, runId: rec.id, port: this.opts.port, model: this.opts.model?.() });
     const argv = buildCommand(this.adapter, { prompt_file: promptFile, settings_file: settingsFile, session_id: spec.session_id }, spec.extra ?? []);
@@ -89,15 +97,14 @@ export class RunManager {
       env: { ...process.env, LENZ_RUN: rec.id, LENZ_PORT: String(this.opts.port), LENZ_ROOT: this.opts.root, CLAUDECODE: undefined as any },
     });
     const timer = setTimeout(() => this.kill(rec.id, "timeout"), this.opts.timeoutSec() * 1000);
-    const act: Active = { rec, proc, timer, changed: new Map(), resolve, text: "" };
-    (act as any).light = spec.light;
+    const act: SpawnedRun = { rec, proc, timer, changed: new Map(), resolve, text: "", light: !!spec.light };
     this.active.set(rec.id, act);
     this.bus.publish("run.updated", { run: rec });
     this.consume(act, dir);
     this.finish(act, dir);
   }
 
-  private async consume(act: Active, dir: string) {
+  private async consume(act: SpawnedRun, dir: string) {
     const reader = (act.proc.stdout as ReadableStream<Uint8Array>).getReader(); const dec = new TextDecoder(); let buf = "";
     const handle = (line: string) => {
       if (!line.trim()) return;
@@ -120,7 +127,7 @@ export class RunManager {
     } catch {}
   }
 
-  private async finish(act: Active, dir: string) {
+  private async finish(act: SpawnedRun, dir: string) {
     const stderr = await new Response(act.proc.stderr as ReadableStream<Uint8Array>).text().catch(() => "");
     const exit = await act.proc.exited;
     clearTimeout(act.timer);
@@ -142,18 +149,21 @@ export class RunManager {
     this.pump();
   }
 
-  /** In-process Gemini call for light runs; keeps the same run record / run dir contract. */
-  private async startGemini(spec: RunSpec, rec: RunRecord, resolve: (o: RunOutcome) => void, dir: string, model: string) {
-    rec.status = "running"; rec.started_at = new Date().toISOString(); rec.provider = `gemini:${model}`;
+  /** In-process LLM call for light runs (gemini or any OpenAI-compatible endpoint); same run record / run dir contract. */
+  private async startLlm(spec: RunSpec, rec: RunRecord, resolve: (o: RunOutcome) => void, dir: string, llm: LlmConfig) {
+    rec.status = "running"; rec.started_at = new Date().toISOString(); rec.provider = `${llm.provider}:${llm.model}`;
     writeFileSync(join(dir, "meta.json"), JSON.stringify({ ...rec, provider: rec.provider }, null, 2));
-    this.active.set(rec.id, { rec, light: true } as any);
+    const abort = new AbortController();
+    this.active.set(rec.id, { rec, light: true, abort, changed: new Map(), resolve, text: "" });
     this.bus.publish("run.updated", { run: rec });
-    const apiKey = process.env.GEMINI_API_KEY ?? "";
-    const r = apiKey ? await geminiGenerate({ apiKey, model, prompt: spec.prompt, schema: spec.schema, timeoutMs: this.opts.timeoutSec() * 1000 }) : { text: "", error: "GEMINI_API_KEY not set (put it in ~/.config/lenz/env or .lenz/.env)" };
+    const r = await this.callLlm(llm, spec, abort.signal);
     rec.ended_at = new Date().toISOString(); rec.duration = (Date.parse(rec.ended_at) - Date.parse(rec.started_at)) / 1000;
     rec.exit = r.error ? 1 : 0; rec.error = r.error; rec.result_text = r.text; rec.status = r.error ? "failed" : "done"; rec.tokens = r.usage;
-    appendFileSync(join(dir, "events.jsonl"), JSON.stringify({ type: "result", provider: rec.provider, text: r.text, structured: r.structured, usage: r.usage, error: r.error }) + "\n");
-    writeFileSync(join(dir, "result.json"), JSON.stringify({ changed_symbols: [], locks_held: [], exit: rec.exit, duration: rec.duration, status: rec.status, provider: rec.provider, usage: r.usage, error: r.error }, null, 2));
+    // the transcript is a nicety; losing the run dir (a wiped .lenz, a torn-down test root) must not strand the caller
+    try {
+      appendFileSync(join(dir, "events.jsonl"), JSON.stringify({ type: "result", provider: rec.provider, text: r.text, structured: r.structured, usage: r.usage, error: r.error }) + "\n");
+      writeFileSync(join(dir, "result.json"), JSON.stringify({ changed_symbols: [], locks_held: [], exit: rec.exit, duration: rec.duration, status: rec.status, provider: rec.provider, usage: r.usage, error: r.error }, null, 2));
+    } catch (e) { this.bus.publish("log", { level: "warn", msg: `run ${rec.id}: could not write transcript (${e})` }); }
     this.bus.publish("run.event", { run: rec.id, node: rec.node, kind: rec.kind, event: { type: "result", subtype: rec.status, text: (r.text ?? "").slice(0, 2000), tokens: r.usage } });
     this.active.delete(rec.id);
     this.bus.publish("run.updated", { run: rec });
@@ -161,9 +171,25 @@ export class RunManager {
     this.pump();
   }
 
+  /** Provider dispatch for light runs. `key()` reports a missing key as a run error rather than throwing. */
+  private callLlm(llm: LlmConfig, spec: RunSpec, signal: AbortSignal): Promise<{ text: string; structured?: any; usage?: { prompt: number; output: number; thoughts?: number }; error?: string }> {
+    const timeoutMs = this.opts.timeoutSec() * 1000;
+    const key = (envVar: string) => process.env[llm.api_key_env ?? envVar] ?? "";
+    if (llm.provider === "gemini") {
+      const apiKey = key("GEMINI_API_KEY");
+      if (!apiKey) return Promise.resolve({ text: "", error: `${llm.api_key_env ?? "GEMINI_API_KEY"} not set (put it in <project>/.env or .lenz/.env)` });
+      return geminiGenerate({ apiKey, model: llm.model, prompt: spec.prompt, schema: spec.schema, timeoutMs, signal });
+    }
+    const baseUrl = llm.base_url ?? OPENROUTER_BASE;
+    const apiKey = key("OPENROUTER_API_KEY");
+    // a self-hosted OpenAI-compatible server needs no key; only the hosted default demands one
+    if (!apiKey && baseUrl === OPENROUTER_BASE) return Promise.resolve({ text: "", error: `${llm.api_key_env ?? "OPENROUTER_API_KEY"} not set (put it in <project>/.env or .lenz/.env)` });
+    return openaiGenerate({ baseUrl, apiKey, model: llm.model, prompt: spec.prompt, schema: spec.schema, strict: llm.strict_schema, timeoutMs, signal });
+  }
+
   kill(id: string, reason = "killed") {
     const act = this.active.get(id);
-    if (act) { act.killed = reason; try { act.proc.kill(); } catch {} return true; }
+    if (act) { act.killed = reason; act.abort?.abort(); try { act.proc?.kill(); } catch {} return true; }
     const qi = this.queue.findIndex((q) => q.rec.id === id);
     if (qi >= 0) { const [q] = this.queue.splice(qi, 1); q.rec.status = "killed"; q.rec.ended_at = new Date().toISOString(); this.bus.publish("run.updated", { run: q.rec }); q.resolve({ run: q.rec, text: "" }); return true; }
     return false;

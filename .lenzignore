@@ -1,0 +1,21 @@
+# Folders lenz should not index, in .gitignore syntax.
+
+# .gitignore is honoured automatically; this file is for anything extra you want lenz to skip
+
+# so the graph covers only the code you are working on.
+
+# vendored or generated code
+
+**/generated/** \*_/_.min.js
+
+# examples and fixtures — uncomment to focus the graph on the product itself
+
+# examples/\*\*
+
+# **/fixtures/**
+
+# **/**snapshots**/**
+
+# shelved UI — kept for reference, not part of the working codebase
+
+packages/gui/src/vault/\*\*

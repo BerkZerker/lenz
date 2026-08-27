@@ -1,0 +1,21 @@
+kind: intent
+title: Modular Subsystems and Core Packages
+spec: The packages folder contains the primary modular building blocks of the codebase, dividing the
+  application into decoupled sub-systems and shared domain engines. It encompasses the foundational
+  runtime and agent execution core, deep semantic and structural code analysis tools, and the
+  primary graphical user interface frontend. Developers should look inside this directory to access
+  or contribute to the platform's core functional logic, analysis capabilities, and
+  application-level user experiences.
+status: proposed
+derived: true
+folder: packages
+parent: null
+id: n_dd5e0e
+deps: []
+summary: This top-level area houses the project's primary modular subsystems, organizing
+  foundational runtime services, deep code indexing capabilities, and the graphical user interface.
+  It acts as the central destination for developers building, inspecting, or extending the
+  platform's core functional engines and presentation layers. As the overarching container for these
+  decoupled packages, it provides the essential domain logic and application infrastructure that
+  power the entire codebase.
+summary_at: 2026-08-27T03:48:47.536Z

@@ -1,0 +1,51 @@
+kind: behavior
+title: Gemini REST content generation
+spec: Makes a direct REST POST request to Google Gemini's generateContent endpoint
+  (`https://generativelanguage.googleapis.com/v1beta/models/${opts.model}:generateContent`) using
+  the provided API key, prompt, and optional system instructions or JSON schema. Manages abort
+  signals and request timeouts (defaulting to 180,000 ms). Returns a GeminiResult object containing
+  generated text, parsed structured JSON (when schema is requested), token usage counts (prompt,
+  output, thoughts), or error strings if the request fails, times out, is aborted, or returns an
+  unparseable response / non-STOP finish reason.
+parent: n_ed9767
+status: proposed
+examples:
+  - id: ex_36da55
+    name: structured generation with timeout handling
+    given: A prompt, a JSON schema, an API key, and model 'gemini-1.5-flash'
+    when: geminiGenerate is called with opts specifying prompt and schema
+    then: It sends a POST request with responseMimeType 'application/json' and responseJsonSchema set,
+      parses the returned text into structured data, and includes token usage metadata.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_e52e76
+    name: network or request abortion
+    given: An AbortSignal that fires or a request that exceeds timeoutMs
+    when: geminiGenerate executes the fetch request
+    then: "The request is aborted and returns `{ text: '', error: 'gemini: aborted' }`."
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: GeminiResult
+    container: ""
+    file: packages/core/src/llm/gemini.ts
+    sig: ab7a9da81398
+    body: 01ad70f7c22c
+  - kind: function
+    name: geminiGenerate
+    container: ""
+    file: packages/core/src/llm/gemini.ts
+    sig: dea5e605aada
+    body: d0c4d61ca7a1
+id: n_057f84
+deps: []
+summary: This node handles direct REST API requests to Google Gemini's content generation endpoint,
+  processing prompts, system instructions, and schema constraints while managing request timeouts
+  and cancellations. It returns normalized generation results containing output text, parsed
+  structured data, token usage metrics, or error details. It is called by [[n_ba9088]] to execute
+  model inference within broader execution workflows.
+summary_at: 2026-08-27T03:49:11.598Z

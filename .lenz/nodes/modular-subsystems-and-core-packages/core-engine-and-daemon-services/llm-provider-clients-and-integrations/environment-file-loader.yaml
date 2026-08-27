@@ -1,0 +1,34 @@
+kind: behavior
+title: Environment file loader
+spec: Reads specified file paths synchronously, parses lines formatted as `KEY=VALUE` or `export
+  KEY=VALUE` (ignoring comment lines beginning with `#`), strips outer quotes from values, and
+  populates `process.env` with any key that is not already set.
+parent: n_ed9767
+status: proposed
+examples:
+  - id: ex_d71b7e
+    name: loads undefined environment variables without overwriting existing ones
+    given: A list of .env file paths where some files may not exist and some keys are already present on
+      process.env
+    when: loadEnvFiles(paths) is invoked
+    then: It silently skips unreadable files and sets missing keys on process.env while preserving
+      existing environment variable values.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: loadEnvFiles
+    container: ""
+    file: packages/core/src/llm/gemini.ts
+    sig: 6e2d3c5c487a
+    body: 1dab0fb0d23c
+id: n_d33d6c
+deps: []
+summary: This behavior is responsible for initializing runtime configuration by synchronously
+  reading and parsing key-value pairs from specified environment files into `process.env`. It
+  handles standard assignment and export syntax, stripping outer quotes and ignoring comments while
+  safely preserving any existing environment variables. It operates as an independent configuration
+  utility with no direct upstream or downstream connections registered in the graph.
+summary_at: 2026-08-27T03:49:12.356Z

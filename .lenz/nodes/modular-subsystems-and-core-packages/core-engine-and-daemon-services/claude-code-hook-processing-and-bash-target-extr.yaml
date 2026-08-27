@@ -1,0 +1,49 @@
+kind: behavior
+title: Claude Code Hook Processing and Bash Target Extraction
+spec: Extracts candidate write file paths from Bash command strings containing write indicators or
+  direct file tool inputs, and processes Claude Code hook events (`pre`, `post`, `notices`) by
+  querying the Lenz daemon lock broker to acquire, refresh, or notify file locks and output
+  permission decisions.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_493954
+    name: Bash write target extraction
+    given: A bash command string containing a redirection or file modification indicator such as `tee
+      output.ts`
+    when: "`bashWriteTargets` is called with the command and working directory"
+    then: Returns an array containing the absolute path of `output.ts` if it or its parent directory
+      exists on disk
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_383327
+    name: Pre-tool hook lock acquisition denied
+    given: A pre-tool hook event with tool input targeting an in-repo file locked by another run
+    when: "`hook('pre')` is invoked"
+    then: Outputs JSON with permission decision 'deny' and the reason returned by the daemon lock API
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: hook
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 824a24c285b0
+    body: 00afec1e3e0c
+  - kind: function
+    name: bashWriteTargets
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: c076a7c0ea39
+    body: 8b44703d234f
+id: n_8e024e
+deps:
+  - n_836db2
+summary: This behavior intercepts Claude Code lifecycle hook events to extract target write file
+  paths from tool inputs and Bash commands, resolving lock permissions against the daemon broker. It
+  is invoked during CLI execution by [[n_836db2]] and in turn hands off flag-level and API routing
+  tasks back to [[n_836db2]].
+summary_at: 2026-08-27T03:48:52.671Z

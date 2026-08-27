@@ -1,0 +1,53 @@
+kind: behavior
+title: Source Code and Ownership Viewer
+spec: Fetches and displays source code text and symbol metadata for a file, computes line-by-line
+  ownership mapping from symbols to nodes, scrolls the selected symbol into view, indicates unowned
+  symbols or files, and provides navigation to focus and select the owning node.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_777fd2
+    name: scroll to selected symbol and show owner button
+    given: a file has loaded containing a symbol matching symKey with an assigned owner node ID
+    when: CodeView mounts or updates
+    then: the symbol's start line element is scrolled into view and a button to navigate to the owning
+      node is rendered
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_72024c
+    name: show unowned tag for symbol without owner
+    given: the loaded source contains the selected symKey with owner set to null
+    when: CodeView renders
+    then: a tag with class 'tag warn' displaying 'unowned' is shown in the detail bar
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: SourceSym
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: ab7a9da81398
+    body: 9aefc44d7dd0
+  - kind: interface
+    name: Source
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: ab7a9da81398
+    body: e1df671fbf69
+  - kind: function
+    name: CodeView
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: 231950dcb121
+    body: 2c251ff28892
+id: n_ce293f
+deps: []
+summary: This behavior provides an interactive inspection interface for source files, rendering code
+  text alongside symbol metadata and line-by-line node ownership mappings. It automatically
+  highlights unowned code elements, brings selected symbols into view, and allows users to navigate
+  directly to an owning node. It currently operates as a standalone view with no registered upstream
+  dependencies or downstream handoffs.
+summary_at: 2026-08-27T03:49:18.766Z

@@ -1,0 +1,69 @@
+kind: behavior
+title: Codebase derivation prompts and schemas
+spec: Provides JSON schemas and prompt builders for bottom-up codebase derivation. Defines
+  FILE_SCHEMA for deriving behavior nodes referencing bracketed symbol indexes, FOLDER_SCHEMA for
+  intent nodes, filePrompt to format unowned symbols and their docs/sources within a single file,
+  and folderPrompt to name and summarize folders based on child nodes.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_fe306f
+    name: Formats file derivation prompt
+    given: A file path 'src/foo.ts' and an array of DeriveSymbol objects with indices and signatures
+    when: filePrompt is called
+    then: Returns a prompt instructing the LLM to group symbols by bracketed indices into behaviors
+      matching FILE_SCHEMA
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_7ad257
+    name: Formats folder intent derivation prompt
+    given: A folder path 'src/runs' and a list of derived child node titles and specs
+    when: folderPrompt is called
+    then: Returns a prompt instructing the LLM to produce an intent node title and one-paragraph spec
+      matching FOLDER_SCHEMA
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: FILE_SCHEMA
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 53a0acfad593
+    body: d6950300d2b0
+  - kind: const
+    name: FOLDER_SCHEMA
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 53a0acfad593
+    body: 6d15f8104c89
+  - kind: interface
+    name: DeriveSymbol
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: ab7a9da81398
+    body: 420ed9acfc1f
+  - kind: function
+    name: filePrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 90357d5751ef
+    body: 3fdb007cdaf9
+  - kind: function
+    name: folderPrompt
+    container: ""
+    file: packages/core/src/runs/prompt.ts
+    sig: 47dc52b71ec9
+    body: f6cee8849dd2
+id: n_136d52
+deps:
+  - n_2f337f
+summary: This node provides the structured JSON schemas and prompt templates used for bottom-up
+  codebase derivation, translating raw source symbols and folder hierarchies into behavior and
+  intent nodes. It formats unowned symbols, source documentation, and child node contexts into
+  guided prompts that enforce consistent output structures for files and directories. Once nodes are
+  extracted, they hand off directly to [[n_2f337f]] for subsequent refinement, summary generation,
+  and YAML serialization.
+summary_at: 2026-08-27T03:49:15.065Z

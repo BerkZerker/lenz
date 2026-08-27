@@ -1,0 +1,80 @@
+kind: behavior
+title: In-memory todo store management
+spec: Provides an in-memory store for managing Todo items with unique auto-incrementing numeric IDs,
+  string titles, and boolean completion states. Allows adding non-empty todos, listing todos with
+  optional filtering by 'open' or 'done' status, marking existing todos as done, and removing todos
+  by ID. Throws an error if an empty title is added, an invalid filter is provided, or a nonexistent
+  todo ID is referenced for removal or completion.
+parent: n_fcea59
+status: proposed
+examples:
+  - id: ex_941523
+    name: Adding and listing todos
+    given: A new store created via createStore()
+    when: A todo with title 'Buy milk' is added and store.list() is called
+    then: A todo with id 1, title 'Buy milk', and done false is returned in the list
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_fdd742
+    name: Completing a todo and filtering by status
+    given: A store containing an open todo with id 1
+    when: store.done(1) is called, followed by store.list('done')
+    then: The todo is marked as done and returned when filtering by 'done'
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_a61999
+    name: Rejecting operations on nonexistent todos or empty titles
+    given: A newly created store
+    when: store.add('   ') or store.remove(999) is called
+    then: "An error is thrown indicating 'title is required' or 'todo not found: 999'"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: Todo
+    container: ""
+    file: examples/demo/src/store.ts
+    sig: ab7a9da81398
+    body: c24ff599bdc8
+  - kind: function
+    name: createStore
+    container: ""
+    file: examples/demo/src/store.ts
+    sig: a9d0d8e95e12
+    body: 6a86fdb5609d
+  - kind: method
+    name: list
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 233669d98703
+    body: c3902eefbcdb
+  - kind: method
+    name: add
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 5d98de16fe76
+    body: 2814738b30be
+  - kind: method
+    name: remove
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 52498d6f472a
+    body: 9e91cfa9f12b
+  - kind: method
+    name: done
+    container: createStore
+    file: examples/demo/src/store.ts
+    sig: 554609dab365
+    body: edacae8c08b0
+id: n_e7465c
+deps: []
+summary: This behavior provides in-memory state management for todo items, enabling the creation,
+  deletion, completion, and filtered retrieval of tasks. It enforces data integrity by validating
+  task titles, checking status filters, and guarding against operations on nonexistent IDs.
+  Currently, it functions as a self-contained unit with no external dependencies or direct
+  downstream handoffs.
+summary_at: 2026-08-27T03:48:50.575Z

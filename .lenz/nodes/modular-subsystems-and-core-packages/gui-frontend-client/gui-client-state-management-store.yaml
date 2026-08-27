@@ -1,0 +1,77 @@
+kind: behavior
+title: GUI client state management store
+spec: Maintains the reactive UI state and actions for the GUI, including node selections, tree
+  hierarchy expansion, lens mode, modal dialogs, and toast notifications. Tracks and synchronizes
+  node relations, runs, locks, and picked code files, ensuring selecting a node expands ancestor
+  nodes via reveal() while clearing picked files (and vice-versa). Persists tree display mode to
+  localStorage and connects to backend REST and WebSocket event endpoints.
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_e190c2
+    name: Selecting a node clears picked file and expands ancestors
+    given: The store has a parent node 'pkg/a' and child 'pkg/a/fn', with a file currently picked in
+      'picked'
+    when: setSelected('pkg/a/fn') is executed
+    then: selected is set to 'pkg/a/fn', picked is set to null, and 'pkg/a' is added to the expanded set
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_ab417f
+    name: Toggling node expansion in the tree
+    given: The expanded set contains 'node-1'
+    when: toggleExpanded('node-1') is called
+    then: "'node-1' is removed from the expanded set"
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_4aedc1
+    name: Posting and auto-dismissing a toast notification
+    given: The store has null toast
+    when: notify('Changes saved') is called
+    then: toast is set to 'Changes saved' and automatically reset to null after 3000ms if unchanged
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: RunEvent
+    container: ""
+    file: packages/gui/src/store.ts
+    sig: ab7a9da81398
+    body: 8b47b18fd94e
+  - kind: interface
+    name: Modal
+    container: ""
+    file: packages/gui/src/store.ts
+    sig: ab7a9da81398
+    body: 76e1dd7f240d
+  - kind: interface
+    name: State
+    container: ""
+    file: packages/gui/src/store.ts
+    sig: ab7a9da81398
+    body: b4ee93c19c6a
+  - kind: const
+    name: useStore
+    container: ""
+    file: packages/gui/src/store.ts
+    sig: 53a0acfad593
+    body: 7ce89e0c07d5
+  - kind: function
+    name: reveal
+    container: ""
+    file: packages/gui/src/store.ts
+    sig: 141fe3a1164d
+    body: 3ba1de645b23
+id: n_a1505f
+deps:
+  - n_b8f010
+summary: This store manages reactive client-side state and actions for the GUI, synchronizing node
+  selections, tree hierarchy expansion, modals, and file views. It structures its state using
+  [[n_b0a73c]] and dispatches backend communication through [[n_b8f010]] to keep UI data
+  synchronized with server events. It serves as the central state provider for [[n_eef5f8]] and the
+  application shell in [[n_58c921]], while also initiating graph and node processing tasks via
+  [[n_62ea90]].
+summary_at: 2026-08-27T03:49:03.828Z

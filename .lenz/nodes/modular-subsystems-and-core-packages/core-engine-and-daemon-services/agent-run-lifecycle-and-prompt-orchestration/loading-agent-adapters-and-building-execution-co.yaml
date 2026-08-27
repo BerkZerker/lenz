@@ -1,0 +1,66 @@
+kind: behavior
+title: Loading agent adapters and building execution commands
+spec: Loads agent adapter YAML configuration from `<lenzDir>/agents/claude.yaml` (falling back to
+  default YAML if not present), ensuring the required `command` is present and defaulting `events`
+  to 'claude-stream-json' and `hooks` to 'claude-settings'. Interpolates placeholders
+  (`{prompt_file}`, `{settings_file}`, `{session_id}`) into the adapter's command template (or
+  `resume` template if `session_id` is present) using shell-word splitting with quote and escape
+  support, filtering out empty placeholder arguments and appending extra CLI arguments.
+parent: n_80e676
+status: proposed
+examples:
+  - id: ex_e1ef2c
+    name: Interpolating command template arguments
+    given: An AgentAdapter with command 'claude --settings {settings_file} run {prompt_file}' and no
+      resume template
+    when: "buildCommand is called with vars { prompt_file: '', settings_file: '/tmp/settings.json' } and
+      extra args ['--verbose']"
+    then: It returns ['claude', '--settings', '/tmp/settings.json', 'run', '--verbose'] with the empty
+      prompt file placeholder removed
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_fffe4b
+    name: Selecting resume template when session_id is provided
+    given: An AgentAdapter with command 'claude start' and resume 'claude resume --session {session_id}
+      --settings {settings_file}'
+    when: buildCommand is called with session_id 'sess-123' and settings_file '/tmp/settings.json'
+    then: It evaluates the resume template and returns ['claude', 'resume', '--session', 'sess-123',
+      '--settings', '/tmp/settings.json']
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: AgentAdapter
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: ab7a9da81398
+    body: a63199aa9bcf
+  - kind: function
+    name: loadAdapter
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 14a6bc3d7283
+    body: 1559ea684638
+  - kind: function
+    name: splitArgs
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 0a80a277429c
+    body: 18c7008b222a
+  - kind: function
+    name: buildCommand
+    container: ""
+    file: packages/core/src/runs/adapter.ts
+    sig: 966682560b31
+    body: e202f85fe4ae
+id: n_c97bb7
+deps: []
+summary: This behavior handles loading agent adapter configurations from YAML files and assembling
+  ready-to-run execution command strings. It applies configuration defaults and safely interpolates
+  dynamic parameters—such as session identifiers and prompt file paths—into command or resume
+  templates. It is invoked by [[n_ba9088]] to initialize adapter settings and build the final
+  command line arguments before executing agent runs.
+summary_at: 2026-08-27T03:49:12.340Z

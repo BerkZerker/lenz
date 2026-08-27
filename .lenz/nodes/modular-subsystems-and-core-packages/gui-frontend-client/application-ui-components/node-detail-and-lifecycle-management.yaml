@@ -1,0 +1,54 @@
+kind: behavior
+title: Node Detail and Lifecycle Management
+spec: Renders metadata, status, verification results, and drift details for the currently selected
+  or focused node. Exposes tab navigation across spec, flow, examples, anchors, verify, and
+  reconstruction views. Provides action buttons to approve, dispatch, summarize/re-summarize, or
+  regenerate nodes according to their status and kind. When no node is selected, renders an empty
+  state prompt and entry points.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_52f687
+    name: render approve button for proposed node
+    given: a node with status 'proposed' is selected
+    when: NodeView renders
+    then: an approve button is displayed that calls api('/nodes/:id/approve') on click
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_3a6c4d
+    name: render empty state with entry points
+    given: neither selected nor focus node ID exists in nodes
+    when: NodeView renders
+    then: a 'nothing selected' header, a hint prompt, and the EntryPoints component are displayed
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: type
+    name: Tab
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: 6305f7771c12
+    body: 905cfad951e5
+  - kind: const
+    name: TABS
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: 8e72d626a56e
+    body: 417979f0b17e
+  - kind: function
+    name: NodeView
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: a9d0d8e95e12
+    body: 520ba36a68bf
+id: n_5d13e8
+deps: []
+summary: This behavior serves as the primary inspection and action panel for the active graph node,
+  rendering its metadata, drift status, and tabbed subviews while exposing lifecycle controls such
+  as approval, dispatch, and regeneration. When presenting node information, it hands off visual
+  state indicators to [[n_7d8829]] and delegates the display of interactive linked overview text to
+  [[n_a105ed]].
+summary_at: 2026-08-27T03:49:18.026Z

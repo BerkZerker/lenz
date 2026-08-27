@@ -1,0 +1,71 @@
+kind: behavior
+title: Flow Hierarchy, Relations, and Entry Point Navigation
+spec: Fetches and displays outgoing and incoming call flow trees, peer-level node call relations,
+  and detected entry point symbols grouped by owning node or file. Uses useGoto to update store
+  focus and selection when a linked node is clicked.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_5b7cac
+    name: display in and out flow trees
+    given: FlowView fetches outgoing and incoming FlowStep objects for a node
+    when: FlowView renders
+    then: it renders 'flows into' and 'reached from' outline trees with step titles, via symbol hints,
+      and click handlers to navigate to steps
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_8acabb
+    name: group entry points by node
+    given: EntryPoints receives a list of entry point symbols where multiple symbols share the same
+      owning node
+    when: EntryPoints renders
+    then: it renders a single row for the owning node listing joined entry symbol names and file paths
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: FlowStep
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: ab7a9da81398
+    body: 2c94fbae165b
+  - kind: interface
+    name: EntryPoint
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: ab7a9da81398
+    body: 5dec8acd6ea5
+  - kind: function
+    name: useGoto
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: a9d0d8e95e12
+    body: 38338d9b668c
+  - kind: function
+    name: FlowView
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: 8786b89917a7
+    body: e94029e39b7f
+  - kind: function
+    name: EntryPoints
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: a9d0d8e95e12
+    body: 6ba096753b98
+  - kind: function
+    name: Relations
+    container: ""
+    file: packages/gui/src/components/Detail.tsx
+    sig: 8786b89917a7
+    body: c15ebed4f0ca
+id: n_fbb49d
+deps: []
+summary: This behavior facilitates code structure exploration by fetching and rendering incoming and
+  outgoing call hierarchies, peer-level call relations, and entry point symbols grouped by file or
+  node. When users click on any linked entity, it updates the application store's focus and
+  selection states to enable seamless navigation across execution flows.
+summary_at: 2026-08-27T03:49:18.247Z

@@ -94,6 +94,8 @@ export class StructureDb {
   entryPoints(): { key: string; source: string }[] { return this.db.query("SELECT e.key, e.source FROM entry_points e JOIN symbols s ON s.key=e.key ORDER BY s.file, s.start_line").all() as any; }
 
   // anchors mirror
+  /** Drop the whole mirror. The node yaml is the source of truth, so a reload rebuilds it from scratch. */
+  clearAnchors() { this.db.query("DELETE FROM anchors").run(); }
   setAnchors(nodeId: string, keys: string[]) {
     this.db.query("DELETE FROM anchors WHERE node_id=?").run(nodeId);
     const q = this.db.query("INSERT OR IGNORE INTO anchors(node_id,key) VALUES(?,?)");

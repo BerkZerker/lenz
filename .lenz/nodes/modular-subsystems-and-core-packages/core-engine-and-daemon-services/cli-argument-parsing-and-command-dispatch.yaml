@@ -1,0 +1,149 @@
+kind: behavior
+title: CLI Argument Parsing and Command Dispatch
+spec: Parses CLI arguments, boolean flags, and valued flags; searches upward from the working
+  directory or specified root to find a directory containing `.lenz`; configures daemon
+  communication over HTTP; and dispatches subcommands (such as `init`, `start`, `index`,
+  `summarize`, `status`, and `propose`) to local handlers or daemon API endpoints.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_7fc64f
+    name: Project initialization
+    given: A project root directory without `.lenz` metadata
+    when: "`lenz init` is invoked"
+    then: Initializes the `.lenz` directory at the resolved root and logs the relative path of the
+      initialized directory
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_497114
+    name: Daemon status query
+    given: A running lenz daemon listening on the configured port
+    when: "`lenz status` is executed"
+    then: Fetches status information from `/api/status` and prints the formatted JSON response
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: argv
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: c696e584ee3e
+  - kind: const
+    name: VALUE_FLAGS
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 3e896e89a693
+  - kind: const
+    name: flags
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 58c4543a42aa
+  - kind: const
+    name: bools
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: a14f7ae6030a
+  - kind: const
+    name: words
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 54ec986c5022
+    body: 0ce35fcd956b
+  - kind: const
+    name: i
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: eb36a0305e92
+  - kind: const
+    name: a
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 87dbb9562e8a
+  - kind: const
+    name: cmd
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 2b48345dd8b2
+  - kind: const
+    name: flag
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 1ec1d9c3eb16
+    body: 245b87252e52
+  - kind: const
+    name: has
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 649f9a2dee98
+    body: d019e23a2603
+  - kind: const
+    name: positional
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: b1b2b72e9046
+  - kind: function
+    name: findRoot
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: cf38c2587185
+    body: 5adbb2b57f9b
+  - kind: const
+    name: root
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 677930d12865
+  - kind: const
+    name: port
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: f8ee1548a64e
+  - kind: const
+    name: api
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 8893193c83db
+    body: 7630c6cd0eb6
+  - kind: const
+    name: daemonUp
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 80c6498d9e11
+    body: a77e0ddd2d19
+  - kind: const
+    name: usage
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 53a0acfad593
+    body: 2d25879b9dc2
+  - kind: function
+    name: main
+    container: ""
+    file: packages/core/src/cli.ts
+    sig: 207bfd2fb49a
+    body: 56bfc0f4e48d
+id: n_836db2
+deps:
+  - n_19d7fc
+  - n_77901c
+  - n_81d7fd
+  - n_8e024e
+  - n_c04098
+summary: This node serves as the command-line interface entry point, handling flag parsing,
+  workspace root discovery, and daemon communication setup. It loads initial settings through
+  [[n_81d7fd]] before dispatching requested subcommands to components such as [[n_19d7fc]],
+  [[n_77901c]], [[n_c04098]], [[n_9828f9]], [[n_d12a81]], [[n_298de6]], or [[n_58299f]]. In
+  addition, it integrates with [[n_8e024e]] to handle custom hook processing and command targeting.
+summary_at: 2026-08-27T03:48:53.347Z

@@ -1,0 +1,85 @@
+kind: behavior
+title: Gitignore-style rule compilation, loading, and path matching
+spec: Compiles gitignore pattern lines into IgnoreRule objects containing anchored regular
+  expressions, negation flags, and directory-only constraints. Handles comments (#), escaped
+  characters (\#, \!), glob patterns (*, **, ?), and character sets ([...]), with unslashed patterns
+  matching at any depth. Loads ignore rules in sequential order from specified files on disk
+  (defaulting to .gitignore and .lenzignore via IGNORE_FILES), skipping missing files. Tests
+  project-relative POSIX paths (isIgnored) by evaluating every ancestor path segment in order;
+  directory-only rules apply exclusively to intermediate path segments, later matching rules
+  override earlier ones, and an ignored ancestor directory immediately marks the path as excluded.
+  Provides DEFAULT_LENZIGNORE containing default ignore template comments and patterns.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_503de4
+    name: Ancestor directory exclusion
+    given: Ignore rules parsed from 'node_modules/' and '!node_modules/keep.js'
+    when: isIgnored is evaluated on 'node_modules/keep.js'
+    then: It returns true because the ancestor directory 'node_modules' matched an exclusion rule before
+      the child path was evaluated
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_c009ee
+    name: Pattern negation and unslashed wildcard matching
+    given: Ignore rules parsed from '*.log\n!important.log'
+    when: isIgnored is evaluated on 'src/error.log' and 'src/important.log'
+    then: "'src/error.log' returns true matching the glob at any depth, and 'src/important.log' returns
+      false due to negation rule precedence"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: IgnoreRule
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: ab7a9da81398
+    body: c066774c5ed5
+  - kind: const
+    name: IGNORE_FILES
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 53a0acfad593
+    body: 10bf4b2e5fd8
+  - kind: function
+    name: compile
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 8951ffcc3bd9
+    body: b9359e4d45c5
+  - kind: function
+    name: parseIgnore
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 8dcc124025db
+    body: 95469f003913
+  - kind: function
+    name: loadIgnoreRules
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 80012992fc26
+    body: ca4b2c50e108
+  - kind: function
+    name: isIgnored
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 3cbc2ab813a5
+    body: c877c654148d
+  - kind: const
+    name: DEFAULT_LENZIGNORE
+    container: ""
+    file: packages/structure/src/ignore.ts
+    sig: 53a0acfad593
+    body: 913a64021fc6
+id: n_ee0acb
+deps: []
+summary: This behavior compiles gitignore-style glob patterns into regular expression rules and
+  evaluates project-relative paths to determine whether files and directories should be excluded. It
+  reads ignore files from disk, correctly handling sequential overrides, directory constraints, and
+  ancestor path exclusions. Its default templates are consumed during project setup in [[n_19d7fc]],
+  while its rule loading and matching routines are relied upon by [[n_d12a81]] for structural
+  indexing and by [[n_759ab4]] to filter filesystem watch events.
+summary_at: 2026-08-27T03:49:05.635Z

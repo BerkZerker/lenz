@@ -1,0 +1,37 @@
+kind: behavior
+title: Send mail messages via console logging
+spec: The Mailer class provides a send method that accepts a recipient address (`to`) and message
+  text (`body`), logging them directly to the console.
+parent: n_35a297
+status: proposed
+examples:
+  - id: ex_18526b
+    name: logging email recipient and body
+    given: An instance of Mailer
+    when: send('user@example.com', 'Welcome aboard!') is invoked
+    then: "'user@example.com Welcome aboard!' is output to console.log"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: class
+    name: Mailer
+    container: ""
+    file: examples/brownfield/src/mailer.ts
+    sig: 53f82707abe6
+    body: 42aef496d159
+  - kind: method
+    name: send
+    container: Mailer
+    file: examples/brownfield/src/mailer.ts
+    sig: 19a4dc3c3eb7
+    body: 5570cb4aee1b
+id: n_ef2cba
+deps: []
+summary: This behavior provides a lightweight mail dispatch utility by logging outgoing recipient
+  addresses and message contents directly to the console. It is invoked to deliver notifications
+  during authentication workflows in [[n_db379b]] and is exercised within the example runner
+  [[n_3f4644]]. As a terminal logging utility, it operates independently without handing off to
+  downstream behaviors.
+summary_at: 2026-08-27T03:48:49.886Z

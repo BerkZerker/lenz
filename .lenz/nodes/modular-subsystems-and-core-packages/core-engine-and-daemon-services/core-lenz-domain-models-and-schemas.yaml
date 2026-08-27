@@ -1,0 +1,133 @@
+kind: behavior
+title: Core Lenz domain models and schemas
+spec: Declares data types, interfaces, and constants for Lenz nodes (node kinds, statuses,
+  specification details, verification results, example definitions and outcomes, proposed anchors,
+  and the EDITABLE_FIELDS whitelist for client PUT updates), execution run tracking (run kinds, run
+  statuses, and execution metadata records), and file concurrency locks with audit events.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_bb5ee1
+    name: Client-editable field whitelist
+    given: A client requests a PUT mutation on a node
+    when: Checking permitted fields against EDITABLE_FIELDS
+    then: Only 'title', 'spec', 'examples', 'deps', 'machine', 'parent', and 'kind' are recognized as
+      client-modifiable.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_91a941
+    name: Node definition and verification typing
+    given: A LenzNode object instance representing an intent or behavior
+    when: Populated with specification, example tests, and verification state
+    then: It conforms to LenzNode with NodeKind, NodeStatus, Example expectations (such as ExpectMode),
+      and Verification outcomes.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_1d6a8f
+    name: Run execution and lock tracking
+    given: A core task execution and concurrency management process
+    when: Recording execution runs and file locks
+    then: RunRecord captures the run lifecycle using RunKind and RunStatus, and Lock/LockEvent capture
+      file lock acquisition, transfer, and release.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: type
+    name: NodeKind
+    container: ""
+    file: packages/core/src/types.ts
+    sig: c5d4159cb93f
+    body: 89c5c368f515
+  - kind: type
+    name: NodeStatus
+    container: ""
+    file: packages/core/src/types.ts
+    sig: 5d4b1fe2913d
+    body: ac0498455b9b
+  - kind: type
+    name: ExpectMode
+    container: ""
+    file: packages/core/src/types.ts
+    sig: 9314982e16e8
+    body: 23c4f6e746e9
+  - kind: interface
+    name: Example
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: d4f3883a4689
+  - kind: interface
+    name: ExampleResult
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: 0e4f11dbbf33
+  - kind: interface
+    name: Verification
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: dc93cba370a4
+  - kind: interface
+    name: ProposedAnchor
+    container: ""
+    file: packages/core/src/types.ts
+    sig: c4b545d2c259
+    body: 2e838289acf2
+  - kind: interface
+    name: LenzNode
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: b047f480c61d
+  - kind: const
+    name: EDITABLE_FIELDS
+    container: ""
+    file: packages/core/src/types.ts
+    sig: 53a0acfad593
+    body: 0930ee0998ce
+  - kind: type
+    name: RunKind
+    container: ""
+    file: packages/core/src/types.ts
+    sig: 5f4fc5ee0d6b
+    body: 679a859f6b20
+  - kind: type
+    name: RunStatus
+    container: ""
+    file: packages/core/src/types.ts
+    sig: 1ed41378e38f
+    body: eb5f7322a156
+  - kind: interface
+    name: RunRecord
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: 585bf20a716c
+  - kind: interface
+    name: Lock
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: 373bcd076eca
+  - kind: interface
+    name: LockEvent
+    container: ""
+    file: packages/core/src/types.ts
+    sig: ab7a9da81398
+    body: 9a39945f7f48
+id: n_19fac0
+deps: []
+summary: This node defines the core domain models, schemas, and constants that standardize node
+  definitions, execution run records, verification outcomes, and concurrency locks across the
+  platform. It provides structural definitions that map directly to symbol anchor models in
+  [[n_5608cc]]. These foundational types are consumed throughout the system, supporting node
+  authoring, storage, and relationship summaries in [[n_348046]], [[n_c26d86]], and [[n_dbc58c]],
+  architecture derivation and materialization in [[n_b3b72e]] and [[n_5ffc74]], anchor resolution
+  and multi-phase verification in [[n_c8c898]], [[n_484bc9]], and [[n_9828f9]], as well as agent
+  orchestration in [[n_80e676]] and lock management in [[n_6a10f1]].
+summary_at: 2026-08-27T03:48:54.858Z

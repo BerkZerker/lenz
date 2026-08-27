@@ -1,0 +1,104 @@
+kind: behavior
+title: HTTP REST API and WebSocket Server
+spec: Starts and manages the HTTP and WebSocket server for Lenz Core. Registers route handlers for
+  status, node operations (CRUD, approve, reject, dispatch, verify, reconstruct, drift resolution,
+  example marking, anchor assignment), and system runs. Formats JSON responses and errors with
+  permissive CORS headers. Handles WebSocket upgrades at `/events`, registering connections to
+  broadcast core events and sending an initial hello message with core status upon opening. Serves
+  static GUI files from the configured directory with cache-control headers, falling back to
+  `index.html` for single-page application routes.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_1d51ac
+    name: Handle REST API requests
+    given: A running server initialized with startServer(core, staticDir)
+    when: A GET request is sent to `/api/status`
+    then: The server responds with HTTP 200, JSON content-type, CORS allow-origin headers, and the JSON
+      payload returned by core.status().
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_67b2f6
+    name: Establish WebSocket connection on /events
+    given: A client connecting to the `/events` endpoint
+    when: The WebSocket handshake completes and the connection opens
+    then: The socket is tracked in the active connection set and receives a JSON message of type 'hello'
+      with the current timestamp and core status.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_980098
+    name: Serve static GUI files and SPA fallback
+    given: A static GUI directory containing an index.html file
+    when: A GET request is received for a non-existent non-API path such as `/dashboard`
+    then: "The server serves index.html with a 'cache-control: no-store' header."
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: json
+    container: ""
+    file: packages/core/src/server.ts
+    sig: a3aae3d59837
+    body: ee3e1c905f55
+  - kind: const
+    name: err
+    container: ""
+    file: packages/core/src/server.ts
+    sig: 1381e58bd8cd
+    body: 29d7b2011b30
+  - kind: function
+    name: startServer
+    container: ""
+    file: packages/core/src/server.ts
+    sig: e850a83d47d8
+    body: bcc35b6bd3fa
+  - kind: method
+    name: fetch
+    container: startServer.server
+    file: packages/core/src/server.ts
+    sig: 54d3ec6dd13c
+    body: 0e9b39680bf0
+  - kind: method
+    name: open
+    container: startServer.server
+    file: packages/core/src/server.ts
+    sig: b85c27a8c2bf
+    body: 5f8726155751
+  - kind: method
+    name: close
+    container: startServer.server
+    file: packages/core/src/server.ts
+    sig: b85c27a8c2bf
+    body: bb95994f13d2
+  - kind: method
+    name: message
+    container: startServer.server
+    file: packages/core/src/server.ts
+    sig: d7b0a4d6f984
+    body: 03e2b026ee88
+id: n_c04098
+deps:
+  - n_1cef8b
+  - n_20e5ea
+  - n_348046
+  - n_484bc9
+  - n_5ffc74
+  - n_6a10f1
+  - n_77901c
+  - n_b3b72e
+  - n_c26d86
+  - n_c8c898
+  - n_dbc58c
+summary: This node serves as the primary communication boundary for Lenz Core, exposing a REST API,
+  WebSocket event stream, and static GUI server for client interactions. Invoked by [[n_836db2]], it
+  bridges incoming requests to core lifecycle controls in [[n_77901c]], node storage and authoring
+  workflows in [[n_c26d86]] and [[n_348046]], and agent execution or verification pipelines in
+  [[n_80e676]], [[n_484bc9]], and [[n_c8c898]]. Additionally, it coordinates structural querying and
+  indexing with [[n_dbc58c]], [[n_1cef8b]], [[n_58299f]], [[n_d12a81]], and [[n_298de6]], while
+  delegating staging, locking, and architectural derivation tasks to [[n_6a10f1]], [[n_20e5ea]],
+  [[n_5ffc74]], and [[n_b3b72e]].
+summary_at: 2026-08-27T03:48:54.770Z

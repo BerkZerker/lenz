@@ -1,0 +1,39 @@
+kind: behavior
+title: Go language definition
+spec: Configures LanguageDef for Go (go) matching .go files. Determines export visibility by
+  checking if the symbol name begins with an uppercase letter. Walks AST import specifications to
+  extract module paths and package aliases into ImportBinding records (parseImport), while returning
+  null for resolveModule as same-package symbols resolve locally.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_70136b
+    name: Determine Go export status by casing
+    given: A Go declaration named 'ServeHTTP' and another named 'handleRequest'
+    when: evaluating go.isExported for both symbol names
+    then: returns true for 'ServeHTTP' and false for 'handleRequest'
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: go
+    container: ""
+    file: packages/structure/src/languages.ts
+    sig: 42cf3b988e6a
+    body: 7dab2938ec1c
+  - kind: method
+    name: parseImport
+    container: go.go
+    file: packages/structure/src/languages.ts
+    sig: 1249705f1b89
+    body: f191daf804a9
+id: n_55ca5b
+deps: []
+summary: This behavior configures the language definition for Go source files, handling file
+  matching, import parsing, and symbol export rules. It inspects symbol identifiers to determine
+  public visibility based on standard capitalization conventions and walks the abstract syntax tree
+  to extract package aliases and module paths into structured bindings. It operates as a
+  self-contained language handler that leaves same-package symbol resolution to local file contexts.
+summary_at: 2026-08-27T03:49:07.991Z

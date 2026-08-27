@@ -1,0 +1,75 @@
+kind: behavior
+title: Triggering graph and node derivation workflows
+spec: Provides actions to initiate graph or node derivation in the store. If a derivation is already
+  in progress, notifications are posted and actions aborted. For deriveGraph, if no derived nodes
+  exist, it immediately posts to `/derive` with reset mode 'none'; otherwise, it opens a choice
+  modal with options to replace unreviewed ('proposed') or all derived nodes before posting. For
+  deriveNode, if the node kind is 'behavior', it prompts with a confirmation modal to rewrite spec
+  and examples from anchors posting with reset 'none'; otherwise, it opens a choice modal with reset
+  options for the node's folder/code subtree. API responses notify the store on start or completion,
+  and catch errors to notify error messages.
+parent: n_e265c6
+status: proposed
+examples:
+  - id: ex_61aac5
+    name: First graph derivation without existing derived nodes
+    given: The store is not currently deriving and contains no nodes marked as derived
+    when: deriveGraph() is called
+    then: A POST request is made to `/derive` with reset mode 'none' and the store is notified upon
+      response
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_633baf
+    name: Deriving an existing behavior node
+    given: The store is idle and a behavior node with anchors is selected
+    when: deriveNode(node) is called
+    then: A confirmation modal is opened to confirm rewriting spec and examples from its anchors,
+      posting to `/nodes/:id/derive` upon submit
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_2ab9f3
+    name: Triggering derivation while another derivation is active
+    given: The store status indicates an ongoing derivation with scope 'subgraph'
+    when: deriveGraph() or deriveNode(node) is invoked
+    then: The store notifies 'already deriving subgraph' without opening a modal or sending an API
+      request
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: RESET_OPTIONS
+    container: ""
+    file: packages/gui/src/derive.ts
+    sig: 53a0acfad593
+    body: 8494b9af6790
+  - kind: const
+    name: post
+    container: ""
+    file: packages/gui/src/derive.ts
+    sig: 92b4a5ed59f1
+    body: aa258ca937b1
+  - kind: function
+    name: deriveGraph
+    container: ""
+    file: packages/gui/src/derive.ts
+    sig: a9d0d8e95e12
+    body: 5a6b80e8af49
+  - kind: function
+    name: deriveNode
+    container: ""
+    file: packages/gui/src/derive.ts
+    sig: eee24a41e4e3
+    body: 0514f71f3df1
+id: n_62ea90
+deps:
+  - n_b8f010
+summary: This behavior manages the initiation of graph and node derivation workflows, handling
+  derivation state checks, user confirmation modals, and reset configuration options. It is invoked
+  from the top-level interface in [[n_58c921]] and interactive components in [[n_eef5f8]]. In turn,
+  it utilizes types from [[n_b0a73c]], updates notifications and client state via [[n_a1505f]], and
+  dispatches derivation requests through [[n_b8f010]].
+summary_at: 2026-08-27T03:49:01.587Z

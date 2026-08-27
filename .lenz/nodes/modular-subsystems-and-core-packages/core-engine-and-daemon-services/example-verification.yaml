@@ -1,0 +1,18 @@
+kind: intent
+title: Example Verification
+spec: Provides utilities for running command-line examples and validating their outcomes against
+  expected results. This area is responsible for executing shell commands within designated working
+  directories, enforcing execution timeouts, and evaluating process results such as exit codes,
+  standard output, and standard error to ensure they match specified expectation criteria.
+status: proposed
+derived: true
+folder: packages/core/src/verify
+parent: n_0e8e26
+id: n_9828f9
+deps: []
+summary: This module provides execution and validation utilities for running command-line examples
+  in controlled environments with enforced timeouts. It evaluates process outcomes like standard
+  streams and exit codes against expectation criteria, integrating with domain schemas in
+  [[n_19fac0]]. Verification runs are orchestrated upstream by [[n_836db2]] and the multi-phase
+  pipeline in [[n_484bc9]].
+summary_at: 2026-08-27T03:48:49.924Z

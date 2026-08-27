@@ -62,7 +62,8 @@ export const PROPOSAL_SCHEMA = {
         title: { type: "string" },
         spec: { type: "string" },
         deps: { type: "array", items: { type: "string" }, description: "titles of sibling behavior nodes that must be built first" },
-        examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" } }, required: ["name", "given", "when", "then"] } },
+        examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" },
+        run: { type: "string", description: "optional shell command that demonstrates this example and exits 0 on success; omit unless you are confident it runs as-is from the project root" } }, required: ["name", "given", "when", "then"] } },
         children: { type: "array", items: { $ref: "#/$defs/node" } },
       },
       required: ["kind", "title", "spec"],
@@ -71,37 +72,83 @@ export const PROPOSAL_SCHEMA = {
 };
 
 export function proposePrompt(brainDump: string, existingTree: string, parentTitle: string | null, repoSummary: string | null = null): string {
-  return `You are turning a human's brain-dump into a tree of nodes for an agent dev kit.\n\nTwo node kinds: **intent** nodes group (title + one-paragraph spec, children); **behavior** nodes are leaves that own code (title, precise spec, 1–4 examples as given/when/then). Rules:\n- A node has at most 9 children. Group into intent nodes to stay under the cap.\n- Behavior specs are contracts: inputs, outputs, errors, limits. Concrete enough that an agent can implement without asking questions, no larger than the brain-dump asks for.\n- Examples are observable behavior, never test code.\n- deps: list titles of sibling behaviors that must exist first (e.g. "login" before "reset password").\n- Do not repeat nodes that already exist in the tree below; propose only what is new.\n${parentTitle ? `- The new nodes will be placed under the existing intent node "${parentTitle}".\n` : ""}\n${existingTree ? `## Existing tree\n\n${existingTree}\n\n` : ""}${repoSummary ? `## Repository overview (file: exported symbols)\n\n${repoSummary}\n\n` : ""}## Brain-dump\n\n${brainDump}\n\n${repoSummary ? "Do not modify anything." : "You may read the repository to understand conventions, but do not modify anything."} Return the tree as JSON matching the schema.`;
+  return `You are turning a human's brain-dump into a tree of nodes for an agent dev kit.\n\nTwo node kinds: **intent** nodes group (title + one-paragraph spec, children); **behavior** nodes are leaves that own code (title, precise spec, 1–4 examples as given/when/then). Rules:\n- Group siblings under intent nodes wherever that makes the tree easier to read; do not flatten everything to one level.\n- Behavior specs are contracts: inputs, outputs, errors, limits. Concrete enough that an agent can implement without asking questions, no larger than the brain-dump asks for.\n- Examples are observable behavior, never test code.\n- deps: list titles of sibling behaviors that must exist first (e.g. "login" before "reset password").\n- Do not repeat nodes that already exist in the tree below; propose only what is new.\n${parentTitle ? `- The new nodes will be placed under the existing intent node "${parentTitle}".\n` : ""}\n${existingTree ? `## Existing tree\n\n${existingTree}\n\n` : ""}${repoSummary ? `## Repository overview (file: exported symbols)\n\n${repoSummary}\n\n` : ""}## Brain-dump\n\n${brainDump}\n\n${repoSummary ? "Do not modify anything." : "You may read the repository to understand conventions, but do not modify anything."} Return the tree as JSON matching the schema.`;
 }
 
-export const DERIVE_SCHEMA = {
+/** One file's behaviors. Symbols are referenced by the bracketed index shown in the prompt, never by key: the
+ *  mapping back to symbol keys is done in code, so a behaviour can never anchor a symbol that was not offered. */
+export const FILE_SCHEMA = {
   type: "object",
   properties: {
-    intent: { type: "object", properties: { title: { type: "string" }, spec: { type: "string" } }, required: ["title", "spec"] },
     behaviors: { type: "array", items: { type: "object", properties: {
       title: { type: "string" }, spec: { type: "string" },
-      anchors: { type: "array", items: { type: "string" }, description: "symbol keys from the list, verbatim" },
-      examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" } }, required: ["name", "given", "when", "then"] } },
-    }, required: ["title", "spec", "anchors"] } },
+      symbols: { type: "array", items: { type: "integer" }, description: "the bracketed indexes of the symbols this behavior owns" },
+      examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" },
+        run: { type: "string", description: "optional shell command that demonstrates this example and exits 0 on success; omit unless you are confident it runs as-is from the project root" } }, required: ["name", "given", "when", "then"] } },
+    }, required: ["title", "spec", "symbols"] } },
   },
-  required: ["intent", "behaviors"],
+  required: ["behaviors"],
 };
 
-export function derivePrompt(folder: string, symbols: { key: string; kind: string; name: string; container: string; file: string; sig: string; doc: string }[], subIntents: { title: string; spec: string }[]): string {
-  return `You are deriving behavior nodes from existing code, bottom-up, one folder at a time. Folder: \`${folder || "."}\`.\n\nGroup this folder's symbols into 1–9 **behavior** nodes: each is a user-observable behavior (title, precise spec of what the code does, 1–3 examples as given/when/then describing observable behavior). Every symbol should be owned by exactly one behavior; a symbol can appear in only one node's anchors. Anchors must be symbol keys copied verbatim from the list. Also write one **intent** node summarizing this folder (title + one-paragraph spec), taking the subfolders' intents into account.\n\n## Symbols in this folder's files\n\n${symbols.map((s) => `- key: \`${s.key}\`\n  ${s.kind} ${s.container ? s.container + "." : ""}${s.name}${s.sig ? ` — ${oneLine(s.sig, 160)}` : ""}${s.doc ? `\n  ${oneLine(s.doc, 200)}` : ""}`).join("\n")}\n\n${subIntents.length ? `## Already-derived subfolder intents\n\n${subIntents.map((s) => `- ${s.title}: ${oneLine(s.spec, 200)}`).join("\n")}\n\n` : ""}Do not use tools. Return JSON matching the schema.`;
+export const FOLDER_SCHEMA = {
+  type: "object",
+  properties: { title: { type: "string" }, spec: { type: "string" } },
+  required: ["title", "spec"],
+};
+
+export interface DeriveSymbol { idx: number; key: string; kind: string; name: string; container: string; file: string; sig: string; doc: string; source?: string }
+
+/** Group one file's unowned symbols into behaviors. The scope is a single file, so the whole file usually fits. */
+export function filePrompt(file: string, symbols: DeriveSymbol[]): string {
+  const one = (s: DeriveSymbol) =>
+    `[${s.idx}] ${s.kind} ${s.container ? s.container + "." : ""}${s.name}` +
+    (s.doc ? `\n  doc: ${oneLine(s.doc, 200)}` : "") +
+    (s.source ? `\n\n\`\`\`\n${s.source}\n\`\`\`\n` : s.sig ? `\n  ${oneLine(s.sig, 160)}` : "");
+  return `You are deriving behavior nodes from existing code. Scope: the single file \`${file}\`.
+
+Group the symbols below into **behavior** nodes: each is one user-observable behavior, with a title, a precise spec of what the code does, and 1-3 examples as given/when/then describing observable behavior.
+
+Rules:
+- Every symbol must be owned by exactly one behavior. Refer to symbols by their bracketed index, in the \`symbols\` array.
+- Group by what the code does, not by name similarity. Symbols that collaborate on one job belong together; a symbol that does a big job alone is its own behavior.
+- Prefer few, meaningful behaviors over one per symbol. A file that does one thing is one behavior.
+- Write the spec from the code you are shown, not from the symbol's name. State only what the code actually does - no capability it does not have, no file or format it does not reference. If a symbol's source is not shown, describe it only as far as its signature supports.
+- An example may carry a \`run\`: a shell command, executed from the project root, that demonstrates it and exits non-zero on failure. Add one only when you are confident it works as written against this repo; an example with no \`run\` is documentation, and that is fine.
+
+## Symbols in \`${file}\`
+
+${symbols.map(one).join("\n")}
+
+Do not use tools. Return JSON matching the schema.`;
+}
+
+/** Name a folder from the children already derived under it. No source: this call is about the level above the code. */
+export function folderPrompt(folder: string, children: { kind: string; title: string; spec: string }[], files: string[]): string {
+  return `Name and describe one folder of a codebase, as an **intent** node: a title, and a one-paragraph spec saying what this area of the project is for and what it does.
+
+Write it as orientation for someone deciding whether to look inside. Summarize the parts below rather than listing them, and stay at this level of abstraction - do not describe individual functions.
+
+## Folder \`${folder || "."}\`
+
+${files.length ? `Files: ${files.join(", ")}\n\n` : ""}## What is already described inside it
+
+${children.length ? children.map((c) => `- [${c.kind}] ${c.title}: ${oneLine(c.spec, 240)}`).join("\n") : "(nothing yet)"}
+
+Do not use tools. Return JSON matching the schema.`;
 }
 
 export const BEHAVIOR_SCHEMA = {
   type: "object",
   properties: {
     title: { type: "string" }, spec: { type: "string" },
-    examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" } }, required: ["name", "given", "when", "then"] } },
+    examples: { type: "array", items: { type: "object", properties: { name: { type: "string" }, given: { type: "string" }, when: { type: "string" }, then: { type: "string" },
+        run: { type: "string", description: "optional shell command that demonstrates this example and exits 0 on success; omit unless you are confident it runs as-is from the project root" } }, required: ["name", "given", "when", "then"] } },
   },
   required: ["title", "spec", "examples"],
 };
 
 export function behaviorPrompt(n: LenzNode, sources: { key: string; source: string }[], parent: LenzNode | null): string {
-  return `You are rewriting one **behavior** node of a software project graph from its current code. Produce a title, a precise spec of what the code observably does, and 1–3 examples (given/when/then describing observable behavior). Describe the code as it is now, not as it was described before.${parent ? `\n\nParent intent: ${parent.title} — ${oneLine(parent.spec, 300)}` : ""}\n\n## Previous description (may be stale)\n\n${nodeToYamlForPrompt(n)}\n\n## Anchored symbols\n\n${sources.map((s) => `### ${s.key}\n\n\`\`\`\n${s.source.slice(0, 4000)}\n\`\`\``).join("\n\n")}\n\nDo not use tools. Return JSON matching the schema.`;
+  return `You are rewriting one **behavior** node of a software project graph from its current code. Produce a title, a precise spec of what the code observably does, and 1–3 examples (given/when/then describing observable behavior). An example may carry a \`run\`: a shell command, executed from the project root, that demonstrates it and exits non-zero on failure - add one only when you are confident it works as written; omitting it is fine. Describe the code as it is now, not as it was described before.${parent ? `\n\nParent intent: ${parent.title} — ${oneLine(parent.spec, 300)}` : ""}\n\n## Previous description (may be stale)\n\n${nodeToYamlForPrompt(n)}\n\n## Anchored symbols\n\n${sources.map((s) => `### ${s.key}\n\n\`\`\`\n${s.source.slice(0, 4000)}\n\`\`\``).join("\n\n")}\n\nDo not use tools. Return JSON matching the schema.`;
 }
 
 export function nodeToYamlForPrompt(n: LenzNode) { return YAML.stringify({ title: n.title, spec: n.spec, examples: n.examples }); }

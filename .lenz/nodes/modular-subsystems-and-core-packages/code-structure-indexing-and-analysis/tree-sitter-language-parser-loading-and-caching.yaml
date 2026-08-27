@@ -1,0 +1,58 @@
+kind: behavior
+title: Tree-sitter language parser loading and caching
+spec: Initializes the Tree-sitter WASM engine once via `ensureInit`, and compiles and caches parsers
+  and language queries keyed by language ID in `langCache` via `loadLanguage`. `preloadLanguages`
+  iterates over configured language definitions (or a specified subset) to warm up parser caches.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_e5b281
+    name: Preloading supported languages
+    given: A list of language IDs or all default supported languages.
+    when: preloadLanguages is called.
+    then: Tree-sitter WASM initializes and each target language grammar and query file is loaded into
+      the parser cache.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: const
+    name: initPromise
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 2b30882c3a3e
+    body: 493e277433c3
+  - kind: const
+    name: langCache
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 53a0acfad593
+    body: "896e63365260"
+  - kind: function
+    name: ensureInit
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 207bfd2fb49a
+    body: 2ad000455a09
+  - kind: function
+    name: loadLanguage
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 712f69fe8a91
+    body: 9f52ff3b9930
+  - kind: function
+    name: preloadLanguages
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 4141f3418a95
+    body: 3d9a6c42a54a
+id: n_790227
+deps:
+  - n_d27685
+summary: This behavior manages the initialization of the Tree-sitter WASM runtime, compiling and
+  caching language parsers and queries to support syntax-aware analysis. It resolves parser
+  definitions and asset file paths by calling [[n_d27685]]. In turn, it supplies ready-to-use
+  parsers to [[n_329a75]] for symbol extraction and provides cache preloading for codebase indexing
+  pipelines in [[n_d12a81]].
+summary_at: 2026-08-27T03:49:03.786Z

@@ -1,0 +1,18 @@
+kind: intent
+title: Demo Application Source
+spec: Serves as the core implementation for the example demonstration project, providing a concrete
+  reference for how to build with the codebase. It orchestrates a sample Todo application by
+  managing an in-memory state store alongside the application entry point, handling task creation,
+  status filtering, and lifecycle updates.
+status: proposed
+derived: true
+folder: examples/demo/src
+parent: n_c64b09
+id: n_fcea59
+deps: []
+summary: This module serves as the core implementation of the example demo project, illustrating how
+  to build applications using the codebase. It orchestrates a sample Todo application by managing an
+  in-memory data store alongside the primary entry point to handle task creation, lifecycle updates,
+  and status filtering. As a self-contained reference implementation, it operates independently to
+  demonstrate standard state management and application setup patterns.
+summary_at: 2026-08-27T03:48:46.552Z

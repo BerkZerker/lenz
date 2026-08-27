@@ -1,0 +1,79 @@
+kind: behavior
+title: Build Dispatch, Execution, and Multi-phase Verification
+spec: Dispatches behavior build runs to LLM runners. Upon completion, auto-adopts newly created
+  unowned symbols as anchors, executes test examples and machine check commands, triggers blind
+  reconstruction and spec comparison, and supports anchor reassignment and manual example mark
+  updates.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_0f525e
+    name: dispatch triggers build and sets status
+    given: A specified behavior node without an active run.
+    when: dispatch(id) is called.
+    then: A build run is submitted, and the node status transitions to 'building'.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_6c0eb2
+    name: verify runs examples and machine checks
+    given: A built behavior node with defined examples and a machine check command.
+    when: verify(nodeId) is executed.
+    then: Example runner results and machine command exit status are recorded in the node's verification
+      field.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: method
+    name: dispatch
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 95831d5aff53
+    body: 8c5a65466a6c
+  - kind: method
+    name: onBuildDone
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 0c64e2bca0a4
+    body: 6133310a2d99
+  - kind: method
+    name: verify
+    container: Core
+    file: packages/core/src/core.ts
+    sig: e8f243e0edd3
+    body: 47a0cda81180
+  - kind: method
+    name: markExample
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 0e5bc7dcb594
+    body: 849c586f01e0
+  - kind: method
+    name: reconstruct
+    container: Core
+    file: packages/core/src/core.ts
+    sig: e8f243e0edd3
+    body: b86e8068f0a7
+  - kind: method
+    name: assignAnchor
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 2a45b2bfbed1
+    body: acb9d9dde3d9
+id: n_484bc9
+deps:
+  - n_5ffc74
+  - n_77901c
+  - n_c26d86
+  - n_dbc58c
+summary: This node oversees the dispatch and multi-phase verification of behavior builds, driving
+  task execution and validating outputs through automated checks, reconstruction comparisons, and
+  anchor adoptions. It is invoked following authoring, staging, drift detection, and server
+  interactions from [[n_348046]], [[n_20e5ea]], [[n_c8c898]], and [[n_c04098]]. In turn, it relies
+  on [[n_80e676]] for agent prompting and run management, [[n_c26d86]] and [[n_77901c]] for storage
+  and logging, [[n_9828f9]] for example execution, and a suite of structural and schema utilities
+  including [[n_08fed0]], [[n_58299f]], [[n_d12a81]], [[n_dbc58c]], [[n_5608cc]], [[n_19fac0]],
+  [[n_fb7815]], and [[n_5ffc74]] to resolve anchors and synthesize relationship summaries.
+summary_at: 2026-08-27T03:49:00.441Z

@@ -1,0 +1,53 @@
+kind: behavior
+title: Status bar and graph derivation controls
+spec: Render the application status bar displaying status metrics (runs, locks, drifted nodes,
+  orphan counts, staged items, and blast radius), connection state indicator, and toast
+  notifications. Provide interactive controls to trigger graph derivation (`deriveGraph`), track
+  derivation progress and scope, and toggle immediate staging mode via the `/staging/immediate` API
+  endpoint.
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_ec1844
+    name: render default idle status bar
+    given: The store contains status metrics with 0 drifted nodes, no active derivation, and connected
+      is true
+    when: The StatusBar component is rendered
+    then: It displays runs, locks, drifted, orphans, staged counts, a 'generate graph' button, and a '●
+      live' connection indicator
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_cc9cea
+    name: render active derivation progress
+    given: The store status indicates derivation is active with 3 of 10 tasks done
+    when: The StatusBar component is rendered
+    then: The derive button is disabled displaying 'generating 3/10' and a progress bar is shown with
+      30% width
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_334be6
+    name: toggle immediate staging mode
+    given: The store status has staged.immediate set to false
+    when: "The user clicks the '[immediate: off]' link"
+    then: "A request is sent to the '/staging/immediate' endpoint with { on: true }"
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: StatusBar
+    container: ""
+    file: packages/gui/src/components/StatusBar.tsx
+    sig: a9d0d8e95e12
+    body: 0691bc02c7c2
+id: n_adc914
+deps: []
+summary: This node renders the application's primary status bar, providing real-time visibility into
+  connection health, notification toasts, and key system metrics such as active runs, drifted nodes,
+  and staged items. It also supplies interactive controls to trigger and monitor graph derivation
+  progress as well as toggle immediate staging. It currently operates as a self-contained UI
+  behavior with no explicitly recorded upstream callers or downstream handoffs.
+summary_at: 2026-08-27T03:49:15.797Z

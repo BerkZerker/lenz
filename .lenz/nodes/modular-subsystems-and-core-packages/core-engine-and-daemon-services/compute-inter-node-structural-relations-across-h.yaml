@@ -1,0 +1,60 @@
+kind: behavior
+title: Compute inter-node structural relations across hierarchy depth
+spec: Given a NodeStore and a StructureDb, computeRelations constructs a mapping of each node ID to
+  its incoming and outgoing NodeRelations. It identifies symbol ownership and resolves references
+  between symbols across nodes, lifting peer owner nodes to match the current node's tree depth
+  while discarding references internal to the node's own subtree. For each relation, it collects up
+  to four formatted symbol-to-symbol transition examples ('src → dst'). Nodes with no anchors
+  receive empty relation arrays.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_1937bd
+    name: Computes outgoing and incoming peer relations at matching depth
+    given: A NodeStore containing nodes A and B at depth 1, and a StructureDb with a reference from a
+      symbol anchored in A to a symbol anchored in B
+    when: computeRelations(store, db) is invoked
+    then: Node A's relation record contains node B in its 'out' list with the symbol transition in
+      'via', and node B's relation record contains node A in its 'in' list.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_de09a6
+    name: Excludes relations within the same subtree
+    given: A NodeStore containing parent node A and child node A1, and a reference from a symbol in A to
+      a symbol in A1
+    when: computeRelations(store, db) is invoked
+    then: The reference is ignored because the target owner belongs to node A's descendant subtree.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: Relation
+    container: ""
+    file: packages/core/src/relations.ts
+    sig: ab7a9da81398
+    body: b1081414c61e
+  - kind: interface
+    name: NodeRelations
+    container: ""
+    file: packages/core/src/relations.ts
+    sig: ab7a9da81398
+    body: 7dcb186d61d0
+  - kind: function
+    name: computeRelations
+    container: ""
+    file: packages/core/src/relations.ts
+    sig: 507eba9b6744
+    body: e146fb6e0322
+id: n_ab4a86
+deps:
+  - n_c26d86
+summary: This behavior calculates incoming and outgoing structural relations across nodes in the
+  hierarchy by resolving cross-node symbol references and lifting peer nodes to matching tree
+  depths. To build these mappings and sample transitions, it queries symbols and references from
+  [[n_58299f]], traverses node hierarchies and anchors via [[n_c26d86]], and formats anchor keys
+  using [[n_fb7815]]. The resulting relationship data is utilized by [[n_dbc58c]] and coordinated
+  through [[n_77901c]].
+summary_at: 2026-08-27T03:48:53.622Z

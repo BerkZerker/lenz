@@ -1,0 +1,108 @@
+kind: behavior
+title: Explorer Tree Navigation and Filtering
+spec: "Renders the left explorer pane supporting dual tree modes: 'nodes' (intent and behavior node
+  hierarchy) and 'files' (hierarchical directory structure constructed from flat FileEntry objects
+  containing symbols). Provides search query filtering matching node titles, file paths, symbol
+  names, and containers, alongside global expand-all and collapse-all controls and item selection
+  handlers."
+parent: n_eef5f8
+status: proposed
+examples:
+  - id: ex_1f1967
+    name: Build and display folder hierarchy in files mode
+    given: A list of FileEntry objects with paths like 'src/components/Tree.tsx' and treeMode set to
+      'files'
+    when: The Tree component builds folders using buildFolders
+    then: It constructs a nested Folder tree sorted alphabetically by name/path and renders folder and
+      file rows.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_d35bd4
+    name: Search filter matching
+    given: A search query 'tree' and tree items or file entries
+    when: The search filter predicates (hasMatch, symMatches, fileMatches, folderMatches) are evaluated
+      against titles, paths, and symbols
+    then: Items whose paths, node titles, symbol names, or symbol containers match the query in a
+      case-insensitive manner are retained in the view.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_3334c8
+    name: Expand and collapse all tree items
+    given: The Tree pane rendered in either 'nodes' or 'files' mode
+    when: The user clicks the expand all (⊞) or collapse all (⊟) toolbar button
+    then: setExpanded is called with all node or folder/file path IDs on expand, or an empty array on
+      collapse.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: FileSym
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: ab7a9da81398
+    body: 71cc48d93e59
+  - kind: interface
+    name: FileEntry
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: ab7a9da81398
+    body: 98e07a8c1aa5
+  - kind: interface
+    name: Folder
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: ab7a9da81398
+    body: f3563fd6d3b1
+  - kind: function
+    name: Tree
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: a9d0d8e95e12
+    body: 6d180923f59e
+  - kind: function
+    name: Row
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: fb2227337456
+    body: 78f62e67e7ee
+  - kind: function
+    name: buildFolders
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: 34a7df90b632
+    body: 5d4819650b2c
+  - kind: function
+    name: hasMatch
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: f26d879d8e8c
+    body: a8c384867788
+  - kind: function
+    name: symMatches
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: 59407eb7cb24
+    body: ac62acf33572
+  - kind: function
+    name: fileMatches
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: 18b9620708b7
+    body: 49a1bb62c764
+  - kind: function
+    name: folderMatches
+    container: ""
+    file: packages/gui/src/components/Tree.tsx
+    sig: 63aed41d1a5d
+    body: f8bb97a5495d
+id: n_729ebd
+deps: []
+summary: This component manages the primary explorer navigation pane, rendering searchable and
+  expandable tree views for both project nodes and file directory structures. It facilitates quick
+  traversal by filtering paths, symbols, and titles while handling user selections. Tree item
+  interactions hand off context to [[n_7d8829]] to drive detail views and visual status indicators.
+summary_at: 2026-08-27T03:49:17.597Z

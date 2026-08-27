@@ -2,7 +2,7 @@ import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { cpSync, mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Core, FanOutError, LockBroker, EventBus, extractJson, fanOutViolation } from "../src/index.ts";
+import { Core, LockBroker, EventBus, extractJson } from "../src/index.ts";
 import { judge, isSubset } from "../src/verify/examples.ts";
 import { startServer } from "../src/server.ts";
 
@@ -22,10 +22,15 @@ PROMPT=$(cat)
 SETTINGS=""
 while [ $# -gt 0 ]; do case "$1" in --settings) SETTINGS="$2"; shift;; esac; shift; done
 echo '{"type":"system","subtype":"init","session_id":"sess-1","model":"fake"}'
+if echo "$PROMPT" | grep -q "Name and describe one folder"; then
+  FOLDER=$(echo "$PROMPT" | grep -o '## Folder \`[^\`]*\`' | head -1 | sed 's/## Folder \`//; s/\`$//')
+  FOLDER="$FOLDER" python3 -c "import json,os; f=os.environ['FOLDER']; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'title':'Folder '+f,'spec':'spec of '+f})}))"
+  exit 0
+fi
 if echo "$PROMPT" | grep -q "You are deriving behavior nodes"; then
-  FOLDER=$(echo "$PROMPT" | grep -o 'Folder: \`[^\`]*\`' | head -1 | sed 's/Folder: \`//; s/\`$//')
-  KEYS=$(echo "$PROMPT" | grep -o 'key: \`[^\`]*\`' | sed 's/key: \`//; s/\`$//')
-  RES=$(KEYS="$KEYS" FOLDER="$FOLDER" python3 -c "import json,os; ks=[k for k in os.environ['KEYS'].splitlines() if k]; f=os.environ['FOLDER']; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'intent':{'title':'Folder '+f,'spec':'spec of '+f},'behaviors':[{'title':'Behavior '+f,'spec':'does '+f,'anchors':ks,'examples':[{'name':'e','given':'g','when':'w','then':'t'}]}]})}))")
+  FILE=$(echo "$PROMPT" | grep -o 'the single file \`[^\`]*\`' | head -1 | sed 's/the single file \`//; s/\`$//')
+  IDXS=$(echo "$PROMPT" | grep -o '^\[[0-9]*\]' | tr -d '[]')
+  RES=$(IDXS="$IDXS" FILE="$FILE" python3 -c "import json,os; ix=[int(i) for i in os.environ['IDXS'].split()]; f=os.environ['FILE']; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'behaviors':[{'title':'Behavior '+f,'spec':'does '+f,'symbols':ix,'examples':[{'name':'e','given':'g','when':'w','then':'t'}]}]})}))")
   echo "$RES"; exit 0
 fi
 if echo "$PROMPT" | grep -q "You are rewriting one"; then python3 -c "import json; print(json.dumps({'type':'result','subtype':'success','session_id':'sess-1','result':json.dumps({'title':'Regenerated','spec':'fresh spec','examples':[{'name':'x','given':'a','when':'b','then':'c'}]})}))"; exit 0; fi
@@ -53,14 +58,15 @@ echo '{"type":"result","subtype":"success","result":"implemented verifyPassword"
 afterAll(async () => { server.stop(true); await core.close(); rmSync(root, { recursive: true, force: true }); });
 
 describe("nodes", () => {
-  test("create/save/load with slug paths, fan-out cap, topo order", () => {
+  test("create/save/load with slug paths, wide fan-out, topo order", () => {
     const auth = core.createNode({ kind: "intent", title: "Auth" });
     const login = core.createNode({ kind: "behavior", title: "Login", parent: auth.id, spec: "users log in" });
     const reset = core.createNode({ kind: "behavior", title: "Reset password", parent: auth.id, spec: "reset", deps: [login.id] });
     expect(existsSync(join(root, ".lenz/nodes/auth/reset-password.yaml"))).toBe(true);
     expect(core.store.topo([reset.id, login.id]).map((n) => n.id)).toEqual([login.id, reset.id]);
-    for (let i = 0; i < 7; i++) core.createNode({ kind: "behavior", title: `b${i}`, parent: auth.id });
-    expect(() => core.createNode({ kind: "behavior", title: "tenth", parent: auth.id })).toThrow(FanOutError);
+    // no fan-out cap: a folder with 30 files is 30 behaviors, and losing code to a layout constraint is worse than a wide tree
+    for (let i = 0; i < 30; i++) core.createNode({ kind: "behavior", title: `b${i}`, parent: auth.id });
+    expect(core.store.children(auth.id).length).toBe(32);
     core.store.load();
     expect(core.store.get(reset.id)?.deps).toEqual([login.id]);
     for (const n of core.store.children(auth.id)) if (n.title.startsWith("b")) core.deleteNode(n.id);
@@ -118,11 +124,9 @@ describe("verification judges", () => {
     expect(judge({ id: "x", name: "x", expect: { mode: "manual" } }, out).pass).toBeNull();
     expect(isSubset({ x: { y: 1 } }, { x: { y: 1, z: 2 } })).toBe(true);
   });
-  test("json extraction + fan-out validation of proposals", () => {
+  test("json extraction out of chatty model output", () => {
     expect(extractJson('blah ```json\n{"nodes":[]}\n``` more')).toEqual({ nodes: [] });
     expect(extractJson('text {"a":[1,2]} trailing')).toEqual({ a: [1, 2] });
-    expect(fanOutViolation([{ title: "x", children: new Array(10).fill({ title: "c" }) }])).toContain("10 children");
-    expect(fanOutViolation([{ title: "x" }])).toBeNull();
   });
 });
 
@@ -230,7 +234,9 @@ describe("brownfield: derive / regenerate (fake agent)", () => {
     const out = await core.deriveNode(newBeh.id) as any;
     expect(out.title).toBe("Regenerated"); expect(out.spec).toBe("fresh spec"); expect(out.examples[0].then).toBe("c"); expect(out.anchors).toEqual(anchors);
     expect(() => core.deriveNode("n_nope")).toThrow();
-    const res = await fetch(`http://127.0.0.1:${PORT}/api/derive`, { method: "POST", body: JSON.stringify({ reset: "none" }), headers: { "content-type": "application/json" } });
+    // reset "all" so the run has real work to do — a second derive while one is in flight must be refused.
+    // ("none" keeps every derived node, so with nothing unowned it finishes before the next request lands.)
+    const res = await fetch(`http://127.0.0.1:${PORT}/api/derive`, { method: "POST", body: JSON.stringify({ reset: "all" }), headers: { "content-type": "application/json" } });
     expect((await res.json()).started).toBe(true);
     const busy = await fetch(`http://127.0.0.1:${PORT}/api/derive`, { method: "POST", body: "{}" });
     expect(busy.status).toBe(409);

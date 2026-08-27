@@ -1,0 +1,146 @@
+kind: behavior
+title: Codebase structure indexing, synchronization, and symbol queries
+spec: Configures and manages an SQLite-backed code structure index (StructureIndex). Filters source
+  files using glob patterns and ignore files (.gitignore, .lenzignore), incrementally hashes and
+  extracts file symbols and imports, updates dependency graphs upon modification or deletion,
+  auto-detects entry points, and provides helper accessors for relative paths, symbol source code
+  snippets, and modification times.
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_fac629
+    name: full-project-index
+    given: A StructureIndex instance configured for a project directory
+    when: indexAll() is invoked
+    then: It reloads ignore rules, scans source files matching source globs, updates files and symbols
+      in the database, and returns the SymbolsChanged changeset
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_8c350f
+    name: retrieve-symbol-source
+    given: An indexed symbol key stored in the structure database
+    when: symbolSource(key) is called
+    then: It reads the corresponding source file and returns the slice of lines between the symbol's
+      start_line and end_line
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: interface
+    name: StructureConfig
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: ab7a9da81398
+    body: 9a98083c31e4
+  - kind: const
+    name: DEFAULT_STRUCTURE_CONFIG
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: c051e29bbc81
+    body: 18ae2ea4a615
+  - kind: class
+    name: StructureIndex
+    container: ""
+    file: packages/structure/src/structure.ts
+    sig: 3e72e0311fa1
+    body: 3664c47370a4
+  - kind: method
+    name: constructor
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 077b327f59ef
+    body: 595bca71521b
+  - kind: method
+    name: reloadIgnores
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: d7b0a4d6f984
+    body: 41bad6fd5029
+  - kind: method
+    name: rel
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 0258408d32d2
+    body: 78756e7477d1
+  - kind: method
+    name: abs
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 73c225fc899d
+    body: 0fc315123900
+  - kind: method
+    name: accepts
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 73c225fc899d
+    body: dcd81b03336e
+  - kind: method
+    name: listSourceFiles
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 69efba224114
+    body: 0145020e18a3
+  - kind: method
+    name: indexAll
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: c940b266c702
+    body: f68de9f8decc
+  - kind: method
+    name: sync
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 89f507d539bd
+    body: 965e5d6da688
+  - kind: method
+    name: doSync
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 2b824c63e4a4
+    body: 7001210d0818
+  - kind: method
+    name: refreshEntryPoints
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: d7b0a4d6f984
+    body: 5d62774f338a
+  - kind: method
+    name: close
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 2b99dbd07328
+    body: 04d64dd006ef
+  - kind: method
+    name: symbolSource
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: 87318759f4e6
+    body: 30ce03fcaf32
+  - kind: method
+    name: fileMtime
+    container: StructureIndex
+    file: packages/structure/src/structure.ts
+    sig: b79355986553
+    body: 086b9c4319a9
+id: n_d12a81
+deps:
+  - n_1442b1
+  - n_1c6d8c
+  - n_329a75
+  - n_58299f
+  - n_790227
+  - n_8861f2
+  - n_d27685
+  - n_ee0acb
+  - n_ef236d
+summary: This behavior maintains an incremental, SQLite-backed structural index of the codebase,
+  tracking source files, symbols, and dependencies while serving queries for code snippets and
+  metadata. During indexing, it filters paths via [[n_ee0acb]] and [[n_8861f2]], hashes content with
+  [[n_1442b1]], determines languages using [[n_d27685]] and [[n_790227]], extracts symbols and
+  references through [[n_329a75]], [[n_1c6d8c]], and [[n_ef236d]], and formats and persists data
+  using [[n_5608cc]] into [[n_58299f]]. It is initialized via [[n_81d7fd]] and driven by
+  [[n_77901c]], [[n_836db2]], and [[n_759ab4]], supplying structural intelligence to downstream
+  features in [[n_1cef8b]], [[n_b3b72e]], [[n_484bc9]], [[n_80e676]], and [[n_c04098]].
+summary_at: 2026-08-27T03:49:11.102Z

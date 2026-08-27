@@ -3,7 +3,7 @@ import { useStore } from "../store";
 
 const HELP: [string, string][] = [
   ["j / k", "move selection"], ["enter", "drill in / open"], ["esc / h", "up / close"], ["/", "search tree"],
-  ["1–6", "lens: graph · queue · verify · orphans · runs · flow"], ["7 / 8", "propose · stage"],
+  ["t", "toggle the tree between nodes and files"],
   ["a", "approve (proposed → specified, built → verified)"], ["r", "reject with note (re-dispatch)"], ["e", "edit node (yaml)"], ["d", "dispatch build"],
   ["n", "new node under focus"], ["x", "delete node"], ["g", "generate / regenerate graph from code"], ["c", "confirm staged set"], ["i", "toggle immediate mode"], ["?", "this help"],
 ];

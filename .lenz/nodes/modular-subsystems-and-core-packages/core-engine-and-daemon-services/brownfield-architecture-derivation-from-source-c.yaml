@@ -1,0 +1,190 @@
+kind: behavior
+title: Brownfield Architecture Derivation from Source Code
+spec: Derives intent and behavior nodes from unowned codebase symbols. Groups symbols into buckets
+  using caller/callee proximity, submits parallel derivation runs, assigns call-based sibling
+  dependencies, collapses redundant single-child container intents, prunes empty intents, and
+  manages derivation reset policies and progress reporting.
+parent: n_0e8e26
+status: proposed
+examples:
+  - id: ex_a97176
+    name: assignSymbols groups symbols and sweeps unassigned helpers
+    given: A list of symbols in a file and LLM group definitions omitting some helper symbols.
+    when: assignSymbols(syms, groups, db, file) is executed.
+    then: Unassigned symbols are swept into the bucket with the most caller/callee references.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_4bcbe3
+    name: deriveAll starts brownfield derivation job
+    given: An indexed project with unowned source files.
+    when: deriveAll('proposed') is invoked.
+    then: Derivation begins, publishing progress events, and resolves with created proposed intent and
+      behavior nodes.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: type
+    name: DeriveReset
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 55f8ed03f169
+    body: 488e8cb09a33
+  - kind: interface
+    name: DeriveProgress
+    container: ""
+    file: packages/core/src/core.ts
+    sig: ab7a9da81398
+    body: 845605cb4ef1
+  - kind: method
+    name: folderOf
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 54889f24decc
+    body: 31c9af858eab
+  - kind: method
+    name: derivedIn
+    container: Core
+    file: packages/core/src/core.ts
+    sig: c2fa9d069ef6
+    body: 5473194e3f5c
+  - kind: method
+    name: resetDerived
+    container: Core
+    file: packages/core/src/core.ts
+    sig: c2fa9d069ef6
+    body: 79d749cad364
+  - kind: method
+    name: deriveAll
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 015e4c97f019
+    body: 1e9e812bed48
+  - kind: method
+    name: deriveNode
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 8213e45b4de5
+    body: 6cd9816e8b13
+  - kind: method
+    name: allDirs
+    container: Core
+    file: packages/core/src/core.ts
+    sig: d301303d919f
+    body: 4b3e682c2264
+  - kind: method
+    name: runDerive
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 0428cb9fe49d
+    body: b7549ec90e85
+  - kind: method
+    name: derive
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 1088cef5827d
+    body: 3787c0edf9bf
+  - kind: method
+    name: computeDerivedDeps
+    container: Core
+    file: packages/core/src/core.ts
+    sig: afb9edbcea96
+    body: 95ad41df99d5
+  - kind: method
+    name: pruneEmptyIntents
+    container: Core
+    file: packages/core/src/core.ts
+    sig: afb9edbcea96
+    body: 0d8883271fdc
+  - kind: method
+    name: collapseContainerIntents
+    container: Core
+    file: packages/core/src/core.ts
+    sig: afb9edbcea96
+    body: 384f0a64cd2a
+  - kind: method
+    name: regenerateBehavior
+    container: Core
+    file: packages/core/src/core.ts
+    sig: 66f01f8360cd
+    body: 65e209e060d2
+  - kind: function
+    name: fileLines
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 9039f4e881f9
+    body: 838d00de201c
+  - kind: function
+    name: docAbove
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 60bd487db698
+    body: 2d95de1808ee
+  - kind: function
+    name: toExamples
+    container: ""
+    file: packages/core/src/core.ts
+    sig: a46f6da8b6fa
+    body: 9591c55edb7f
+  - kind: interface
+    name: SymbolBucket
+    container: ""
+    file: packages/core/src/core.ts
+    sig: ab7a9da81398
+    body: aecde0222df0
+  - kind: function
+    name: assignSymbols
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 83d39d86fed7
+    body: c8287185acf8
+  - kind: const
+    name: SOURCE_BUDGET
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 53a0acfad593
+    body: 456fcb5eb110
+  - kind: const
+    name: MAX_SYMBOL_SOURCE
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 53a0acfad593
+    body: 8db7bd31fc2b
+  - kind: const
+    name: parentDir
+    container: ""
+    file: packages/core/src/core.ts
+    sig: ec31aefb34e5
+    body: 130c86e32788
+  - kind: function
+    name: pooled
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 8a747d9c10a1
+    body: 1e188ca13a15
+  - kind: function
+    name: runDag
+    container: ""
+    file: packages/core/src/core.ts
+    sig: 855fcb7ddcb3
+    body: 5f6cbbe76db3
+id: n_b3b72e
+deps:
+  - n_1cef8b
+  - n_348046
+  - n_5ffc74
+  - n_77901c
+  - n_c26d86
+  - n_c4686d
+  - n_dbc58c
+summary: This behavior automatically reconstructs structured intent and behavior hierarchies by
+  analyzing unowned symbols and call relationships across an existing codebase. Triggered via API
+  requests in [[n_c04098]] as well as workflows in [[n_5ffc74]] and [[n_dbc58c]], it inspects code
+  structure and orphan symbols using [[n_1cef8b]], [[n_58299f]], [[n_5608cc]], and [[n_d12a81]]. It
+  drives parallel generation runs through [[n_80e676]] while logging and publishing progress via
+  [[n_77901c]] and [[n_c4686d]]. Finally, resulting nodes and anchors are resolved, formatted, and
+  committed to domain storage via [[n_08fed0]], [[n_fb7815]], [[n_5ffc74]], [[n_19fac0]],
+  [[n_c26d86]], and [[n_348046]], before handing off to [[n_dbc58c]] for summary generation.
+summary_at: 2026-08-27T03:49:02.358Z

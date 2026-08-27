@@ -1,0 +1,53 @@
+kind: behavior
+title: Text normalization and content hashing
+spec: "Provides hashing and whitespace normalization functions: `normalize` strips multi-line block
+  comments, single-line slashes and hash comments, and collapses multi-whitespace down to single
+  spaces; `hashText` computes a truncated 12-character SHA-1 hex digest; and `contentHash` computes
+  a full 40-character SHA-1 hex digest."
+parent: n_73cee3
+status: proposed
+examples:
+  - id: ex_51bc39
+    name: Normalizing commented code and hashing
+    given: A code snippet containing inline block comments, slash comments, and irregular whitespace.
+    when: normalize is called on the code snippet.
+    then: All comments are removed and remaining tokens are separated by single spaces with
+      leading/trailing whitespace trimmed.
+    expect:
+      mode: manual
+    derived: true
+  - id: ex_267267
+    name: Hashing source text
+    given: A string of source code.
+    when: hashText is called on the string.
+    then: A 12-character hexadecimal SHA-1 prefix string is returned.
+    expect:
+      mode: manual
+    derived: true
+derived: true
+anchors:
+  - kind: function
+    name: hashText
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: e188321efa0f
+    body: c482bc12645b
+  - kind: function
+    name: contentHash
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: e188321efa0f
+    body: 9027e6240a0f
+  - kind: function
+    name: normalize
+    container: ""
+    file: packages/structure/src/extract.ts
+    sig: 40d0c770c43d
+    body: ac6d98c71fbc
+id: n_1442b1
+deps: []
+summary: This behavior provides text sanitization and SHA-1 hashing utilities that strip comments,
+  collapse whitespace, and generate full or truncated content digests. It serves as a core helper
+  called by [[n_329a75]] during AST symbol and reference extraction, as well as by [[n_d12a81]] to
+  detect content changes during codebase synchronization.
+summary_at: 2026-08-27T03:49:03.283Z
